@@ -26,3 +26,5 @@ Thumbs.db
 /node_modules
 .env
 /public/storage
+/storage/*.key
+/bootstrap/cache
