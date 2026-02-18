@@ -1,0 +1,164 @@
+.mt-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mt-icon {
+    font-size: 1.2rem;
+    color: var(--gold);
+}
+
+/* Sunday cards */
+.sunday-card {
+    text-align: center;
+    padding: 0;
+    overflow: hidden;
+}
+
+.sunday-time-box {
+    background: var(--navy);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.sunday-icon {
+    font-size: 1.4rem;
+    color: var(--gold);
+}
+
+.sunday-time {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+
+.sunday-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--navy);
+    padding: 16px 16px 4px;
+}
+
+.sunday-lang {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    padding: 0 16px 16px;
+}
+
+/* Weekday grid */
+.weekday-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+}
+
+.weekday-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.weekday-row:nth-child(n+4) {
+    border-bottom: none;
+}
+
+.weekday-name {
+    color: var(--text-dark);
+}
+
+.weekday-name.bold {
+    font-weight: 700;
+    color: var(--navy);
+}
+
+.weekday-time {
+    color: var(--text-mid);
+}
+
+/* Holy days */
+.holy-days-box {
+    background: var(--navy);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    color: var(--white);
+}
+
+.holy-days-label {
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.holy-days-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Additional info */
+.add-info-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 10px;
+}
+
+.add-info-sub {
+    font-size: 0.85rem;
+    color: var(--text-mid);
+    margin-bottom: 10px;
+}
+
+.add-info-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-mid);
+}
+
+.add-info-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--text-mid);
+    line-height: 1.5;
+}
+
+/* Banner image */
+.mt-image-banner {
+    width: 100%;
+    height: 320px;
+    overflow: hidden;
+    margin-top: 24px;
+}
+
+.mt-image-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .weekday-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

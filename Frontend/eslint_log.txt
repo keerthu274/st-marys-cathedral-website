@@ -1,0 +1,34 @@
+﻿node.exe : Invalid 
+option '--eslintrc' 
+- perhaps you meant 
+'--ext'?
+At line:1 char:1
++ & "C:\Program Files
+\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (Invalid   
+  option ... mean    
+t '--ext'?:Strin    
+g) [], RemoteExc    
+eption
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 
+You're using 
+eslint.config.js, 
+some command line 
+flags are no longer 
+available. Please 
+see https://eslint.or
+g/docs/latest/use/com
+mand-line-interface 
+for details.

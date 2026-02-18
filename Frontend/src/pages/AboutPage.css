@@ -1,0 +1,132 @@
+.about-history,
+.about-diocese {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.about-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 20px;
+}
+
+.history-text p,
+.diocese-text p {
+    color: var(--text-mid);
+    line-height: 1.7;
+    margin-bottom: 14px;
+    font-size: 0.92rem;
+}
+
+.history-image img,
+.diocese-image img {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Values */
+.value-card {
+    text-align: center;
+}
+
+.value-icon {
+    font-size: 1.8rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.value-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 8px;
+}
+
+.value-desc {
+    font-size: 0.82rem;
+    color: var(--text-mid);
+    line-height: 1.5;
+}
+
+/* Staff */
+.staff-card {
+    text-align: center;
+}
+
+.staff-avatar {
+    font-size: 2rem;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.staff-role {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+}
+
+.staff-name {
+    font-size: 0.85rem;
+    color: var(--text-mid);
+    margin-bottom: 2px;
+}
+
+.staff-title {
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+/* Mission */
+.mission-banner {
+    background: var(--navy);
+    color: var(--white);
+    padding: 64px 0;
+}
+
+.mission-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.mission-quote {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 700px;
+    margin: 0 auto;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+
+    .about-history,
+    .about-diocese {
+        grid-template-columns: 1fr;
+    }
+
+    .diocese-image {
+        order: -1;
+    }
+}
