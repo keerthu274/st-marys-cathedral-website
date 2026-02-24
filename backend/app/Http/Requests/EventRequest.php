@@ -22,6 +22,9 @@ class EventRequest extends FormRequest
             // Title is required
             'title' => ['required', 'string', 'max:255'],
 
+            // Description is optional
+            'description' => ['nullable', 'string'],
+
             // Start date is required
             // Also check overlapping events (no clashes)
             'start_date' => [
@@ -30,15 +33,24 @@ class EventRequest extends FormRequest
                 new NoEventOverlap($eventId, $this->location),
             ],
 
+            // Start time is optional (HH:MM)
+            'start_time' => ['nullable', 'date_format:H:i'],
+
             // End date is optional
             // If provided, it must be same day or after start date
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+
+            // End time is optional (HH:MM)
+            'end_time' => ['nullable', 'date_format:H:i'],
 
             // Location is optional
             'location' => ['nullable', 'string', 'max:255'],
 
             // Status must be one of these two
             'status' => ['required', 'in:draft,published'],
+
+            // Category is optional
+            'category' => ['nullable', 'string', 'max:255'],
         ];
     }
 
