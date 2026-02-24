@@ -9,44 +9,39 @@ use App\Models\Event;
 class NoEventOverlap implements ValidationRule
 {
     // ignoreId is used when editing (so it won't clash with itself)
-    // location is used if you want to check clashes only in same location
-    public function __construct(
-        private ?int $ignoreId,
-        private ?string $location
-    ) {}
+    public function __construct(private ?int $ignoreId) {}
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        // Get start and end date from request
-        $start = request('start_date');
+        // Get date + time from request
+        $startDate = request('start_date');
+        $endDate   = request('end_date') ?: $startDate;
 
-        // If end date is empty, treat it as same as start date
-        $end = request('end_date') ?: $start;
+        // If time is missing, use full-day safe defaults
+        $startTime = request('start_time') ?: '00:00';
+        $endTime   = request('end_time') ?: '23:59';
 
-        // Start building query
+        // Create full date-time strings
+        $newStart = $startDate . ' ' . $startTime . ':00';
+        $newEnd   = $endDate . ' ' . $endTime . ':00';
+
+        // Make sure end is after start (extra safety)
+        if (strtotime($newEnd) <= strtotime($newStart)) {
+            $fail('End time must be after start time.');
+            return;
+        }
+
+        // Find any event that overlaps this time range
         $query = Event::query()
+            ->when($this->ignoreId, fn($q) => $q->where('id', '!=', $this->ignoreId))
+            ->whereRaw("
+                STR_TO_DATE(CONCAT(start_date,' ',IFNULL(start_time,'00:00')), '%Y-%m-%d %H:%i') < ?
+                AND
+                STR_TO_DATE(CONCAT(IFNULL(end_date,start_date),' ',IFNULL(end_time,'23:59')), '%Y-%m-%d %H:%i') > ?
+            ", [$newEnd, $newStart]);
 
-            // Ignore current event when editing
-            ->when($this->ignoreId, fn($q) => 
-                $q->where('id', '!=', $this->ignoreId)
-            )
-
-            // Check clash only in same location (optional logic)
-            ->when($this->location, fn($q) => 
-                $q->where('location', $this->location)
-            );
-
-        // Overlap logic:
-        // Existing event start <= new event end
-        // AND existing event end >= new event start
-        $query->where(function ($q) use ($start, $end) {
-            $q->whereDate('start_date', '<=', $end)
-              ->whereDate('end_date', '>=', $start);
-        });
-
-        // If any overlapping event exists, fail validation
         if ($query->exists()) {
-            $fail('This event clashes with another event already booked for that date/time range.');
+            $fail('This time slot is already booked for another event.');
         }
     }
 }
