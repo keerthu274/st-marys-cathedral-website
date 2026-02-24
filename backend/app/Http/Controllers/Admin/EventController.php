@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;          // Base controller class
 use App\Models\Event;                         // Our Event model (database table)
 use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -104,6 +106,25 @@ class EventController extends Controller
         return redirect()
             ->route('admin.events.index')
             ->with('success', 'Event updated successfully.');
+    }
+
+    public function eventsByDate(Request $request)
+
+    {
+    // Get date from query string
+    $date = $request->query('date');
+
+    if (!$date) {
+        return response()->json([]);
+    }
+
+    // Get events that are happening on that date (including multi-day events)
+    $events = Event::whereDate('start_date', '<=', $date)
+        ->whereDate(\DB::raw('IFNULL(end_date, start_date)'), '>=', $date)
+        ->orderBy('start_time')
+        ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
+
+    return response()->json($events);
     }
 
     /**
