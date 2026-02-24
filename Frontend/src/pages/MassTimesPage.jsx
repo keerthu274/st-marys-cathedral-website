@@ -2,115 +2,150 @@ import PageHero from '../components/PageHero'
 import './MassTimesPage.css'
 
 const sundayMasses = [
-    { time: '9:00 AM', name: 'Sunday Mass', lang: 'English' },
-    { time: '11:00 AM', name: 'Sunday Mass (Family)', lang: 'English' },
-    { time: '6:30 PM', name: 'Sunday Evening Mass', lang: 'English' },
+    { time: '9:00 AM', name: 'Sunday Mass' },
+    { time: '11:00 AM', name: 'Sunday Mass (Family)' },
+    { time: '6:30 PM', name: 'Sunday Evening Mass' },
 ]
 
-const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const sacraments = [
+    { id: 'baptism', title: 'Baptism', description: 'The first sacrament welcoming new members into the Catholic faith', icon: '💧' },
+    { id: 'communion', title: 'First Holy Communion', description: 'Receiving the Body and Christ for the first time', icon: '🤝' },
+    { id: 'confirmation', title: 'Confirmation', description: 'Completing Christian initiation through the gifts of the Holy Spirit', icon: '✨' },
+    { id: 'marriage', title: 'Marriage', description: 'The sacred union of a man and woman in the presence of God', icon: '❤️' },
+    { id: 'reconciliation', title: 'Reconciliation', description: 'The sacrament of healing and forgiveness', icon: '🙌' },
+    { id: 'anointing', title: 'Anointing of the Sick', description: 'Spiritual comfort and strength for those who are ill', icon: '🙏' },
+]
 
-const holyDays = [
-    'Ash Wednesday – February 14, 2026',
-    'Easter Sunday – April 5, 2026',
-    'Ascension Thursday – May 14, 2026',
+const otherServices = [
+    { title: 'Adoration of the Blessed Sacrament', schedule: 'Every Friday following 10:00 AM Mass until 12:00 PM', description: 'A beautiful opportunity to spend time in silent prayer before the Blessed Sacrament.' },
+    { title: 'Stations of the Cross', schedule: 'Every Friday during Lent at 7:00 PM', description: 'Join us in meditating on the Passion of Christ during the Lenten season.' },
+    { title: 'The Rosary', schedule: 'Saturdays at 9:30 AM before Mass', description: 'Praying the Rosary together as a community before Saturday morning Mass.' },
+    { title: 'Divine Mercy Chaplet', schedule: 'Daily at 3:00 PM', description: 'The Cathedral is open for private prayer and the Divine Mercy Chaplet at the hour of mercy.' },
 ]
 
 export default function MassTimesPage() {
     return (
-        <div>
+        <div className="mass-sac-page">
             <PageHero
-                title="Mass Times"
-                subtitle="Join us for worship and celebration of the Eucharist"
+                title="Mass & Sacraments"
+                subtitle="Information about Mass times and sacramental life at St Mary's Cathedral"
             />
 
             <div className="container">
-                {/* Sunday Masses */}
-                <section className="section-sm">
-                    <h2 className="mt-section-title">
-                        <span className="mt-icon">📅</span> Sunday Masses
-                    </h2>
-                    <div className="grid-3 sunday-cards">
-                        {sundayMasses.map(m => (
-                            <div key={m.time} className="card sunday-card">
-                                <div className="sunday-time-box">
-                                    <span className="sunday-icon">🕐</span>
-                                    <span className="sunday-time">{m.time}</span>
+                {/* Mass Times Section */}
+                <section className="section">
+                    <h2 className="section-title">Mass Times</h2>
+                    <p className="section-subtitle">Join us for the celebration of the Eucharist</p>
+
+                    <div className="grid-3 mass-times-grid">
+                        {/* Sunday Mass Card */}
+                        <div className="card mass-time-card">
+                            <div className="mt-icon-box">
+                                <span className="mt-icon-large">🕒</span>
+                            </div>
+                            <h3 className="mt-card-title">Sunday Mass Times</h3>
+                            <div className="mt-card-details">
+                                <p><strong>9:00 AM</strong></p>
+                                <p><strong>11:00 AM (Family Mass)</strong></p>
+                                <p><strong>6:30 PM</strong></p>
+                            </div>
+                            <p className="mt-card-note">All Masses held at St Mary's Cathedral</p>
+                        </div>
+
+                        {/* Weekday Mass Card */}
+                        <div className="card mass-time-card">
+                            <div className="mt-icon-box">
+                                <span className="mt-icon-large">🕒</span>
+                            </div>
+                            <h3 className="mt-card-title">Weekday Mass Times</h3>
+                            <div className="mt-card-details">
+                                <p><strong>Monday - Saturday</strong></p>
+                                <p>10:00 AM</p>
+                            </div>
+                            <p className="mt-card-note">Confessions available 30 minutes before Mass</p>
+                        </div>
+
+                        {/* Holy Days Card */}
+                        <div className="card mass-time-card">
+                            <div className="mt-icon-box">
+                                <span className="mt-icon-large">🕒</span>
+                            </div>
+                            <h3 className="mt-card-title">Holy Days of Obligation</h3>
+                            <div className="mt-card-details">
+                                <p><strong>9:00 AM</strong></p>
+                                <p><strong>7:00 PM</strong></p>
+                            </div>
+                            <p className="mt-card-note">Please check the newsletter for specific dates</p>
+                        </div>
+                    </div>
+
+                    <div className="text-center mt-32">
+                        <button className="btn-primary">View Full Mass Times & Schedule</button>
+                    </div>
+                </section>
+
+                {/* Sacraments Section */}
+                <section className="section bg-light-full-width">
+                    <div className="container">
+                        <h2 className="section-title">Sacraments</h2>
+                        <p className="section-subtitle">Receiving God's grace through the sacraments of the Church</p>
+
+                        <div className="grid-3 sacrament-grid">
+                            {sacraments.map(sac => (
+                                <div key={sac.id} className="card sacrament-card">
+                                    <div className="sac-icon-box">
+                                        <span className="sac-icon">{sac.icon}</span>
+                                    </div>
+                                    <h3 className="sac-title">{sac.title}</h3>
+                                    <p className="sac-desc">{sac.description}</p>
+                                    <button className="btn-outline-sm">Learn More</button>
                                 </div>
-                                <h3 className="sunday-name">{m.name}</h3>
-                                <p className="sunday-lang">{m.lang}</p>
+                            ))}
+                        </div>
+
+                        {/* Important Info Banner */}
+                        <div className="info-banner">
+                            <div className="info-banner-icon">ℹ️</div>
+                            <div className="info-banner-content">
+                                <h3>Important Information</h3>
+                                <p>Each sacrament has specific preparation and requirements. Please read the relevant page before making an enquiry. If you have any questions, our parish office is here to help guide you through the process.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Other Services Section */}
+                <section className="section">
+                    <h2 className="section-title">Other Liturgical Services</h2>
+                    <p className="section-subtitle">Additional opportunities for prayer and worship</p>
+
+                    <div className="grid-2 other-services-grid">
+                        {otherServices.map((service, index) => (
+                            <div key={index} className="card service-card">
+                                <h3 className="service-title">{service.title}</h3>
+                                <p className="service-schedule">{service.schedule}</p>
+                                <p className="service-desc">{service.description}</p>
                             </div>
                         ))}
                     </div>
                 </section>
-
-                {/* Weekday Masses */}
-                <section className="section-sm">
-                    <h2 className="mt-section-title">
-                        <span className="mt-icon">🕐</span> Weekday Masses
-                    </h2>
-                    <div className="card weekday-grid">
-                        {weekdays.map(day => (
-                            <div key={day} className="weekday-row">
-                                <span className={`weekday-name ${['Wednesday', 'Saturday'].includes(day) ? 'bold' : ''}`}>{day}</span>
-                                <span className="weekday-time">10:00 AM</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Holy Days */}
-                <section className="section-sm">
-                    <h2 className="mt-section-title">
-                        <span className="mt-icon">🔔</span> Holy Days of Obligation
-                    </h2>
-                    <div className="card">
-                        <p style={{ color: 'var(--text-mid)', marginBottom: '20px', lineHeight: '1.7', fontSize: '0.9rem' }}>
-                            Mass times for Holy Days of Obligation are announced in advance through our weekly newsletter and bulletin. Typically, we offer multiple masses throughout the day to accommodate everyone's schedule.
-                        </p>
-                        <div className="holy-days-box">
-                            <p className="holy-days-label">Upcoming Holy Days:</p>
-                            <ul className="holy-days-list">
-                                {holyDays.map(d => <li key={d}>• {d}</li>)}
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Additional Info */}
-                <section className="section-sm">
-                    <h2 className="mt-section-title" style={{ marginBottom: '24px' }}>Additional Information</h2>
-                    <div className="grid-2">
-                        <div className="card">
-                            <h3 className="add-info-title">Confessions</h3>
-                            <p className="add-info-sub">The Sacrament of Reconciliation is available:</p>
-                            <ul className="add-info-list">
-                                <li>• Saturday: 9:30 AM – 10:00 AM</li>
-                                <li>• Saturday: 5:00 PM – 6:00 PM</li>
-                                <li>• By appointment: Contact the parish office</li>
-                            </ul>
-                        </div>
-                        <div className="card">
-                            <h3 className="add-info-title">Cathedral Information</h3>
-                            <div className="add-info-row">
-                                <span>📍</span>
-                                <span>St Mary's Cathedral<br />Regent Street, Wrexham<br />LL11 1RR</span>
-                            </div>
-                            <div className="add-info-row">
-                                <span>🕐</span>
-                                <span>Cathedral open for private prayer<br />Daily: 8:00 AM – 6:00 PM</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
             </div>
 
-            {/* Full-width image */}
-            <div className="mt-image-banner">
-                <img
-                    src="https://images.unsplash.com/photo-1548625149-720754951eca?w=1200&q=80"
-                    alt="Mass celebration"
-                />
-            </div>
+            {/* Questions Section */}
+            <section className="questions-section">
+                <div className="container">
+                    <h2 className="section-title">Have questions about Mass or Sacraments?</h2>
+                    <p className="section-subtitle">Our parish office is here to help. Whether you're enquiring about Mass times, preparing for a sacrament, or have any questions about the liturgical life of the Cathedral, please don't hesitate to get in touch.</p>
+                    <div className="questions-actions">
+                        <button className="btn-primary">
+                            <span>📞</span> Contact the Parish Office
+                        </button>
+                        <button className="btn-outline-navy">
+                            <span>✉️</span> Sacramental Enquiry
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
     )
 }
