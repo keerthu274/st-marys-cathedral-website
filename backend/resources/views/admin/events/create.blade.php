@@ -43,15 +43,23 @@
                     {{-- Start date --}}
                     <div class="mb-4">
                         <label class="block mb-1">Start Date *</label>
-                        <input type="date" name="start_date" value="{{ old('start_date') }}"
-                               class="w-full border rounded px-3 py-2">
+                        <input id="start_date" type="date" name="start_date" value="{{ old('start_date') }}"
+                               class="w-full border rounded px-3 py-2" required>
+                    </div>
+
+                    {{-- Existing events on this date --}}
+                    <div class="mb-4 p-4 bg-gray-50 border rounded">
+                        <p class="font-semibold text-gray-700 mb-2">Events already booked on this date</p>
+                        <ul id="existing-events" class="text-sm text-gray-600 space-y-1">
+                            <li>Select a date to see booked time slots.</li>
+                        </ul>
                     </div>
 
                     {{-- Start time --}}
                     <div class="mb-4">
-                        <label class="block mb-1">Start Time</label>
+                        <label class="block mb-1">Start Time *</label>
                         <input type="time" name="start_time" value="{{ old('start_time') }}"
-                               class="w-full border rounded px-3 py-2">
+                               class="w-full border rounded px-3 py-2" required>
                     </div>
 
                     {{-- End date --}}
@@ -63,9 +71,9 @@
 
                     {{-- End time --}}
                     <div class="mb-4">
-                        <label class="block mb-1">End Time</label>
+                        <label class="block mb-1">End Time *</label>
                         <input type="time" name="end_time" value="{{ old('end_time') }}"
-                               class="w-full border rounded px-3 py-2">
+                               class="w-full border rounded px-3 py-2" required>
                     </div>
 
                     {{-- Location --}}
@@ -107,6 +115,47 @@
                     </div>
 
                 </form>
+
+                {{-- Script to show existing events by date --}}
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const dateInput = document.getElementById('start_date');
+                        const list = document.getElementById('existing-events');
+
+                        function formatTime(t) {
+                            if (!t) return '';
+                            return String(t).slice(0, 5);
+                        }
+
+                        async function loadEvents(date) {
+                            if (!date) {
+                                list.innerHTML = '<li>Select a date to see booked time slots.</li>';
+                                return;
+                            }
+
+                            const res = await fetch(`{{ route('admin.events.byDate') }}?date=${date}`);
+                            const data = await res.json();
+
+                            if (!data.length) {
+                                list.innerHTML = '<li>No other events on this date.</li>';
+                                return;
+                            }
+
+                            list.innerHTML = data.map(e => {
+                                const start = formatTime(e.start_time) || '00:00';
+                                const end = formatTime(e.end_time) || '23:59';
+                                return `<li>• ${e.title} (${start} - ${end})</li>`;
+                            }).join('');
+                        }
+
+                        if (dateInput && dateInput.value) {
+                            loadEvents(dateInput.value);
+                        }
+
+                        dateInput?.addEventListener('change', e => loadEvents(e.target.value));
+                    });
+                </script>
+
             </div>
         </div>
     </div>
