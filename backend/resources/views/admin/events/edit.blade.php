@@ -53,18 +53,34 @@
                                required>
                     </div>
 
-                    {{-- Existing events on this date --}}
+                    {{-- Existing events on selected date --}}
                     <div class="mb-4 p-4 bg-gray-50 border rounded">
-                        <p class="font-semibold text-gray-700 mb-2">Events already booked on this date</p>
+                        <p class="font-semibold text-gray-700 mb-2">
+                            Events already booked on this date
+                        </p>
                         <ul id="existing-events" class="text-sm text-gray-600 space-y-1">
                             <li>Loading...</li>
                         </ul>
                     </div>
 
+                    {{-- All day event checkbox --}}
+                    <div class="mb-4">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox"
+                                   name="all_day"
+                                   id="all_day"
+                                   class="mr-2"
+                                   {{ old('all_day', ($event->start_time === '00:00' && $event->end_time === '23:59')) ? 'checked' : '' }}>
+                            All Day Event
+                        </label>
+                    </div>
+
                     {{-- Start time --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Start Time *</label>
-                        <input type="time" name="start_time"
+                        <input type="time"
+                               id="start_time"
+                               name="start_time"
                                value="{{ old('start_time', $event->start_time) }}"
                                class="w-full border rounded px-3 py-2" required>
                     </div>
@@ -80,7 +96,9 @@
                     {{-- End time --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">End Time *</label>
-                        <input type="time" name="end_time"
+                        <input type="time"
+                               id="end_time"
+                               name="end_time"
                                value="{{ old('end_time', $event->end_time) }}"
                                class="w-full border rounded px-3 py-2" required>
                     </div>
@@ -132,11 +150,17 @@
 
                 </form>
 
-                {{-- Script to show existing events by date --}}
+                {{-- Script for showing booked events + handling all day --}}
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
+
                         const dateInput = document.getElementById('start_date');
                         const list = document.getElementById('existing-events');
+
+                        const allDayCheckbox = document.getElementById('all_day');
+                        const startTimeInput = document.getElementById('start_time');
+                        const endTimeInput = document.getElementById('end_time');
+
                         const currentEventId = {{ $event->id }};
 
                         function formatTime(t) {
@@ -153,7 +177,7 @@
                             const res = await fetch(`{{ route('admin.events.byDate') }}?date=${date}`);
                             const data = await res.json();
 
-                            // Remove current event from the list (so it doesn't confuse admin)
+                            // Remove current event from list
                             const filtered = data.filter(e => e.id !== currentEventId);
 
                             if (!filtered.length) {
@@ -168,11 +192,26 @@
                             }).join('');
                         }
 
+                        function toggleAllDay() {
+                            if (allDayCheckbox.checked) {
+                                startTimeInput.value = '00:00';
+                                endTimeInput.value = '23:59';
+                                startTimeInput.disabled = true;
+                                endTimeInput.disabled = true;
+                            } else {
+                                startTimeInput.disabled = false;
+                                endTimeInput.disabled = false;
+                            }
+                        }
+
                         if (dateInput && dateInput.value) {
                             loadEvents(dateInput.value);
                         }
 
                         dateInput?.addEventListener('change', e => loadEvents(e.target.value));
+                        allDayCheckbox?.addEventListener('change', toggleAllDay);
+
+                        toggleAllDay();
                     });
                 </script>
 
