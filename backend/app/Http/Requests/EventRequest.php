@@ -30,18 +30,17 @@ class EventRequest extends FormRequest
             'start_date' => [
                 'required',
                 'date',
-                new NoEventOverlap($eventId, $this->location),
+                new NoEventOverlap($eventId),
             ],
 
-            // Start time is optional (HH:MM)
-            'start_time' => ['nullable', 'date_format:H:i'],
+            // Start time is required (so clashes are accurate)
+            'start_time' => ['required', 'date_format:H:i'],
 
-            // End date is optional
-            // If provided, it must be same day or after start date
+            // End date is optional (defaults to start date in the rule)
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
 
-            // End time is optional (HH:MM)
-            'end_time' => ['nullable', 'date_format:H:i'],
+            // End time is required (prevents "open ended" overlaps)
+            'end_time' => ['required', 'date_format:H:i'],
 
             // Location is optional
             'location' => ['nullable', 'string', 'max:255'],
@@ -59,6 +58,10 @@ class EventRequest extends FormRequest
         return [
             // Friendly message for invalid end date
             'end_date.after_or_equal' => 'End date must be the same or after the start date.',
+
+            // Friendly message for time fields
+            'start_time.required' => 'Start time is required.',
+            'end_time.required' => 'End time is required.',
         ];
     }
 }
