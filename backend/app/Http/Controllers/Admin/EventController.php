@@ -39,6 +39,12 @@ class EventController extends Controller
         // Validate input coming from the create form (security + correctness)
         $validated = $request->validated();
 
+        // If event is marked as all day, set full-day time range
+    if ($request->has('all_day')) {
+       $validated['start_time'] = '00:00';
+       $validated['end_time'] = '23:59';
+        }
+
           // Capitalise selected fields
     $validated['title'] = ucfirst(strtolower($validated['title']));
 
@@ -87,6 +93,12 @@ class EventController extends Controller
     {
         // Validate input coming from the edit form
         $validated = $request->validated();
+
+        // If event is marked as all day, set full-day time range
+    if ($request->has('all_day')) {
+       $validated['start_time'] = '00:00';
+       $validated['end_time'] = '23:59';
+    }
 
         // Capitalise fields
     $validated['title'] = ucfirst(strtolower($validated['title']));
