@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
 
-
 Route::get('/', function () {
     return view('welcome');
 });
@@ -21,18 +20,17 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::resource('events', EventController::class);
-});
 
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+    // Events CRUD routes
+    Route::resource('events', EventController::class);
+
+    // Extra route to get existing events by date (for clash checking UI)
+    Route::get('events/by-date', [EventController::class, 'eventsByDate'])
+        ->name('events.byDate');
+
     // Mass Times CRUD routes
     Route::resource('mass-times', MassTimeController::class)
         ->except(['show']); // we don't need a "show" page for admin
 });
 
 require __DIR__.'/auth.php';
-
-
-
-
-
