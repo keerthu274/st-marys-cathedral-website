@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;          // Base controller class
 use App\Models\Event;                         // Our Event model (database table)
-use Illuminate\Http\Request;                  // Used for handling form requests
+use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -32,20 +34,16 @@ class EventController extends Controller
     /**
      * Store a newly created event in the database (POST /admin/events).
      */
-    public function store(Request $request)
+    public function store(EventRequest $request)
     {
         // Validate input coming from the create form (security + correctness)
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',     // title must exist
-            'description' => 'nullable|string',             // description optional
-            'start_date'  => 'required|date',               // required date
-            'start_time'  => 'nullable|date_format:H:i',    // optional time (HH:MM)
-            'end_date'    => 'nullable|date|after_or_equal:start_date',               // optional end date
-            'end_time'    => 'nullable|date_format:H:i',    // optional end time
-            'location'    => 'nullable|string|max:255',     // optional location
-            'status'      => 'required|in:draft,published', // must be draft or published
-            'category'    => 'nullable|string|max:255',     // optional category
-        ]);
+        $validated = $request->validated();
+
+        // If event is marked as all day, set full-day time range
+    if ($request->has('all_day')) {
+       $validated['start_time'] = '00:00';
+       $validated['end_time'] = '23:59';
+        }
 
           // Capitalise selected fields
     $validated['title'] = ucfirst(strtolower($validated['title']));
@@ -91,20 +89,16 @@ class EventController extends Controller
     /**
      * Update an existing event (PUT/PATCH /admin/events/{event}).
      */
-    public function update(Request $request, Event $event)
+    public function update(EventRequest $request, Event $event)
     {
         // Validate input coming from the edit form
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date'  => 'required|date',
-            'start_time'  => 'required|date_format:H:i',
-            'end_date'    => 'nullable|date|after_or_equal:start_date',
-            'end_time'    => 'nullable|date_format:H:i',
-            'location'    => 'nullable|string|max:255',
-            'status'      => 'required|in:draft,published',
-            'category'    => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
+
+        // If event is marked as all day, set full-day time range
+    if ($request->has('all_day')) {
+       $validated['start_time'] = '00:00';
+       $validated['end_time'] = '23:59';
+    }
 
         // Capitalise fields
     $validated['title'] = ucfirst(strtolower($validated['title']));
@@ -126,6 +120,25 @@ class EventController extends Controller
             ->with('success', 'Event updated successfully.');
     }
 
+    public function eventsByDate(Request $request)
+
+    {
+    // Get date from query string
+    $date = $request->query('date');
+
+    if (!$date) {
+        return response()->json([]);
+    }
+
+    // Get events that are happening on that date (including multi-day events)
+    $events = Event::whereDate('start_date', '<=', $date)
+        ->whereDate(\DB::raw('IFNULL(end_date, start_date)'), '>=', $date)
+        ->orderBy('start_time')
+        ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
+
+    return response()->json($events);
+    }
+
     /**
      * Delete an event (DELETE /admin/events/{event}).
      */
@@ -140,14 +153,3 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-
-
-
-
-
-
-
-
-
-
-
