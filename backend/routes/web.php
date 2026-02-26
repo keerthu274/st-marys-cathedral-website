@@ -21,16 +21,16 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
+    // Route to get events by selected date (used in create/edit preview box)
+    Route::get('events/by-date', [EventController::class, 'byDate'])
+        ->name('events.byDate');
+
     // Events CRUD routes
     Route::resource('events', EventController::class);
 
-    // Extra route to get existing events by date (for clash checking UI)
-    Route::get('events/by-date', [EventController::class, 'eventsByDate'])
-        ->name('events.byDate');
-
     // Mass Times CRUD routes
     Route::resource('mass-times', MassTimeController::class)
-        ->except(['show']); // we don't need a "show" page for admin
+        ->except(['show']);
 });
 
 require __DIR__.'/auth.php';
