@@ -169,7 +169,7 @@
                                 return;
                             }
 
-                            const res = await fetch(`{{ route('admin.events.byDate') }}?date=${date}`);
+                            const res = await fetch(`{{ route('admin.events.by-date') }}?date=${date}`);
                             const data = await res.json();
 
                             if (!data.length) {

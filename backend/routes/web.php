@@ -23,7 +23,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Route to get events by selected date (used in create/edit preview box)
     Route::get('events/by-date', [EventController::class, 'byDate'])
-        ->name('events.byDate');
+    ->name('events.by-date');
 
     // Events CRUD routes
     Route::resource('events', EventController::class);
