@@ -81,16 +81,6 @@
     </select>
 </div>
 
-{{-- Sort Order --}}
-<div class="mb-6">
-    <label class="block mb-1 font-semibold">Display Order</label>
-    <input type="number"
-           name="sort_order"
-           value="{{ old('sort_order', $massTime->sort_order ?? 0) }}"
-           class="w-full border p-2 rounded"
-           min="0">
-</div>
-
 {{-- Form actions --}}
 <div class="flex gap-3">
     <button type="submit"

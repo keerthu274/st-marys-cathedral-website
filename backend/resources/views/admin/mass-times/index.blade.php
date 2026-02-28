@@ -1,10 +1,10 @@
 {{-- resources/views/admin/mass-times/index.blade.php --}}
 {{-- Mass Times admin index --}}
-{{-- Uses Breeze x-app-layout (same as Events) --}}
+{{-- Uses Breeze x-app-layout --}}
 
 <x-app-layout>
 
-    {{-- Page header (title only – Breeze safe) --}}
+    {{-- Page header --}}
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Mass Times') }}
@@ -12,16 +12,14 @@
     </x-slot>
 
     <div class="py-8">
-        {{-- Full width container --}}
         <div class="w-full px-6 lg:px-12">
 
-            {{-- Top action bar --}}
+            {{-- Top section with button --}}
             <div class="flex items-center justify-between mb-6">
                 <p class="text-gray-600">
                     Manage weekly and special Mass times here.
                 </p>
 
-                {{-- Create Mass Time button --}}
                 <a href="{{ route('admin.mass-times.create') }}"
                    class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">
                     + Create Mass Time
@@ -35,16 +33,15 @@
                 </div>
             @endif
 
-            {{-- Full width card --}}
+            {{-- Main card --}}
             <div class="bg-white shadow-sm rounded-lg w-full">
                 <div class="p-6">
 
-                    {{-- Table wrapper --}}
                     <div class="overflow-x-auto">
 
                         <table class="w-full table-fixed border-collapse">
 
-                            {{-- Table header --}}
+                            {{-- Table headings --}}
                             <thead>
                                 <tr class="border-b text-gray-600 uppercase text-sm">
 
@@ -68,48 +65,38 @@
                                         Status
                                     </th>
 
-                                    <th class="w-1/12 text-left py-3 px-4 font-semibold">
-                                        Order
-                                    </th>
-
-                                    <th class="w-1/12 text-left py-3 px-4 font-semibold">
+                                    <th class="w-2/12 text-left py-3 px-4 font-semibold">
                                         Actions
                                     </th>
 
                                 </tr>
                             </thead>
 
-                            {{-- Table body --}}
+                            {{-- Table data --}}
                             <tbody>
                                 @forelse ($massTimes as $massTime)
                                     <tr class="border-b hover:bg-gray-50">
 
-                                        {{-- Day --}}
                                         <td class="py-4 px-4 text-gray-900">
                                             {{ $massTime->day }}
                                         </td>
 
-                                        {{-- Time --}}
                                         <td class="py-4 px-4 text-gray-700">
                                             {{ \Carbon\Carbon::parse($massTime->time)->format('H:i') }}
                                         </td>
 
-                                        {{-- Location --}}
                                         <td class="py-4 px-4 text-gray-700">
                                             {{ $massTime->location ?? '-' }}
                                         </td>
 
-                                        {{-- Language --}}
                                         <td class="py-4 px-4 text-gray-700">
                                             {{ $massTime->language ?? '-' }}
                                         </td>
 
-                                        {{-- Status --}}
                                         <td class="py-4 px-4 text-gray-700">
                                             {{ ucfirst($massTime->status) }}
                                         </td>
 
-                                        {{-- Actions --}}
                                         <td class="py-4 px-4">
                                             <a href="{{ route('admin.mass-times.edit', $massTime) }}"
                                                class="text-blue-600 hover:underline mr-3">
@@ -133,7 +120,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7"
+                                        <td colspan="6"
                                             class="py-10 px-4 text-center text-gray-500">
                                             No Mass times added yet.
                                         </td>

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;          // Base controller class
 use App\Models\Event;                         // Our Event model (database table)
 use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -40,22 +39,20 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // If event is marked as all day, set full-day time range
-    if ($request->has('all_day')) {
-       $validated['start_time'] = '00:00';
-       $validated['end_time'] = '23:59';
+        if ($request->has('all_day')) {
+            $validated['start_time'] = '00:00';
+            $validated['end_time'] = '23:59';
         }
 
-          // Capitalise selected fields
-    $validated['title'] = ucfirst(strtolower($validated['title']));
+        // Capitalise selected fields
+        $validated['title'] = ucfirst(strtolower($validated['title']));
 
-    if (!empty($validated['location']))
-        {
-        $validated['location'] = ucfirst(strtolower($validated['location']));
+        if (!empty($validated['location'])) {
+            $validated['location'] = ucfirst(strtolower($validated['location']));
         }
 
-    if (!empty($validated['category']))
-        {
-        $validated['category'] = ucfirst(strtolower($validated['category']));
+        if (!empty($validated['category'])) {
+            $validated['category'] = ucfirst(strtolower($validated['category']));
         }
 
         // Create the event in the database using validated data
@@ -95,21 +92,21 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // If event is marked as all day, set full-day time range
-    if ($request->has('all_day')) {
-       $validated['start_time'] = '00:00';
-       $validated['end_time'] = '23:59';
-    }
+        if ($request->has('all_day')) {
+            $validated['start_time'] = '00:00';
+            $validated['end_time'] = '23:59';
+        }
 
         // Capitalise fields
-    $validated['title'] = ucfirst(strtolower($validated['title']));
+        $validated['title'] = ucfirst(strtolower($validated['title']));
 
-    if (!empty($validated['location'])) {
-        $validated['location'] = ucfirst(strtolower($validated['location']));
-    }
+        if (!empty($validated['location'])) {
+            $validated['location'] = ucfirst(strtolower($validated['location']));
+        }
 
-    if (!empty($validated['category'])) {
-        $validated['category'] = ucfirst(strtolower($validated['category']));
-    }
+        if (!empty($validated['category'])) {
+            $validated['category'] = ucfirst(strtolower($validated['category']));
+        }
 
         // Update the event using validated data
         $event->update($validated);
@@ -120,23 +117,25 @@ class EventController extends Controller
             ->with('success', 'Event updated successfully.');
     }
 
-    public function eventsByDate(Request $request)
-
+    /**
+     * Return events for a selected date (used in create/edit preview box).
+     */
+    public function byDate(Request $request)
     {
-    // Get date from query string
-    $date = $request->query('date');
+        // Get date from query string
+        $date = $request->query('date');
 
-    if (!$date) {
-        return response()->json([]);
-    }
+        if (!$date) {
+            return response()->json([]);
+        }
 
-    // Get events that are happening on that date (including multi-day events)
-    $events = Event::whereDate('start_date', '<=', $date)
-        ->whereDate(\DB::raw('IFNULL(end_date, start_date)'), '>=', $date)
-        ->orderBy('start_time')
-        ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
+        // Get events that are happening on that date (including multi-day events)
+        $events = Event::whereDate('start_date', '<=', $date)
+            ->whereRaw("IFNULL(end_date, start_date) >= ?", [$date])
+            ->orderByRaw("IFNULL(start_time, '00:00') ASC")
+            ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
 
-    return response()->json($events);
+        return response()->json($events);
     }
 
     /**
