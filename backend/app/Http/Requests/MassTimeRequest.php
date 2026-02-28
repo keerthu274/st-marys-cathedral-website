@@ -3,7 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use App\Rules\NoMassTimeOverlap;
+use Carbon\Carbon;
 
 class MassTimeRequest extends FormRequest
 {
@@ -19,24 +20,50 @@ class MassTimeRequest extends FormRequest
         $massTimeId = $this->route('mass_time')?->id;
 
         return [
-            // Day must be a short string (example: "Sunday")
+
+            // Day must be provided (example: "Sunday")
             'day' => ['required', 'string', 'max:20'],
 
-            // Time must be in HH:MM format
-            // Also block duplicate day + time slots (no clashes)
-            'time' => [
+            // Start time must be valid HH:MM format
+            'start_time' => [
                 'required',
                 'date_format:H:i',
-                Rule::unique('mass_times')
-                    ->where(fn ($q) => $q->where('day', $this->day))
-                    ->ignore($massTimeId),
+
+                // Custom rule to prevent time clashes (same day + same location)
+                new NoMassTimeOverlap(
+                    day: $this->day,
+                    location: $this->location,
+                    startTime: $this->start_time,
+                    endTime: $this->end_time,
+                    ignoreId: $massTimeId
+                ),
+            ],
+
+            // End time must exist and must be after start time
+            'end_time' => [
+                'required',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) {
+
+                    if (!$this->start_time || !$value) {
+                        return;
+                    }
+
+                    $start = Carbon::createFromFormat('H:i', $this->start_time);
+                    $end   = Carbon::createFromFormat('H:i', $value);
+
+                    // End time must be later than start time
+                    if ($end->lessThanOrEqualTo($start)) {
+                        $fail('End Time must be after Start Time.');
+                    }
+                }
             ],
 
             'location' => ['nullable', 'string', 'max:100'],
             'language' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string', 'max:1000'],
 
-            // Status must be one of these two
+            // Status must be draft or published
             'status' => ['required', 'in:draft,published'],
         ];
     }
@@ -44,8 +71,8 @@ class MassTimeRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // Friendly message for duplicate time slot
-            'time.unique' => 'This time slot is already booked for the selected day.',
+            'start_time.required' => 'Please select a Start Time.',
+            'end_time.required' => 'Please select an End Time.',
         ];
     }
 }
