@@ -82,7 +82,10 @@
                                         </td>
 
                                         <td class="py-4 px-4 text-gray-700">
-                                            {{ \Carbon\Carbon::parse($massTime->time)->format('H:i') }}
+                                            {{-- Display time range as HH:MM - HH:MM --}}
+                                            {{ \Carbon\Carbon::parse($massTime->start_time)->format('H:i') }}
+                                            -
+                                            {{ $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '—' }}
                                         </td>
 
                                         <td class="py-4 px-4 text-gray-700">
@@ -144,3 +147,10 @@
     </div>
 
 </x-app-layout>
+
+
+
+
+
+
+

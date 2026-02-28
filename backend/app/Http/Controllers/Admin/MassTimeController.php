@@ -9,25 +9,24 @@ use App\Models\MassTime;
 class MassTimeController extends Controller
 {
     public function index()
-   {
-    // Auto-order Mass Times by day (Sunday → Saturday) and then by time
-    $massTimes = MassTime::orderByRaw("
-        FIELD(day,
-            'Sunday',
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday'
-        )
-    ")
-    ->orderBy('time')
-    ->paginate(10);
+    {
+        // Auto-order Mass Times by day (Sunday → Saturday) and then by start_time
+        $massTimes = MassTime::orderByRaw("
+            FIELD(day,
+                'Sunday',
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday'
+            )
+        ")
+        ->orderBy('start_time') // Correct column name
+        ->paginate(10);
 
-    return view('admin.mass-times.index', compact('massTimes'));
+        return view('admin.mass-times.index', compact('massTimes'));
     }
-
 
     public function create()
     {

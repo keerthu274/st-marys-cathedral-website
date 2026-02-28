@@ -27,14 +27,30 @@
     @enderror
 </div>
 
-{{-- Time --}}
+{{-- Start time --}}
 <div class="mb-4">
-    <label class="block mb-1 font-semibold">Time</label>
+    <label class="block mb-1 font-semibold">Start Time</label>
+
     <input type="time"
-           name="time"
-           value="{{ old('time', isset($massTime) ? \Carbon\Carbon::parse($massTime->time)->format('H:i') : '') }}"
+           name="start_time"
+           value="{{ old('start_time', isset($massTime) ? \Carbon\Carbon::parse($massTime->start_time)->format('H:i') : '') }}"
            class="w-full border p-2 rounded">
-    @error('time')
+
+    @error('start_time')
+        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
+{{-- End time --}}
+<div class="mb-4">
+    <label class="block mb-1 font-semibold">End Time</label>
+
+    <input type="time"
+           name="end_time"
+           value="{{ old('end_time', isset($massTime) && $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '') }}"
+           class="w-full border p-2 rounded">
+
+    @error('end_time')
         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
     @enderror
 </div>
