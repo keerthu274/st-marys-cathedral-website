@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MassTimeRequest;
 use App\Models\MassTime;
+use Illuminate\Http\Request;
 
 class MassTimeController extends Controller
 {
@@ -68,5 +69,21 @@ class MassTimeController extends Controller
         return redirect()
             ->route('admin.mass-times.index')
             ->with('success', 'Mass time deleted successfully.');
+    }
+
+    public function byDay(Request $request)
+    {
+    // Get filters from query string
+    $day = $request->query('day');
+    $location = $request->query('location');
+
+    // Fetch mass times for that day (+ location if provided)
+    $massTimes = MassTime::query()
+        ->when($day, fn($q) => $q->where('day', $day))
+        ->when($location, fn($q) => $q->where('location', $location))
+        ->orderBy('start_time')
+        ->get(['id', 'day', 'location', 'start_time', 'end_time', 'language']);
+
+    return response()->json($massTimes);
     }
 }

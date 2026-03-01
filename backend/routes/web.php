@@ -31,6 +31,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Mass Times CRUD routes
     Route::resource('mass-times', MassTimeController::class)
         ->except(['show']);
+
+    Route::get('admin/mass-times/by-day', [\App\Http\Controllers\Admin\MassTimeController::class, 'byDay'])
+    ->name('admin.mass-times.by-day');
 });
 
 require __DIR__.'/auth.php';
