@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class MassTime extends Model
 {
-    // Allow mass assignment for these fields (safe + convenient for CRUD forms)
+    // Allow mass assignment for these fields 
     protected $fillable = [
         'day',
-        'time',
+        'start_time',
+        'end_time',
         'location',
         'language',
         'notes',
