@@ -18,37 +18,37 @@ class NoMassTimeOverlap implements ValidationRule
         private readonly ?int $ignoreId = null
     ) {}
 
-    public function validate(string $attribute, mixed $value, Closure $fail): void
+    public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
-        // If times not present, skip (other validation will catch it)
-        if (!$this->startTime || !$this->endTime) return;
+        // If start or end time missing, skip (other validation handles it)
+        if (!$this->startTime || !$this->endTime) {
+            return;
+        }
 
-        $start = Carbon::createFromFormat('H:i', $this->startTime)->format('H:i:s');
-        $end   = Carbon::createFromFormat('H:i', $this->endTime)->format('H:i:s');
+        $start = \Carbon\Carbon::createFromFormat('H:i', $this->startTime)
+            ->format('H:i:s');
 
-        $service = app(ClashDetectionService::class);
+        $end = \Carbon\Carbon::createFromFormat('H:i', $this->endTime)
+            ->format('H:i:s');
 
-        // Same day + same location must not overlap
-        $hasOverlap = $service->hasOverlap(
-            modelClass: MassTime::class,
-            startColumn: 'start_time',
-            endColumn: 'end_time',
+        $service = app(\App\Services\ClashDetectionService::class);
+
+        // Global conflict check (checks Events + Mass tables)
+        $hasOverlap = $service->hasGlobalOverlap(
+            location: $this->location,
             start: $start,
             end: $end,
             ignoreId: $this->ignoreId,
-            filters: [
-                'day' => $this->day,
-                'location' => $this->location,
-            ]
+            ignoreModel: 'mass'
         );
 
         if ($hasOverlap) {
 
-             $locationText = $this->location
-             ? " at {$this->location}"
-             : '';
-
-         $fail("This Mass Time overlaps with an existing Mass for {$this->day}{$locationText}.");
+            $locationText = $this->location
+                ? " at {$this->location}"
+                : '';
+    
+            $fail("This Mass Time conflicts with another scheduled activity{$locationText}.");
         }
     }
 }
