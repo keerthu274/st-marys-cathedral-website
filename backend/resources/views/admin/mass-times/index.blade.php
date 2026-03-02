@@ -50,7 +50,11 @@
                                     </th>
 
                                     <th class="w-2/12 text-left py-3 px-4 font-semibold">
-                                        Time
+                                        Start Time  
+                                    </th>
+
+                                    <th class="w-2/12 text-left py-3 px-4 font-semibold">
+                                        End Time
                                     </th>
 
                                     <th class="w-3/12 text-left py-3 px-4 font-semibold">
@@ -82,10 +86,11 @@
                                         </td>
 
                                         <td class="py-4 px-4 text-gray-700">
-                                            {{-- Display time range as HH:MM - HH:MM --}}
-                                            {{ \Carbon\Carbon::parse($massTime->start_time)->format('H:i') }}
-                                            -
-                                            {{ $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '—' }}
+                                             {{ \Carbon\Carbon::parse($massTime->start_time)->format('H:i') }}
+                                        </td>
+
+                                        <td class="py-4 px-4 text-gray-700">
+                                             {{ $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '—' }}
                                         </td>
 
                                         <td class="py-4 px-4 text-gray-700">
@@ -123,7 +128,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6"
+                                        <td colspan="7"
                                             class="py-10 px-4 text-center text-gray-500">
                                             No Mass times added yet.
                                         </td>
@@ -147,7 +152,6 @@
     </div>
 
 </x-app-layout>
-
 
 
 

@@ -43,7 +43,12 @@ class NoMassTimeOverlap implements ValidationRule
         );
 
         if ($hasOverlap) {
-            $fail("This Mass Time overlaps with an existing Mass for {$this->day} at {$this->location}.");
+
+             $locationText = $this->location
+             ? " at {$this->location}"
+             : '';
+
+         $fail("This Mass Time overlaps with an existing Mass for {$this->day}{$locationText}.");
         }
     }
 }

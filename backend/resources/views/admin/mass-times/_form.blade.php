@@ -27,7 +27,7 @@
     @enderror
 </div>
 
-{{-- Start time --}}
+{{-- Start Time --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Start Time</label>
 
@@ -41,7 +41,7 @@
     @enderror
 </div>
 
-{{-- End time --}}
+{{-- End Time --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">End Time</label>
 
