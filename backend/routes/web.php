@@ -32,8 +32,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::resource('mass-times', MassTimeController::class)
         ->except(['show']);
 
-    Route::get('admin/mass-times/by-day', [\App\Http\Controllers\Admin\MassTimeController::class, 'byDay'])
-    ->name('admin.mass-times.by-day');
+    // Mass Times preview endpoint (used in create/edit preview box)
+    Route::get('mass-times/by-day', [MassTimeController::class, 'byDay'])
+        ->name('mass-times.by-day');
 });
 
 require __DIR__.'/auth.php';
