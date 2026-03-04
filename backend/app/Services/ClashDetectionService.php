@@ -47,12 +47,13 @@ class ClashDetectionService
 
     /**
      * Check clashes across multiple scheduling models
-     * Used for global conflict prevention (Event vs Mass..)
+     * Used for global conflict prevention (Event vs Mass etc.)
      */
     public function hasGlobalOverlap(
-        ?string $location,     // location can be null
+        ?string $location,       // location can be null
         string $start,
         string $end,
+        ?string $weekday = null, // weekday is needed only when checking Mass vs Event
         ?int $ignoreId = null,
         ?string $ignoreModel = null
     ): bool {
@@ -64,7 +65,7 @@ class ClashDetectionService
         }
 
         // --------------------------------------------------
-        // Check against Events table
+        // Check against Events table (date-based events)
         // --------------------------------------------------
         $eventQuery = \App\Models\Event::query()
             ->where('location', $location)
@@ -81,12 +82,18 @@ class ClashDetectionService
         }
 
         // --------------------------------------------------
-        // Check against Mass Times table
+        // Check against Mass Times table (weekly recurring)
         // --------------------------------------------------
+
         $massQuery = \App\Models\MassTime::query()
             ->where('location', $location)
             ->where('start_time', '<', $end)
             ->where('end_time', '>', $start);
+
+        // Only compare weekday if provided (for Event vs Mass)
+        if ($weekday) {
+            $massQuery->where('day', $weekday);
+        }
 
         // If editing a mass time, ignore itself
         if ($ignoreModel === 'mass' && $ignoreId) {
