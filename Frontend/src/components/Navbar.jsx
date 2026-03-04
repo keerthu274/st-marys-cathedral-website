@@ -49,10 +49,10 @@ const navItems = [
     },
     {
         label: 'Links',
-        path: '#',
+        path: '/links',
         children: [
             { label: 'Diocese of Wrexham', path: '#' },
-            { label: 'Useful Links', path: '#' },
+            { label: 'Useful Links', path: '/links' },
         ],
     },
 ]

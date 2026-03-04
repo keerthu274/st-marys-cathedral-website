@@ -10,6 +10,8 @@ import NewsEventsPage from './pages/NewsEventsPage'
 import ContactPage from './pages/ContactPage'
 import DonatePage from './pages/DonatePage'
 import OurParishPage from './pages/OurParishPage'
+import UsefulLinksPage from './pages/UsefulLinksPage'
+import RegistrationPage from './pages/RegistrationPage'
 
 function App() {
   return (
@@ -24,8 +26,10 @@ function App() {
           <Route path="/mass-sacraments" element={<MassTimesPage />} />
           <Route path="/news-events" element={<NewsEventsPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/registration" element={<RegistrationPage />} />
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
+          <Route path="/links" element={<UsefulLinksPage />} />
         </Routes>
       </main>
       <Footer />

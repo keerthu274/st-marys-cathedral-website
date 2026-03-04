@@ -1,6 +1,7 @@
 .navbar {
-    background: var(--white);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    background: #fdfaf4;
+    /* Soft warm ivory cream */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -60,7 +61,7 @@
     padding: 8px 12px;
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-dark);
+    color: var(--navy);
     border-radius: var(--radius);
     transition: color var(--transition), background var(--transition);
     white-space: nowrap;
@@ -69,7 +70,8 @@
 .nav-link:hover,
 .nav-link.active {
     color: var(--navy);
-    background: var(--light-gray);
+    background: rgba(201, 168, 76, 0.15);
+    /* Soft gold background highlight */
 }
 
 .dropdown-arrow {
@@ -82,10 +84,12 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    background: var(--white);
+    background: #fdfaf4;
+    /* Matching dropdown to navbar */
     border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    /* Faint gold border */
     min-width: 200px;
     list-style: none;
     padding: 6px 0;
@@ -109,12 +113,13 @@
     display: block;
     padding: 9px 16px;
     font-size: 0.85rem;
-    color: var(--text-dark);
+    color: var(--navy);
     transition: background var(--transition), color var(--transition);
 }
 
 .dropdown-link:hover {
-    background: var(--light-gray);
+    background: rgba(201, 168, 76, 0.1);
+    /* Subtle gold hover */
     color: var(--navy);
 }
 
@@ -123,6 +128,11 @@
     flex-shrink: 0;
     font-size: 0.85rem;
     padding: 9px 20px;
+    box-shadow: 0 4px 12px rgba(201, 168, 76, 0.25);
+}
+
+.navbar-donate:hover {
+    box-shadow: 0 6px 16px rgba(201, 168, 76, 0.4);
 }
 
 /* Hamburger */
@@ -146,9 +156,10 @@
 
 /* Mobile menu */
 .mobile-menu {
-    background: var(--white);
-    border-top: 1px solid var(--border);
+    background: #fdfaf4;
+    border-top: 1px solid rgba(201, 168, 76, 0.15);
     padding: 8px 0 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .mobile-link {
@@ -157,17 +168,30 @@
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--navy);
+    transition: color var(--transition), background var(--transition);
+}
+
+.mobile-link:hover {
+    background: rgba(201, 168, 76, 0.05);
+    /* Very subtle gold on hover */
 }
 
 .mobile-sub {
-    background: var(--light-gray);
+    background: rgba(30, 58, 95, 0.03);
+    /* Faint navy tint for submenu */
 }
 
 .mobile-sub-link {
     display: block;
-    padding: 8px 32px;
+    padding: 10px 32px;
     font-size: 0.85rem;
-    color: var(--text-mid);
+    color: var(--text-dark);
+    transition: color var(--transition), background var(--transition);
+}
+
+.mobile-sub-link:hover {
+    background: rgba(201, 168, 76, 0.05);
+    color: var(--navy);
 }
 
 @media (max-width: 1024px) {

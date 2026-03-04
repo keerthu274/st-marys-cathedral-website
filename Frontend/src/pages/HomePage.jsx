@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom'
 import './HomePage.css'
 
 const heroImages = [
-    'https://images.unsplash.com/photo-1548625149-720754951eca?w=600&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80',
-    'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=600&q=80',
-    'https://images.unsplash.com/photo-1438032005730-c779502df39b?w=600&q=80',
+    '/image 01.jpg',
+    '/image 02.jpg',
+    '/image 03.jpg',
+    '/image 04.jpg',
 ]
 
 const galleryImages = [
@@ -88,11 +88,14 @@ export default function HomePage() {
                     </div>
                     <div className="hero-image-wrap">
                         <div className="hero-circle">
-                            <img
-                                src={heroImages[heroIdx]}
-                                alt="St Mary's Cathedral"
-                                className="hero-img"
-                            />
+                            {heroImages.map((src, i) => (
+                                <img
+                                    key={i}
+                                    src={src}
+                                    alt="St Mary's Cathedral"
+                                    className={`hero-img ${i === heroIdx ? 'active' : ''}`}
+                                />
+                            ))}
                         </div>
                         <div className="hero-dots">
                             {heroImages.map((_, i) => (
@@ -111,10 +114,17 @@ export default function HomePage() {
             {/* ── ABOUT SNIPPET ── */}
             <section className="section about-snippet">
                 <div className="container about-inner">
-                    <div className="about-gallery">
-                        {galleryImages.map((src, i) => (
-                            <img key={i} src={src} alt="" className="gallery-img" />
-                        ))}
+                    <div className="about-video-wrapper">
+                        <video
+                            className="about-video"
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                        >
+                            <source src="/video.mp4" type="video/mp4" />
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                     <div className="about-text">
                         <p className="section-label">ABOUT US</p>

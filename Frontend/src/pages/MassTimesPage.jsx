@@ -29,6 +29,7 @@ export default function MassTimesPage() {
             <PageHero
                 title="Mass & Sacraments"
                 subtitle="Information about Mass times and sacramental life at St Mary's Cathedral"
+                centered={true}
             />
 
             <div className="container">

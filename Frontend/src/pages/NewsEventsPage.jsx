@@ -22,6 +22,7 @@ export default function NewsEventsPage() {
                 icon="📅"
                 title="News & Events"
                 subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what's happening at St Mary's Cathedral."
+                centered={true}
             />
             <div className="ne-hero-centered" />
 
