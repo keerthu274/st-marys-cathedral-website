@@ -4,7 +4,7 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\Event;
+use App\Services\ClashDetectionService;
 
 class NoEventOverlap implements ValidationRule
 {
@@ -13,35 +13,39 @@ class NoEventOverlap implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        // Get date + time from request
+        // Get values from request
         $startDate = request('start_date');
         $endDate   = request('end_date') ?: $startDate;
 
-        // If time is missing, use full-day safe defaults
+        // If time missing, use full-day defaults
         $startTime = request('start_time') ?: '00:00';
         $endTime   = request('end_time') ?: '23:59';
 
-        // Create full date-time strings
+        // Build full datetime strings
         $newStart = $startDate . ' ' . $startTime . ':00';
         $newEnd   = $endDate . ' ' . $endTime . ':00';
 
-        // Make sure end is after start (extra safety)
+        // Extra safety: ensure end is after start
         if (strtotime($newEnd) <= strtotime($newStart)) {
             $fail('End time must be after start time.');
             return;
         }
 
-        // Find any event that overlaps this time range
-        $query = Event::query()
-            ->when($this->ignoreId, fn($q) => $q->where('id', '!=', $this->ignoreId))
-            ->whereRaw("
-                STR_TO_DATE(CONCAT(start_date,' ',IFNULL(start_time,'00:00')), '%Y-%m-%d %H:%i') < ?
-                AND
-                STR_TO_DATE(CONCAT(IFNULL(end_date,start_date),' ',IFNULL(end_time,'23:59')), '%Y-%m-%d %H:%i') > ?
-            ", [$newEnd, $newStart]);
+        $location = request('location');
 
-        if ($query->exists()) {
-            $fail('This time slot is already booked for another event.');
+        // Use global scheduling engine
+        $service = app(ClashDetectionService::class);
+
+        $hasOverlap = $service->hasGlobalOverlap(
+            location: $location,
+            start: $newStart,
+            end: $newEnd,
+            ignoreId: $this->ignoreId,
+            ignoreModel: 'event'
+        );
+
+        if ($hasOverlap) {
+            $fail('This Event conflicts with another scheduled activity at the selected location.');
         }
     }
 }
