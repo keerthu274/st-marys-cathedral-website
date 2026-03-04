@@ -27,17 +27,98 @@
     @enderror
 </div>
 
-{{-- Time --}}
+{{-- Start Time --}}
 <div class="mb-4">
-    <label class="block mb-1 font-semibold">Time</label>
+    <label class="block mb-1 font-semibold">Start Time</label>
+
     <input type="time"
-           name="time"
-           value="{{ old('time', isset($massTime) ? \Carbon\Carbon::parse($massTime->time)->format('H:i') : '') }}"
+           name="start_time"
+           value="{{ old('start_time', isset($massTime) ? \Carbon\Carbon::parse($massTime->start_time)->format('H:i') : '') }}"
            class="w-full border p-2 rounded">
-    @error('time')
+
+    @error('start_time')
         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
     @enderror
 </div>
+
+{{-- End Time --}}
+<div class="mb-4">
+    <label class="block mb-1 font-semibold">End Time</label>
+
+    <input type="time"
+           name="end_time"
+           value="{{ old('end_time', isset($massTime) && $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '') }}"
+           class="w-full border p-2 rounded">
+
+    @error('end_time')
+        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
+{{-- Preview box (shows existing Mass times for selected day/location) --}}
+<div id="mass-preview"
+     class="mb-4 p-4 rounded border bg-gray-50 text-gray-700 hidden">
+    <div class="font-semibold mb-2">Existing Mass Times</div>
+    <ul id="mass-preview-list" class="list-disc pl-5 space-y-1"></ul>
+</div>
+
+<script>
+    // Simple preview: when day or location changes, load existing mass times
+    document.addEventListener('DOMContentLoaded', () => {
+        const dayEl = document.querySelector('select[name="day"]');
+        const locEl = document.querySelector('input[name="location"]');
+        const box = document.getElementById('mass-preview');
+        const list = document.getElementById('mass-preview-list');
+
+        async function loadPreview() {
+            const day = dayEl?.value;
+            const location = locEl?.value;
+
+            // Only show preview when day is selected
+            if (!day) {
+                box.classList.add('hidden');
+                list.innerHTML = '';
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set('day', day);
+            if (location) params.set('location', location);
+
+            const res = await fetch(`/admin/mass-times/by-day?${params.toString()}`);
+            const data = await res.json();
+
+            list.innerHTML = '';
+
+            if (!data.length) {
+                box.classList.remove('hidden');
+                list.innerHTML = '<li>No existing Mass Times for this selection.</li>';
+                return;
+            }
+
+            data.forEach(item => {
+                const name = item.language ? `${item.language} Mass` : 'Mass';
+                const start = (item.start_time || '').slice(0,5);
+                const end = (item.end_time || '').slice(0,5);
+
+                const li = document.createElement('li');
+                li.textContent = `${name} (${start} - ${end})`;
+                list.appendChild(li);
+            });
+
+            box.classList.remove('hidden');
+        }
+
+        dayEl?.addEventListener('change', loadPreview);
+        locEl?.addEventListener('input', () => {
+            // Small delay would be nicer, but keep it simple
+            loadPreview();
+        });
+
+        // Load once on edit page
+        loadPreview();
+    });
+</script>
 
 {{-- Location --}}
 <div class="mb-4">
@@ -79,16 +160,6 @@
             Published
         </option>
     </select>
-</div>
-
-{{-- Sort Order --}}
-<div class="mb-6">
-    <label class="block mb-1 font-semibold">Display Order</label>
-    <input type="number"
-           name="sort_order"
-           value="{{ old('sort_order', $massTime->sort_order ?? 0) }}"
-           class="w-full border p-2 rounded"
-           min="0">
 </div>
 
 {{-- Form actions --}}

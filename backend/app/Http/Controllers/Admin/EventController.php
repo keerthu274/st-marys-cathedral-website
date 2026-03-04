@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;          // Base controller class
 use App\Models\Event;                         // Our Event model (database table)
-use Illuminate\Http\Request;                  // Used for handling form requests
+use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
+use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
@@ -32,32 +33,26 @@ class EventController extends Controller
     /**
      * Store a newly created event in the database (POST /admin/events).
      */
-    public function store(Request $request)
+    public function store(EventRequest $request)
     {
         // Validate input coming from the create form (security + correctness)
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',     // title must exist
-            'description' => 'nullable|string',             // description optional
-            'start_date'  => 'required|date',               // required date
-            'start_time'  => 'nullable|date_format:H:i',    // optional time (HH:MM)
-            'end_date'    => 'nullable|date|after_or_equal:start_date',               // optional end date
-            'end_time'    => 'nullable|date_format:H:i',    // optional end time
-            'location'    => 'nullable|string|max:255',     // optional location
-            'status'      => 'required|in:draft,published', // must be draft or published
-            'category'    => 'nullable|string|max:255',     // optional category
-        ]);
+        $validated = $request->validated();
 
-          // Capitalise selected fields
-    $validated['title'] = ucfirst(strtolower($validated['title']));
-
-    if (!empty($validated['location']))
-        {
-        $validated['location'] = ucfirst(strtolower($validated['location']));
+        // If event is marked as all day, set full-day time range
+        if ($request->has('all_day')) {
+            $validated['start_time'] = '00:00';
+            $validated['end_time'] = '23:59';
         }
 
-    if (!empty($validated['category']))
-        {
-        $validated['category'] = ucfirst(strtolower($validated['category']));
+        // Capitalise selected fields
+        $validated['title'] = ucfirst(strtolower($validated['title']));
+
+        if (!empty($validated['location'])) {
+            $validated['location'] = ucfirst(strtolower($validated['location']));
+        }
+
+        if (!empty($validated['category'])) {
+            $validated['category'] = ucfirst(strtolower($validated['category']));
         }
 
         // Create the event in the database using validated data
@@ -91,31 +86,27 @@ class EventController extends Controller
     /**
      * Update an existing event (PUT/PATCH /admin/events/{event}).
      */
-    public function update(Request $request, Event $event)
+    public function update(EventRequest $request, Event $event)
     {
         // Validate input coming from the edit form
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date'  => 'required|date',
-            'start_time'  => 'required|date_format:H:i',
-            'end_date'    => 'nullable|date|after_or_equal:start_date',
-            'end_time'    => 'nullable|date_format:H:i',
-            'location'    => 'nullable|string|max:255',
-            'status'      => 'required|in:draft,published',
-            'category'    => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
+
+        // If event is marked as all day, set full-day time range
+        if ($request->has('all_day')) {
+            $validated['start_time'] = '00:00';
+            $validated['end_time'] = '23:59';
+        }
 
         // Capitalise fields
-    $validated['title'] = ucfirst(strtolower($validated['title']));
+        $validated['title'] = ucfirst(strtolower($validated['title']));
 
-    if (!empty($validated['location'])) {
-        $validated['location'] = ucfirst(strtolower($validated['location']));
-    }
+        if (!empty($validated['location'])) {
+            $validated['location'] = ucfirst(strtolower($validated['location']));
+        }
 
-    if (!empty($validated['category'])) {
-        $validated['category'] = ucfirst(strtolower($validated['category']));
-    }
+        if (!empty($validated['category'])) {
+            $validated['category'] = ucfirst(strtolower($validated['category']));
+        }
 
         // Update the event using validated data
         $event->update($validated);
@@ -124,6 +115,27 @@ class EventController extends Controller
         return redirect()
             ->route('admin.events.index')
             ->with('success', 'Event updated successfully.');
+    }
+
+    /**
+     * Return events for a selected date (used in create/edit preview box).
+     */
+    public function byDate(Request $request)
+    {
+        // Get date from query string
+        $date = $request->query('date');
+
+        if (!$date) {
+            return response()->json([]);
+        }
+
+        // Get events that are happening on that date (including multi-day events)
+        $events = Event::whereDate('start_date', '<=', $date)
+            ->whereRaw("IFNULL(end_date, start_date) >= ?", [$date])
+            ->orderByRaw("IFNULL(start_time, '00:00') ASC")
+            ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
+
+        return response()->json($events);
     }
 
     /**
@@ -140,14 +152,3 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-
-
-
-
-
-
-
-
-
-
-
