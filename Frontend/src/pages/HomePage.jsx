@@ -2,11 +2,39 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './HomePage.css'
 
-const heroImages = [
-    '/image 01.jpg',
-    '/image 02.jpg',
-    '/image 03.jpg',
-    '/image 04.jpg',
+const heroSlides = [
+    {
+        image: '/image 01.jpg',
+        label: 'WELCOME TO ST MARY\'S',
+        title: 'Loving God, Loving Others',
+        desc: 'A historic place of worship, community, and faith in the Diocese of Wrexham. Join our welcoming family as we grow together.',
+        btnText: 'View Mass Times',
+        link: '/mass-times'
+    },
+    {
+        image: '/image 02.jpg',
+        label: 'WORSHIP WITH US',
+        title: 'Centred in Prayer & Praise',
+        desc: 'Join us for our daily and weekend services. Experience the peace and beauty of our sacred space.',
+        btnText: 'Full Mass Schedule',
+        link: '/mass-times'
+    },
+    {
+        image: '/image 03.jpg',
+        label: 'PARISH COMMUNITY',
+        title: 'A Vibrant & Growing Family',
+        desc: 'Discover our upcoming events, social groups, and ways to get involved in the life of the Cathedral.',
+        btnText: 'Explore Events',
+        link: '#upcoming-events'
+    },
+    {
+        image: '/image 04.jpg',
+        label: 'JOIN OUR PARISH',
+        title: 'Become Part of St Mary\'s',
+        desc: 'We are always happy to welcome new parishioners. Register today and stay connected with our community.',
+        btnText: 'Register Now',
+        link: '/registration'
+    },
 ]
 
 const galleryImages = [
@@ -64,48 +92,89 @@ export default function HomePage() {
     const [heroIdx, setHeroIdx] = useState(0)
 
     useEffect(() => {
-        const t = setInterval(() => setHeroIdx(i => (i + 1) % heroImages.length), 4000)
+        const t = setInterval(() => setHeroIdx(i => (i + 1) % heroSlides.length), 5000)
         return () => clearInterval(t)
     }, [])
 
     return (
         <div className="home">
             {/* ── HERO ── */}
-            <section className="hero">
-                <div className="container hero-inner">
-                    <div className="hero-text">
-                        <p className="hero-label">WELCOME TO ST MARY'S CATHEDRAL</p>
-                        <h1 className="hero-title">
-                            Loving God, Loving Others, Serving World &amp; Believe in the God Grace
-                        </h1>
-                        <p className="hero-desc">
-                            A place of worship, community, and faith in the Diocese of Wrexham. Join our welcoming family as we grow together in faith and service.
-                        </p>
-                        <div className="hero-btns">
-                            <Link to="/mass-times" className="btn-primary">View Mass Times</Link>
-                            <Link to="/about" className="btn-outline">Learn More</Link>
+            <section className="hero full-width-hero">
+                {/* Background Slider */}
+                <div className="hero-bg-slider">
+                    {heroSlides.map((s, i) => (
+                        <div
+                            key={i}
+                            className={`hero-bg-slide ${i === heroIdx ? 'active' : ''}`}
+                            style={{ backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${s.image}')` }}
+                        />
+                    ))}
+                </div>
+
+                <div className="container hero-content-centered">
+                    {heroSlides.map((s, i) => (
+                        <div key={i} className={`hero-text-layer ${i === heroIdx ? 'active' : ''}`}>
+                            <p className="hero-label-stately">{s.label} • EST. 1857</p>
+                            <h1 className="hero-title-grand">
+                                {s.title}
+                            </h1>
+                            <p className="hero-desc">
+                                {s.desc}
+                            </p>
+                            <div className="hero-btns">
+                                <Link to={s.link} className="btn-primary-grand">{s.btnText}</Link>
+                            </div>
+                        </div>
+                    ))}
+
+                    <div className="hero-dots">
+                        {heroSlides.map((_, i) => (
+                            <button
+                                key={i}
+                                className={`hero-dot-stately ${i === heroIdx ? 'active' : ''}`}
+                                onClick={() => setHeroIdx(i)}
+                                aria-label={`Slide ${i + 1}`}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Architectural Accent Shape */}
+                <div className="hero-accent-shape"></div>
+            </section>
+
+            {/* ── INFO BAR ── */}
+            <section className="info-bar">
+                <div className="container info-bar-grid">
+                    <div className="info-bar-item">
+                        <span className="info-bar-icon">🏛️</span>
+                        <div className="info-bar-text">
+                            <h3>Est. 1857</h3>
+                            <p>A Rich History</p>
                         </div>
                     </div>
-                    <div className="hero-image-wrap">
-                        <div className="hero-circle">
-                            {heroImages.map((src, i) => (
-                                <img
-                                    key={i}
-                                    src={src}
-                                    alt="St Mary's Cathedral"
-                                    className={`hero-img ${i === heroIdx ? 'active' : ''}`}
-                                />
-                            ))}
+                    <div className="info-bar-divider"></div>
+                    <div className="info-bar-item">
+                        <span className="info-bar-icon">🕊️</span>
+                        <div className="info-bar-text">
+                            <h3>Parish Family</h3>
+                            <p>Growing Together</p>
                         </div>
-                        <div className="hero-dots">
-                            {heroImages.map((_, i) => (
-                                <button
-                                    key={i}
-                                    className={`hero-dot ${i === heroIdx ? 'active' : ''}`}
-                                    onClick={() => setHeroIdx(i)}
-                                    aria-label={`Slide ${i + 1}`}
-                                />
-                            ))}
+                    </div>
+                    <div className="info-bar-divider"></div>
+                    <div className="info-bar-item">
+                        <span className="info-bar-icon">🤝</span>
+                        <div className="info-bar-text">
+                            <h3>100% Welcome</h3>
+                            <p>Open To Everyone</p>
+                        </div>
+                    </div>
+                    <div className="info-bar-divider"></div>
+                    <div className="info-bar-item">
+                        <span className="info-bar-icon">📍</span>
+                        <div className="info-bar-text">
+                            <h3>Wrexham</h3>
+                            <p>Diocese Seat</p>
                         </div>
                     </div>
                 </div>
@@ -152,20 +221,6 @@ export default function HomePage() {
                             </div>
                         ))}
                     </div>
-                    <div className="quick-links-row">
-                        {quickLinks.map(q => (
-                            <Link key={q.label} to={q.path} className="quick-link-card">
-                                <div className="quick-link-icon">{q.icon}</div>
-                                <span className="quick-link-label">{q.label}</span>
-                                <p className="quick-link-desc">
-                                    {q.label === 'Mass Times' && 'View our schedule of all services and worship times.'}
-                                    {q.label === 'Events' && 'Upcoming events and parish activities.'}
-                                    {q.label === 'News & Newsletter' && 'Latest announcements and weekly bulletin.'}
-                                    {q.label === 'Donate' && 'Support our cathedral and ministries.'}
-                                </p>
-                            </Link>
-                        ))}
-                    </div>
                 </div>
             </section>
 
@@ -185,15 +240,16 @@ export default function HomePage() {
                             </div>
                         </div>
                         <div className="mass-card">
-                            <div className="mass-icon">🕐</div>
-                            <div className="mass-day">Weekdays</div>
-                            <div className="mass-sub">Monday – Saturday</div>
-                            <div className="mass-times-list"><span className="mass-highlight">10:00 AM</span></div>
+                            <div className="mass-icon">📍</div>
+                            <div className="mass-day">Wrexham</div>
+                            <div className="mass-sub">St Mary's Cathedral</div>
+                            <div className="mass-times-list"><Link to="/mass-times" className="mass-highlight" style={{ textDecoration: 'underline', cursor: 'pointer' }}>See Schedule</Link></div>
                         </div>
                         <div className="mass-card">
-                            <div className="mass-icon">🕐</div>
-                            <div className="mass-day">Holy Days</div>
-                            <div className="mass-sub">Times announced in weekly newsletter</div>
+                            <div className="mass-icon">📍</div>
+                            <div className="mass-day">Coedpoeth</div>
+                            <div className="mass-sub">St David's Church</div>
+                            <div className="mass-times-list"><Link to="/mass-times" className="mass-highlight" style={{ textDecoration: 'underline', cursor: 'pointer' }}>See Schedule</Link></div>
                         </div>
                     </div>
                     <div style={{ textAlign: 'center', marginTop: '32px' }}>
@@ -203,7 +259,7 @@ export default function HomePage() {
             </section>
 
             {/* ── UPCOMING EVENTS ── */}
-            <section className="section" style={{ background: 'var(--off-white)' }}>
+            <section id="upcoming-events" className="section" style={{ background: 'var(--off-white)' }}>
                 <div className="container">
                     <h2 className="section-title">Upcoming Events</h2>
                     <p className="section-subtitle">Join us for these special occasions</p>
@@ -268,44 +324,29 @@ export default function HomePage() {
             </section>
 
             {/* ── VISIT US ── */}
-            <section className="section">
+            <section className="visit-us-section">
                 <div className="container">
-                    <h2 className="section-title">Visit Us</h2>
-                    <div className="visit-grid">
-                        <div className="visit-info">
-                            <div className="visit-item">
-                                <div className="visit-icon">📍</div>
-                                <div>
-                                    <h4>Address</h4>
-                                    <p>St Mary's Cathedral<br />Regent Street<br />Wrexham<br />LL11 1RR</p>
-                                </div>
-                            </div>
-                            <div className="visit-item">
-                                <div className="visit-icon">🕐</div>
-                                <div>
-                                    <h4>Office Hours</h4>
-                                    <p>Monday – Friday: 9:00 AM – 4:00 PM<br />Saturday: 9:00 AM – 12:00 PM<br />Sunday: Closed</p>
-                                </div>
-                            </div>
-                            <div className="visit-item">
-                                <div className="visit-icon">📞</div>
-                                <div>
-                                    <h4>Contact</h4>
-                                    <p>Phone: 01978 262 826<br />Email: info@stmaryscathedral.org.uk</p>
-                                </div>
-                            </div>
-                            <div className="visit-btns">
-                                <Link to="/contact" className="btn-primary">Contact Us</Link>
-                                <Link to="/registration" className="btn-outline">Parish Registration</Link>
-                            </div>
+                    <p className="section-label" style={{ textAlign: 'center' }}>FIND US</p>
+                    <h2 className="section-title">Visit St Mary's Cathedral</h2>
+                    <div className="visit-cards-row">
+                        <div className="visit-card">
+                            <div className="visit-card-icon">📍</div>
+                            <h4>Address</h4>
+                            <p>St Mary's Cathedral<br />Regent Street<br />Wrexham, LL11 1RR</p>
                         </div>
-                        <div className="visit-map">
-                            <div className="map-placeholder">
-                                <span>📍</span>
-                                <p>Interactive Map</p>
-                                <small>St Mary's Cathedral, Regent Street, Wrexham</small>
-                            </div>
+                        <div className="visit-card">
+                            <div className="visit-card-icon">🕐</div>
+                            <h4>Office Hours</h4>
+                            <p>Mon – Fri: 9:00 AM – 4:00 PM<br />Saturday: 9:00 AM – 12:00 PM<br />Sunday: Closed</p>
                         </div>
+                        <div className="visit-card">
+                            <div className="visit-card-icon">📞</div>
+                            <h4>Contact</h4>
+                            <p>01978 262 826<br />info@stmaryscathedral.org.uk</p>
+                        </div>
+                    </div>
+                    <div style={{ textAlign: 'center', marginTop: '28px' }}>
+                        <Link to="/contact" className="btn-primary">Get in Touch</Link>
                     </div>
                 </div>
             </section>
