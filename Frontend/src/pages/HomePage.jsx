@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './HomePage.css'
 
+// Import icons
+import churchIcon from '../assets/icons/church_sketch.png'
+import bibleIcon from '../assets/icons/bible_sketch.png'
+import doveIcon from '../assets/icons/dove_sketch.png'
+
 const heroSlides = [
     {
         image: '/image 01.jpg',
@@ -46,19 +51,19 @@ const galleryImages = [
 
 const services = [
     {
-        icon: '🙏',
-        title: 'Prayer & Worship',
-        desc: 'Our cathedral is open and friendly with warm worship and wonderful community. We are an ever-growing parish family at St Mary\'s.',
+        icon: churchIcon,
+        title: 'Church Ministry',
+        desc: 'Massa eget egestas purus viverra accumsan malesuada in nisl nisi scelerisque.',
     },
     {
-        icon: '💬',
-        title: 'Counseling',
-        desc: 'We exist to empower lives to be community fully and so we can help open new doors and live life to its fullest potential.',
+        icon: bibleIcon,
+        title: 'Reading a Prayer',
+        desc: 'Venenatis urna cursus eget nunc scelerisque sapien viverra mauris in aliquam.',
     },
     {
-        icon: '📖',
-        title: 'Exhortation',
-        desc: 'We exist to help you live life freely, guided by faith and so we help you discover the fullness of life through growth.',
+        icon: doveIcon,
+        title: 'Praise & Worship',
+        desc: 'Faucibus interdum posuere lorem ipsum dolor commodo sit amet consectetur.',
     },
 ]
 
@@ -207,17 +212,18 @@ export default function HomePage() {
             </section>
 
             {/* ── SERVICES ── */}
-            <section className="section" style={{ background: 'var(--off-white)' }}>
+            <section className="section-sm" style={{ background: 'var(--white)' }}>
                 <div className="container">
                     <p className="section-label">OUR SERVICES</p>
                     <h2 className="section-title">Keeping our church running smoothly</h2>
-                    <div className="grid-3" style={{ marginBottom: '48px' }}>
+                    <div className="grid-3 services-redesign" style={{ marginBottom: '24px' }}>
                         {services.map(s => (
-                            <div key={s.title} className="card service-card">
-                                <div className="service-icon">{s.icon}</div>
+                            <div key={s.title} className="card service-card redesigned">
+                                <div className="service-icon-img-wrapper">
+                                    <img src={s.icon} alt={s.title} className="service-icon-img" />
+                                </div>
                                 <h3 className="service-title">{s.title}</h3>
                                 <p className="service-desc">{s.desc}</p>
-                                <span className="read-more">+ READ MORE</span>
                             </div>
                         ))}
                     </div>

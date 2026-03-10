@@ -12,6 +12,7 @@
     align-items: center;
     gap: 32px;
     height: 68px;
+    margin: 0 auto;
 }
 
 /* Logo */
@@ -194,6 +195,17 @@
     color: var(--navy);
 }
 
+@media (max-width: 1200px) {
+    .navbar-inner {
+        gap: 16px;
+    }
+
+    .nav-link {
+        padding: 8px 8px;
+        font-size: 0.8rem;
+    }
+}
+
 @media (max-width: 1024px) {
     .navbar-links {
         display: none;
@@ -205,5 +217,11 @@
 
     .hamburger {
         display: flex;
+    }
+}
+
+@media (min-width: 1025px) {
+    .mobile-menu {
+        display: none !important;
     }
 }
