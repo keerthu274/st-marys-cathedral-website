@@ -5,6 +5,8 @@ namespace App\Rules;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use App\Models\Event;
+use App\Services\ClashDetectionService;
+use Carbon\Carbon;
 
 class NoEventOverlap implements ValidationRule
 {
@@ -17,31 +19,49 @@ class NoEventOverlap implements ValidationRule
         $startDate = request('start_date');
         $endDate   = request('end_date') ?: $startDate;
 
-        // If time is missing, use full-day safe defaults
+        // If time is missing, use safe defaults (for all-day events)
         $startTime = request('start_time') ?: '00:00';
         $endTime   = request('end_time') ?: '23:59';
 
-        // Create full date-time strings
-        $newStart = $startDate . ' ' . $startTime . ':00';
-        $newEnd   = $endDate . ' ' . $endTime . ':00';
+        // Convert event date to weekday (Sunday, Monday etc.)
+        $weekday = Carbon::parse($startDate)->format('l');
 
-        // Make sure end is after start (extra safety)
+        // Create full datetime strings
+        $newStart = $startTime . ':00';
+        $newEnd   = $endTime . ':00';
+
+        // Extra safety: make sure end > start
         if (strtotime($newEnd) <= strtotime($newStart)) {
             $fail('End time must be after start time.');
             return;
         }
 
-        // Find any event that overlaps this time range
-        $query = Event::query()
+        // First: Check Event vs Event overlap (same date)
+        $eventQuery = Event::query()
             ->when($this->ignoreId, fn($q) => $q->where('id', '!=', $this->ignoreId))
-            ->whereRaw("
-                STR_TO_DATE(CONCAT(start_date,' ',IFNULL(start_time,'00:00')), '%Y-%m-%d %H:%i') < ?
-                AND
-                STR_TO_DATE(CONCAT(IFNULL(end_date,start_date),' ',IFNULL(end_time,'23:59')), '%Y-%m-%d %H:%i') > ?
-            ", [$newEnd, $newStart]);
+            ->where('start_date', $startDate)
+            ->where('start_time', '<', $newEnd)
+            ->where('end_time', '>', $newStart);
 
-        if ($query->exists()) {
+        if ($eventQuery->exists()) {
             $fail('This time slot is already booked for another event.');
+            return;
+        }
+
+        // Second: Global clash check (Event vs Mass)
+        $service = app(ClashDetectionService::class);
+
+        $hasGlobalOverlap = $service->hasGlobalOverlap(
+            location: request('location'),
+            start: $newStart,
+            end: $newEnd,
+            weekday: $weekday,
+            ignoreId: $this->ignoreId,
+            ignoreModel: 'event'
+        );
+
+        if ($hasGlobalOverlap) {
+            $fail('This event conflicts with an existing Mass time at the same location.');
         }
     }
 }
