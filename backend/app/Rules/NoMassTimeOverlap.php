@@ -2,7 +2,6 @@
 
 namespace App\Rules;
 
-use App\Models\MassTime;
 use App\Services\ClashDetectionService;
 use Carbon\Carbon;
 use Closure;
@@ -18,22 +17,23 @@ class NoMassTimeOverlap implements ValidationRule
         private readonly ?int $ignoreId = null
     ) {}
 
-    public function validate(string $attribute, mixed $value, \Closure $fail): void
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        // If start or end time missing, skip (other validation handles it)
+        // If start or end missing, skip (other rules handle it)
         if (!$this->startTime || !$this->endTime) {
             return;
         }
 
-        $start = \Carbon\Carbon::createFromFormat('H:i', $this->startTime)
+        // Format times to H:i:s for DB comparison
+        $start = Carbon::createFromFormat('H:i', $this->startTime)
             ->format('H:i:s');
 
-        $end = \Carbon\Carbon::createFromFormat('H:i', $this->endTime)
+        $end = Carbon::createFromFormat('H:i', $this->endTime)
             ->format('H:i:s');
 
-        $service = app(\App\Services\ClashDetectionService::class);
+        $service = app(ClashDetectionService::class);
 
-        // Global conflict check (checks Events + Mass tables)
+        // Global conflict check (Events + Mass Times)
         $hasOverlap = $service->hasGlobalOverlap(
             location: $this->location,
             start: $start,
@@ -47,7 +47,7 @@ class NoMassTimeOverlap implements ValidationRule
             $locationText = $this->location
                 ? " at {$this->location}"
                 : '';
-    
+
             $fail("This Mass Time conflicts with another scheduled activity{$locationText}.");
         }
     }

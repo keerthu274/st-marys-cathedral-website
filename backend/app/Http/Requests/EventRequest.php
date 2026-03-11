@@ -4,12 +4,13 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\NoEventOverlap;
+use Illuminate\Support\Facades\Auth;
 
 class EventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check();
+        return Auth::check();
     }
 
     public function rules(): array
