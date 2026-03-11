@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // API Controllers
 use App\Http\Controllers\Api\V1\EventApiController;
 use App\Http\Controllers\Api\V1\MassTimeApiController;
+use App\Http\Controllers\Api\V1\ContactApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,10 @@ Route::prefix('v1')->group(function () {
     // GET /api/v1/events/{id}
     // Returns a single event
     Route::get('events/{id}', [EventApiController::class, 'show']);
+
+    // POST /api/v1/contact
+    // Store contact form message
+    Route::post('contact', [ContactApiController::class, 'store']);
 
 
     /*
