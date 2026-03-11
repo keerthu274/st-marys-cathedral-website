@@ -34,7 +34,16 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
+@media (max-width: 900px) {
+    .topbar-right {
+        gap: 8px;
+    }
+}
+
 @media (max-width: 768px) {
+    .topbar-inner {
+        justify-content: center;
+    }
     .topbar-right {
         display: none;
     }

@@ -49,10 +49,10 @@ const navItems = [
     },
     {
         label: 'Links',
-        path: '#',
+        path: '/links',
         children: [
             { label: 'Diocese of Wrexham', path: '#' },
-            { label: 'Useful Links', path: '#' },
+            { label: 'Useful Links', path: '/links' },
         ],
     },
 ]
@@ -67,94 +67,102 @@ export default function Navbar() {
             <div className="container navbar-inner">
                 {/* Logo */}
                 <Link to="/" className="navbar-logo">
-                    <div className="logo-icon">
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                            <rect width="28" height="28" rx="4" fill="#c9a84c" />
-                            <path d="M14 4 L14 24 M8 10 L20 10" stroke="#1e3a5f" strokeWidth="2.5" strokeLinecap="round" />
-                        </svg>
-                    </div>
+                    <span style={{ fontSize: '1.8rem' }}>⛪</span>
                     <div className="logo-text">
-                        <span className="logo-name">St Mary's Cathedral</span>
+                        <span className="logo-name">ST MARY'S CATHEDRAL</span>
                         <span className="logo-sub">WREXHAM</span>
                     </div>
                 </Link>
 
-                {/* Desktop Nav */}
                 <ul className="navbar-links">
-                    {navItems.map((item) => (
-                        <li
-                            key={item.label}
-                            className={`nav-item ${item.children ? 'has-dropdown' : ''}`}
-                            onMouseEnter={() => item.children && setOpenDropdown(item.label)}
-                            onMouseLeave={() => setOpenDropdown(null)}
-                        >
-                            <Link
-                                to={item.path}
-                                className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-                            >
-                                {item.label}
-                                {item.children && <span className="dropdown-arrow">▾</span>}
-                            </Link>
-                            {item.children && openDropdown === item.label && (
-                                <ul className="dropdown">
-                                    {item.children.map((child) => (
-                                        <li key={child.label}>
-                                            <Link to={child.path} className="dropdown-link">
-                                                {child.label}
-                                            </Link>
-                                        </li>
-                                    ))}
-                                </ul>
+                    {navItems.map(item => (
+                        <li key={item.label} className="nav-item">
+                            {item.children ? (
+                                <>
+                                    <button
+                                        className={`nav-link ${item.children.some(child => location.pathname === child.path) ? 'active' : ''}`}
+                                        onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
+                                    >
+                                        {item.label} <span className="dropdown-arrow">▼</span>
+                                    </button>
+                                    {openDropdown === item.label && (
+                                        <ul className="dropdown">
+                                            {item.children.map(child => (
+                                                <li key={child.label}>
+                                                    <Link
+                                                        to={child.path}
+                                                        className="dropdown-link"
+                                                        onClick={() => setOpenDropdown(null)}
+                                                    >
+                                                        {child.label}
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </>
+                            ) : (
+                                <Link
+                                    to={item.path}
+                                    className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                                >
+                                    {item.label}
+                                </Link>
                             )}
                         </li>
                     ))}
                 </ul>
 
-                {/* Donate Button */}
-                <Link to="/donate" className="btn-gold navbar-donate">
-                    <span>♡</span> Donate
-                </Link>
+                <Link to="/donate" className="btn-gold navbar-donate">Donate</Link>
 
-                {/* Mobile hamburger */}
                 <button
                     className="hamburger"
                     onClick={() => setMobileOpen(!mobileOpen)}
-                    aria-label="Toggle menu"
                 >
-                    <span></span><span></span><span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </button>
             </div>
 
-            {/* Mobile Menu */}
             {mobileOpen && (
                 <div className="mobile-menu">
-                    {navItems.map((item) => (
+                    {navItems.map(item => (
                         <div key={item.label}>
-                            <Link
-                                to={item.path}
-                                className="mobile-link"
-                                onClick={() => setMobileOpen(false)}
-                            >
-                                {item.label}
-                            </Link>
-                            {item.children && (
-                                <div className="mobile-sub">
-                                    {item.children.map((child) => (
-                                        <Link
-                                            key={child.label}
-                                            to={child.path}
-                                            className="mobile-sub-link"
-                                            onClick={() => setMobileOpen(false)}
-                                        >
-                                            {child.label}
-                                        </Link>
-                                    ))}
-                                </div>
+                            {item.children ? (
+                                <>
+                                    <span className="mobile-link">{item.label}</span>
+                                    <div className="mobile-sub">
+                                        {item.children.map(child => (
+                                            <Link
+                                                key={child.label}
+                                                to={child.path}
+                                                className="mobile-sub-link"
+                                                onClick={() => setMobileOpen(false)}
+                                            >
+                                                {child.label}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <Link
+                                    to={item.path}
+                                    className="mobile-link"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    {item.label}
+                                </Link>
                             )}
                         </div>
                     ))}
-                    <Link to="/donate" className="btn-gold" style={{ margin: '12px 16px' }} onClick={() => setMobileOpen(false)}>
-                        ♡ Donate
+                    <Link
+                        to="/donate"
+                        className="mobile-link"
+                        style={{ color: 'var(--gold)' }}
+                        onClick={() => setMobileOpen(false)}
+                    >
+                        Donate
                     </Link>
                 </div>
             )}

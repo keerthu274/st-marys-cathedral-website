@@ -1,0 +1,159 @@
+.links-page {
+    background: var(--off-white);
+    min-height: 100vh;
+}
+
+/* Feature Cards (Top) */
+.links-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+.links-feature-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.links-feature-icon {
+    font-size: 2.5rem;
+    color: var(--navy);
+    margin-bottom: 16px;
+}
+
+.links-feature-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--navy);
+    margin-bottom: 12px;
+}
+
+.links-feature-desc {
+    color: var(--text-mid);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.links-feature-btn {
+    color: var(--gold);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: auto;
+    transition: gap var(--transition);
+}
+
+.links-feature-btn:hover {
+    gap: 12px;
+}
+
+/* Category Cards */
+.links-category-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+    overflow: hidden;
+}
+
+.links-category-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    color: var(--navy);
+    padding: 32px 32px 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.links-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.links-item {
+    border-bottom: 1px solid var(--light-gray);
+    transition: background var(--transition);
+}
+
+.links-item:last-child {
+    border-bottom: none;
+}
+
+.links-item:hover {
+    background: var(--off-white);
+}
+
+.links-link {
+    display: flex;
+    align-items: flex-start;
+    padding: 24px 32px;
+    text-decoration: none;
+    gap: 16px;
+}
+
+.link-external-icon {
+    color: var(--gold);
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.link-content {
+    flex: 1;
+}
+
+.link-title {
+    font-weight: 600;
+    color: var(--navy);
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.link-desc {
+    color: var(--text-mid);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Suggestion Section */
+.suggestion-section {
+    text-align: center;
+    padding: 24px 0 64px;
+}
+
+.suggestion-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--navy);
+    margin-bottom: 16px;
+}
+
+.suggestion-desc {
+    color: var(--text-mid);
+    max-width: 600px;
+    margin: 0 auto 32px;
+}
+
+@media (max-width: 768px) {
+    .links-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .links-link {
+        padding: 20px;
+    }
+
+    .links-category-title {
+        padding: 24px 20px 20px;
+        font-size: 1.5rem;
+    }
+}

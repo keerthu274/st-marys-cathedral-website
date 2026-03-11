@@ -33,7 +33,11 @@ export default function ContactPage() {
 
     return (
         <div>
-            <PageHero title="Contact Us" subtitle="We'd love to hear from you" />
+            <PageHero
+                title="Contact Us"
+                subtitle="We'd love to hear from you"
+                centered={true}
+            />
 
             <section className="section">
                 <div className="container contact-grid">

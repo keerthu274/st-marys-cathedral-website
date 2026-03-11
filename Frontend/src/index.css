@@ -33,6 +33,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -41,6 +42,7 @@ body {
   background: var(--white);
   line-height: 1.6;
   font-size: 16px;
+  overflow-x: hidden;
 }
 
 a {
@@ -62,7 +64,8 @@ button {
 
 /* Utility classes */
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -77,7 +80,7 @@ button {
 
 .section-title {
   font-family: 'Playfair Display', serif;
-  font-size: 2rem;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
   font-weight: 700;
   color: var(--navy);
   text-align: center;
@@ -232,13 +235,32 @@ button {
   gap: 8px;
 }
 
+@media (max-width: 1440px) {
+  .container {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .container {
+    max-width: 1024px;
+  }
+}
+
 @media (max-width: 1024px) {
+  .container {
+    max-width: 768px;
+  }
+
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
 
   .grid-2,
   .grid-3,
@@ -252,5 +274,11 @@ button {
 
   .section-title {
     font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
   }
 }
