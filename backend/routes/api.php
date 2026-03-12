@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\EventApiController;
 use App\Http\Controllers\Api\V1\MassTimeApiController;
 use App\Http\Controllers\Api\V1\ContactApiController;
+use App\Http\Controllers\Api\V1\ParishRegistrationApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,4 +47,14 @@ Route::prefix('v1')->group(function () {
     // GET /api/v1/mass-times
     // Returns weekly mass schedule
     Route::get('mass-times', [MassTimeApiController::class, 'index']);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Parish Registration API
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('parish-registrations', [ParishRegistrationApiController::class, 'store']);
+    
 });
