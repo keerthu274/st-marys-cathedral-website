@@ -22,7 +22,11 @@ class ParishRegistrationApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        // Validate registration form
+        /**
+         * ----------------------------------------------------------
+         * Validate registration form
+         * ----------------------------------------------------------
+         */
 
         $validated = $request->validate([
             'registration_type' => 'required|string',
@@ -54,6 +58,34 @@ class ParishRegistrationApiController extends Controller
             'children' => 'array',
             'interests' => 'array'
         ]);
+
+        /**
+         * ----------------------------------------------------------
+         * Generate Member ID
+         * ----------------------------------------------------------
+         */
+
+        $lastMember = ParishRegistration::orderBy('id', 'desc')->first();
+
+        if ($lastMember && $lastMember->member_id) {
+
+            $lastNumber = intval(substr($lastMember->member_id, 3));
+            $newNumber = $lastNumber + 1;
+
+        } else {
+
+            $newNumber = 1;
+        }
+
+        $memberId = 'SMC' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
+
+        /**
+         * ----------------------------------------------------------
+         * Add member_id to validated data
+         * ----------------------------------------------------------
+         */
+
+        $validated['member_id'] = $memberId;
 
         /**
          * ----------------------------------------------------------
