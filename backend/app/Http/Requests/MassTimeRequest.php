@@ -5,13 +5,14 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\NoMassTimeOverlap;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class MassTimeRequest extends FormRequest
 {
     public function authorize(): bool
     {
         // Any logged-in admin user can manage mass times
-        return auth()->check();
+        return Auth::check();
     }
 
     public function rules(): array
