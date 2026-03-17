@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class ContactMessage extends Model
+{
+    /**
+     * --------------------------------------------------------------------------
+     * Table Name
+     * --------------------------------------------------------------------------
+     * Explicitly define the database table used by this model.
+     */
+
+    protected $table = 'contact_messages';
+
+    /**
+     * --------------------------------------------------------------------------
+     * Mass Assignable Fields
+     * --------------------------------------------------------------------------
+     * These fields are allowed when creating or updating records.
+     */
+
+    protected $fillable = [
+        'name',
+        'email',
+        'phone',
+        'subject',
+        'message'
+    ];
+}
