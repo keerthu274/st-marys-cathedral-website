@@ -27,6 +27,9 @@ import ConfirmationPage from './pages/ConfirmationPage'
 import MarriagePage from './pages/MarriagePage'
 import ReconciliationPage from './pages/ReconciliationPage'
 import DiocesePage from './pages/DiocesePage'
+import LoginPage from './pages/LoginPage'
+import SignupPage from './pages/SignupPage'
+import DashboardPage from './pages/DashboardPage'
 
 function App() {
   return (
@@ -46,6 +49,9 @@ function App() {
           <Route path="/reconciliation" element={<ReconciliationPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/registration" element={<RegistrationPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
           <Route path="/parish-council" element={<ParishCouncilPage />} />

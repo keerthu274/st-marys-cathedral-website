@@ -12,5 +12,15 @@ export default defineConfig({
     host: true,
     port: 5173,
     strictPort: true,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_BACKEND_ORIGIN || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/auth-api': {
+        target: process.env.VITE_BACKEND_ORIGIN || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
   },
 })
