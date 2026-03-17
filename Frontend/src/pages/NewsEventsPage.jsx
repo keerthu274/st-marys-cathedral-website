@@ -1,80 +1,74 @@
-import PageHero from '../components/PageHero'
-import './NewsEventsPage.css'
+import { Link } from 'react-router-dom'
+import { NewsHero, NewsIntro, FeatureCards, EventsList, SubscribeSection, NewsCTA } from '../components/news/NewsEventsSections'
 
-const categories = [
-    { icon: '📅', title: 'Events Calendar', desc: 'Stay up to date with upcoming events, services, and activities at the cathedral.', bg: '#f0f4ff' },
-    { icon: '📋', title: 'News & Announcements', desc: 'Read the latest news and important announcements from St Mary\'s Cathedral.', bg: '#f0f4ff' },
-    { icon: '📄', title: 'Weekly Newsletter', desc: 'Our weekly newsletter keeps you informed about parish life, Mass times, and upcoming events.', bg: '#f0fff4' },
-    { icon: '🗄', title: 'Newsletter Archive', desc: 'Access previous editions of our parish newsletter and browse past announcements.', bg: '#fffbf0' },
+const newsFeatures = [
+    {
+        icon: '📅',
+        title: 'Events Calendar',
+        description: 'Stay updated with upcoming services, events, and community activities at the Cathedral.',
+        link: '/events'
+    },
+    {
+        icon: '📰',
+        title: 'News & Announcements',
+        description: 'Read the latest updates, parish news, and important announcements from our community.',
+        link: '/news'
+    },
+    {
+        icon: '📧',
+        title: 'Weekly Newsletter',
+        description: 'Access the current week’s digital newsletter with Mass times and parish updates.',
+        link: '/newsletter'
+    },
+    {
+        icon: '🗄️',
+        title: 'Newsletter Archive',
+        description: 'Browse and download past editions of the parish newsletter from our digital archive.',
+        link: '/newsletter-archive'
+    }
 ]
 
-const events = [
-    { date: 'Feb 9', title: 'Lenten Prayer Service', time: '7:00 PM' },
-    { date: 'Feb 14', title: 'Ash Wednesday Services', time: '9:00 AM & 7:00 PM' },
-    { date: 'Mar 15-17', title: 'Parish Retreat', time: 'All Weekend' },
-    { date: 'Apr 5', title: 'Easter Vigil', time: '8:00 PM' },
+const upcomingEvents = [
+    { day: '19', month: 'MAR', time: '19:00', title: 'Lenten Prayer Service', description: 'Join us for an evening of reflection, music, and prayer during this Lenten season.' },
+    { day: '26', month: 'MAR', time: '10:00', title: 'Parish Community Day', description: 'A day of fellowship, activities, and a shared lunch for all members of our cathedral family.' },
+    { day: '02', month: 'APR', time: '18:30', title: 'Choir Performance', description: 'Expect a beautiful evening of sacred music performed by our Cathedral Adult and Youth Choirs.' },
+    { day: '12', month: 'APR', time: '11:00', title: 'Easter Vigil Preparation', description: 'Information session and rehearsal for those participating in the Easter Vigil liturgy.' }
 ]
 
 export default function NewsEventsPage() {
     return (
-        <div>
-            <PageHero
-                icon="📅"
+        <div className="news-events-page">
+            <NewsHero 
                 title="News & Events"
-                subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what's happening at St Mary's Cathedral."
-                centered={true}
+                subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what’s happening at St Mary’s Cathedral."
+                image="https://images.unsplash.com/photo-1515162305285-0293e4767cc2?q=80&w=1600"
             />
-            <div className="ne-hero-centered" />
+            
+            <NewsIntro 
+                title="Faith in Motion"
+                text="The Cathedral is a bustling center of spiritual and community life. Whether you're looking for liturgical schedules, social gatherings, or parish updates, you can find everything you need to stay engaged right here."
+            />
 
-            <section className="section">
+            <FeatureCards cards={newsFeatures} />
+
+            <section className="section" style={{ paddingBottom: 0 }}>
                 <div className="container">
-                    <div className="grid-2">
-                        {categories.map(c => (
-                            <div key={c.title} className="ne-cat-card">
-                                <div className="ne-cat-icon" style={{ background: c.bg }}>{c.icon}</div>
-                                <h3 className="ne-cat-title">{c.title}</h3>
-                                <p className="ne-cat-desc">{c.desc}</p>
-                                <span className="read-more">View More →</span>
-                            </div>
-                        ))}
-                    </div>
+                    <h2 className="section-title">Upcoming Events</h2>
                 </div>
             </section>
+            
+            <EventsList events={upcomingEvents} limit={4} />
 
-            {/* Upcoming Events */}
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
-                    <div className="card">
-                        <h2 className="ne-events-title">Upcoming Events</h2>
-                        <div className="ne-events-list">
-                            {events.map(e => (
-                                <div key={e.title} className="ne-event-row">
-                                    <span className="ne-event-date">{e.date}</span>
-                                    <div className="ne-event-info">
-                                        <span className="ne-event-name">{e.title}</span>
-                                        <span className="ne-event-time">{e.time}</span>
-                                    </div>
-                                    <span className="ne-event-details">Details</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                            <button className="btn-primary">View Full Calendar</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            <div style={{ textAlign: 'center', padding: '0 0 60px' }}>
+                <Link to="/events" className="btn-gold-outline">View Full Calendar</Link>
+            </div>
 
-            {/* Stay Informed */}
-            <section className="ne-stay-informed">
-                <div className="container" style={{ textAlign: 'center' }}>
-                    <h2 className="ne-stay-title">Stay Informed</h2>
-                    <p className="ne-stay-desc">
-                        Subscribe to our weekly newsletter to receive updates about Mass times, events, and parish news directly to your inbox.
-                    </p>
-                    <button className="btn-gold">Subscribe to Newsletter</button>
-                </div>
-            </section>
+            <NewsCTA 
+                title="Have a Story to Share?"
+                description="Do you have news or an event you'd like to include in our newsletter? We'd love to hear from you."
+                buttonText="Contact Communications Team"
+                buttonLink="/contact"
+            />
         </div>
     )
 }

@@ -1,57 +1,68 @@
-import { Link } from 'react-router-dom'
-import PageHero from '../components/PageHero'
-import './OurParishPage.css'
+import { ParishHero, ParishIntro, ParishInfoCards, ParishCTA, RelatedParishLinks } from '../components/parish/ParishSections'
+import parishHeroImg from '../assets/parish-hero.jpg'
 
-const sections = [
-    { icon: '⛪', title: 'About the Cathedral', desc: 'Discover the rich history and heritage of St Mary\'s Cathedral, serving Wrexham for over 150 years.', bg: '#EBF4FF' },
-    { icon: '👥', title: 'Parish Council', desc: 'Meet the dedicated members who assist in the pastoral care and administration of our parish.', bg: '#F3E8FF' },
-    { icon: '♡', title: 'Parish Groups', desc: 'Join one of our vibrant parish groups and become an active part of our community.', bg: '#FCE7F3' },
-    { icon: '👤+', title: 'Get Involved', desc: 'Discover the many ways you can serve and contribute to our parish community.', bg: '#D1FAE5' },
-    { icon: '🏢', title: 'Building Project', desc: 'Learn about our cathedral restoration project to preserve this historic building.', bg: '#FEF3C7' },
-    { icon: '$', title: 'Fundraising', desc: 'Support our parish through various fundraising initiatives and events.', bg: '#FFEDD5' },
-    { icon: '🛡', title: 'Policies & Safeguarding', desc: 'View our parish policies, safeguarding information, and child protection guidelines.', bg: '#FFE4E6' },
+const parishLifeCards = [
+    {
+        icon: '⛪',
+        title: 'Parish Life',
+        content: 'Discover the rich liturgical life, traditions, and community events that define our cathedral family.',
+        link: '/about'
+    },
+    {
+        icon: '🙏',
+        title: 'Worship',
+        content: 'Join us for daily Mass, Adoration, and specialized prayer services throughout the year.',
+        link: '/mass-sacraments'
+    },
+    {
+        icon: '🤝',
+        title: 'Community',
+        content: 'We offer support, friendship, and many opportunities to gather in faith and fellowship.',
+        link: '/parish-groups'
+    },
+    {
+        icon: '✨',
+        title: 'Get Involved',
+        content: 'Your talents and time are a gift to our parish. Explore the many ways you can serve the Cathedral.',
+        link: '/contact'
+    }
 ]
 
 export default function OurParishPage() {
     return (
-        <div>
-            <PageHero
-                icon="⛪"
+        <div className="parish-page">
+            <ParishHero 
                 title="Our Parish"
-                subtitle="St Mary's Cathedral is more than a building – it's a vibrant community of faith. Explore our parish life, get involved, and become part of our family."
-                centered={true}
+                subtitle="A vibrant community of faith, worship, and service in the heart of Wrexham"
+                image={parishHeroImg}
+            />
+            
+            <ParishIntro 
+                title="Welcome to St Mary's Cathedral"
+                text="St Mary's Cathedral is more than just a magnificent building; it is a spiritual home for a diverse and welcoming community. Rooted in the Catholic faith, we strive to be a light for all through our worship, service, and commitment to love one another as Christ has loved us."
             />
 
-            <section className="section">
-                <div className="container">
-                    <div className="parish-grid">
-                        {sections.map(s => (
-                            <div key={s.title} className="card parish-card">
-                                <div className="parish-icon-strip" style={{ background: s.bg }}>{s.icon}</div>
-                                <div className="parish-card-content">
-                                    <h3 className="parish-card-title">{s.title}</h3>
-                                    <p className="parish-card-desc">{s.desc}</p>
-                                    <span className="read-more">Learn More →</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+            <ParishInfoCards cards={parishLifeCards} columns={4} />
+
+            <section className="section" style={{ background: '#fcfaf6', textAlign: 'center', padding: '60px 0' }}>
+                <div className="container" style={{ maxWidth: '800px' }}>
+                    <h2 className="section-title" style={{ fontSize: '1.8rem', marginBottom: '16px' }}>New to Our Parish?</h2>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-mid)', marginBottom: '24px', lineHeight: '1.6' }}>
+                        Whether you are new to Wrexham, returning to the faith, or just visiting, we are delighted to have you with us. We invite you to join our community and register as a parishioner.
+                    </p>
                 </div>
             </section>
 
-            {/* New to Parish CTA */}
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container" style={{ textAlign: 'center' }}>
-                    <h2 className="section-title">New to Our Parish?</h2>
-                    <p className="section-subtitle" style={{ maxWidth: '600px', margin: '0 auto 28px' }}>
-                        We warmly welcome you to St Mary's Cathedral. Whether you're new to the area or seeking a spiritual home, we invite you to join our community. Register as a parishioner and discover the many ways to get involved.
-                    </p>
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                        <Link to="/registration" className="btn-primary">Register as Parishioner</Link>
-                        <Link to="/contact" className="btn-outline">Contact Us</Link>
-                    </div>
-                </div>
-            </section>
+            <ParishCTA 
+                title="Become Part of Our Family"
+                description="Join our parish registration to receive updates and participate in community events."
+                buttons={[
+                    { text: 'Register as Parishioner', link: '/registration', primary: true },
+                    { text: 'Contact Us', link: '/contact' }
+                ]}
+            />
+
+            <RelatedParishLinks current="Our Parish" />
         </div>
     )
 }
