@@ -186,13 +186,15 @@
 
                         function toggleAllDay() {
                             if (allDayCheckbox.checked) {
+                                //lock fields but still send value
                                 startTimeInput.value = '00:00';
                                 endTimeInput.value = '23:59';
-                                startTimeInput.disabled = true;
-                                endTimeInput.disabled = true;
+                                startTimeInput.readOnly = true;
+                                endTimeInput.readOnly = true;
                             } else {
-                                startTimeInput.disabled = false;
-                                endTimeInput.disabled = false;
+                                //unlock fields for editing
+                                startTimeInput.readOnly = false;
+                                endTimeInput.readOnly = false;
                             }
                         }
 

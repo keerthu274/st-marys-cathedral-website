@@ -1,4 +1,3 @@
-{{-- This page shows the form to edit an existing event --}}
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -11,7 +10,6 @@
 
             <div class="bg-white shadow-sm sm:rounded-lg p-6">
 
-                {{-- Show validation errors --}}
                 @if ($errors->any())
                     <div class="mb-4 p-3 bg-red-100 border border-red-300 rounded">
                         <ul class="list-disc ml-5 text-sm text-red-800">
@@ -22,12 +20,10 @@
                     </div>
                 @endif
 
-                {{-- Edit form --}}
                 <form method="POST" action="{{ route('admin.events.update', $event) }}">
                     @csrf
                     @method('PUT')
 
-                    {{-- Title --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Title *</label>
                         <input type="text" name="title"
@@ -36,7 +32,6 @@
                                required>
                     </div>
 
-                    {{-- Description --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Description</label>
                         <textarea name="description"
@@ -44,7 +39,6 @@
                                   class="w-full border rounded p-2">{{ old('description', $event->description) }}</textarea>
                     </div>
 
-                    {{-- Start date --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Start Date *</label>
                         <input id="start_date" type="date" name="start_date"
@@ -53,7 +47,6 @@
                                required>
                     </div>
 
-                    {{-- Existing events on selected date --}}
                     <div class="mb-4 p-4 bg-gray-50 border rounded">
                         <p class="font-semibold text-gray-700 mb-2">
                             Events already booked on this date
@@ -63,7 +56,6 @@
                         </ul>
                     </div>
 
-                    {{-- All day event checkbox --}}
                     <div class="mb-4">
                         <label class="inline-flex items-center">
                             <input type="checkbox"
@@ -75,35 +67,34 @@
                         </label>
                     </div>
 
-                    {{-- Start time --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Start Time *</label>
                         <input type="time"
                                id="start_time"
                                name="start_time"
-                               value="{{ old('start_time', $event->start_time) }}"
-                               class="w-full border rounded px-3 py-2" required>
+                               value="{{ old('start_time', $event->start_time ? \Carbon\Carbon::parse($event->start_time)->format('H:i') : '') }}"
+                               class="w-full border rounded px-3 py-2"
+                               required>
                     </div>
 
-                    {{-- End date --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">End Date</label>
-                        <input type="date" name="end_date"
+                        <input type="date"
+                               name="end_date"
                                value="{{ old('end_date', $event->end_date) }}"
                                class="w-full border rounded px-3 py-2">
                     </div>
 
-                    {{-- End time --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">End Time *</label>
                         <input type="time"
                                id="end_time"
                                name="end_time"
-                               value="{{ old('end_time', $event->end_time) }}"
-                               class="w-full border rounded px-3 py-2" required>
+                               value="{{ old('end_time', $event->end_time ? \Carbon\Carbon::parse($event->end_time)->format('H:i') : '') }}"
+                               class="w-full border rounded px-3 py-2"
+                               required>
                     </div>
 
-                    {{-- Location --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Location</label>
                         <input type="text" name="location"
@@ -111,7 +102,6 @@
                                class="w-full border rounded p-2">
                     </div>
 
-                    {{-- Category --}}
                     <div class="mb-4">
                         <label class="block mb-1 font-medium">Category</label>
                         <input type="text" name="category"
@@ -119,7 +109,6 @@
                                class="w-full border rounded p-2">
                     </div>
 
-                    {{-- Status --}}
                     <div class="mb-6">
                         <label class="block mb-1 font-medium">Status *</label>
                         <select name="status"
@@ -136,7 +125,6 @@
                         </select>
                     </div>
 
-                    {{-- Buttons --}}
                     <div class="mt-6 flex items-center gap-4">
                         <input type="submit"
                                value="Update Event"
@@ -150,7 +138,6 @@
 
                 </form>
 
-                {{-- Script for showing booked events + handling all day --}}
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
 
@@ -177,7 +164,6 @@
                             const res = await fetch(`{{ route('admin.events.by-date') }}?date=${date}`);
                             const data = await res.json();
 
-                            // Remove current event from list
                             const filtered = data.filter(e => e.id !== currentEventId);
 
                             if (!filtered.length) {
@@ -196,11 +182,11 @@
                             if (allDayCheckbox.checked) {
                                 startTimeInput.value = '00:00';
                                 endTimeInput.value = '23:59';
-                                startTimeInput.disabled = true;
-                                endTimeInput.disabled = true;
+                                startTimeInput.readOnly = true;
+                                endTimeInput.readOnly = true;
                             } else {
-                                startTimeInput.disabled = false;
-                                endTimeInput.disabled = false;
+                                startTimeInput.readOnly = false;
+                                endTimeInput.readOnly = false;
                             }
                         }
 
