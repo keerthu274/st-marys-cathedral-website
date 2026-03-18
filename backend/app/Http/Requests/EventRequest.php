@@ -28,9 +28,8 @@ class EventRequest extends FormRequest
                 new NoEventOverlap($eventId),
             ],
 
-            // If not all day, time is required
-            'start_time' => ['nullable', 'date_format:H:i'],
-            'end_time'   => ['nullable', 'date_format:H:i'],
+            'start_time' => ['required', 'date_format:H:i'],
+            'end_time'   => ['required', 'date_format:H:i'],
 
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
 
@@ -40,8 +39,20 @@ class EventRequest extends FormRequest
 
             'category' => ['nullable', 'string', 'max:255'],
 
-            // All day checkbox
             'all_day' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            if ($this->start_time && $this->end_time) {
+
+                if ($this->end_time <= $this->start_time) {
+                    $validator->errors()->add('end_time', 'End time must be after start time.');
+                }
+            }
+        });
     }
 }
