@@ -38,18 +38,19 @@ export default function Footer() {
                         </li>
                         <li>
                             <span className="footer-icon">✉</span>
-                            <a href="mailto:info@stmaryscathedral.org.uk">info@stmaryscathedral.org.uk</a>
+                            <a href="mailto:secretarywrexhamcathedral@rcdwxm.org.uk">secretarywrexhamcathedral@rcdwxm.org.uk</a>
                         </li>
                     </ul>
                 </div>
 
-                {/* Col 3: Mass Times */}
+                {/* Col 3: Parish Life */}
                 <div className="footer-col">
-                    <h4 className="footer-heading">Mass Times</h4>
-                    <ul className="footer-list">
-                        <li><strong>Sunday</strong><br />9:00 AM, 11:00 AM, 6:30 PM</li>
-                        <li><strong>Weekdays</strong><br />Monday – Saturday: 10:00 AM</li>
-                        <li><strong>Holy Days</strong><br />As announced</li>
+                    <h4 className="footer-heading">Parish Life</h4>
+                    <ul className="footer-links-list">
+                        <li><Link to="/newsletter">Weekly Newsletter</Link></li>
+                        <li><Link to="/events">Events Calendar</Link></li>
+                        <li><Link to="/news">News & Announcements</Link></li>
+                        <li><Link to="/parish">Our Parish</Link></li>
                     </ul>
                 </div>
 
@@ -59,14 +60,14 @@ export default function Footer() {
                     <ul className="footer-links-list">
                         <li><Link to="/registration">Parish Registration</Link></li>
                         <li><Link to="/safeguarding">Safeguarding</Link></li>
-                        <li><Link to="/privacy">Privacy Policy</Link></li>
-                        <li><Link to="#">Diocese of Wrexham</Link></li>
+                        <li><Link to="/contact">Contact Us</Link></li>
+                        <li><a href="https://www.wrexhamdiocese.org.uk/" target="_blank" rel="noopener noreferrer">Diocese of Wrexham</a></li>
                     </ul>
                     <div className="footer-social">
                         <a href="#" aria-label="Facebook" className="social-link">f</a>
-                        <a href="#" aria-label="Twitter" className="social-link">𝕏</a>
                         <a href="#" aria-label="Instagram" className="social-link">📷</a>
-                        <a href="#" aria-label="YouTube" className="social-link">▶</a>
+                        <a href="mailto:secretarywrexhamcathedral@rcdwxm.org.uk" aria-label="Email" className="social-link">✉</a>
+                        <a href="#" aria-label="LinkedIn" className="social-link">in</a>
                     </div>
                 </div>
             </div>

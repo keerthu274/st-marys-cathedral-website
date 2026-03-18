@@ -8,7 +8,6 @@ const navItems = [
         label: 'Mass & Sacraments',
         path: '/mass-sacraments',
         children: [
-            { label: 'Mass Times', path: '/mass-sacraments' },
             { label: 'Mass & Sacraments', path: '/mass-sacraments' },
             { label: 'Baptism', path: '/baptism' },
             { label: 'Confirmation', path: '/confirmation' },
@@ -33,7 +32,7 @@ const navItems = [
         path: '/news-events',
         children: [
             { label: 'News & Events', path: '/news-events' },
-            { label: 'Events Calendar', path: '/events-calendar' },
+            { label: 'Events Calendar', path: '/events' },
             { label: 'News & Announcements', path: '/news' },
             { label: 'Weekly Newsletter', path: '/newsletter' },
             { label: 'Newsletter Archive', path: '/newsletter-archive' },
@@ -51,7 +50,7 @@ const navItems = [
         label: 'Links',
         path: '/links',
         children: [
-            { label: 'Diocese of Wrexham', path: '#' },
+            { label: 'Diocese of Wrexham', path: '/diocese' },
             { label: 'Useful Links', path: '/links' },
         ],
     },
@@ -79,14 +78,15 @@ export default function Navbar() {
                         <li key={item.label} className="nav-item">
                             {item.children ? (
                                 <>
-                                    <button
+                                    <Link
+                                        to={item.path}
                                         className={`nav-link ${item.children.some(child => location.pathname === child.path) ? 'active' : ''}`}
-                                        onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
+                                        onMouseEnter={() => setOpenDropdown(item.label)}
                                     >
                                         {item.label} <span className="dropdown-arrow">▼</span>
-                                    </button>
+                                    </Link>
                                     {openDropdown === item.label && (
-                                        <ul className="dropdown">
+                                        <ul className="dropdown" onMouseLeave={() => setOpenDropdown(null)}>
                                             {item.children.map(child => (
                                                 <li key={child.label}>
                                                     <Link
