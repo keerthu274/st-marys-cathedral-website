@@ -1,3 +1,6 @@
+// added useState and useEffect so we can load events from the Laravel API
+import { useState, useEffect } from 'react'
+
 import PageHero from '../components/PageHero'
 import './NewsEventsPage.css'
 
@@ -8,14 +11,24 @@ const categories = [
     { icon: '🗄', title: 'Newsletter Archive', desc: 'Access previous editions of our parish newsletter and browse past announcements.', bg: '#fffbf0' },
 ]
 
-const events = [
-    { date: 'Feb 9', title: 'Lenten Prayer Service', time: '7:00 PM' },
-    { date: 'Feb 14', title: 'Ash Wednesday Services', time: '9:00 AM & 7:00 PM' },
-    { date: 'Mar 15-17', title: 'Parish Retreat', time: 'All Weekend' },
-    { date: 'Apr 5', title: 'Easter Vigil', time: '8:00 PM' },
-]
+// removed hardcoded events because events will now come from the backend API
 
 export default function NewsEventsPage() {
+
+    // created state to store events coming from Laravel backend
+    const [events, setEvents] = useState([])
+
+    // when page loads, request events from the backend API
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/api/v1/events")
+            .then(res => res.json())
+
+            // API returns { success:true, data:[...] } so we take the data array
+            .then(data => setEvents(data.data))
+
+            .catch(error => console.log("Error loading events:", error))
+    }, [])
+
     return (
         <div>
             <PageHero
@@ -46,18 +59,35 @@ export default function NewsEventsPage() {
                 <div className="container">
                     <div className="card">
                         <h2 className="ne-events-title">Upcoming Events</h2>
+
                         <div className="ne-events-list">
+
+                            {/* events now come from backend instead of hardcoded list */}
                             {events.map(e => (
-                                <div key={e.title} className="ne-event-row">
-                                    <span className="ne-event-date">{e.date}</span>
+
+                                // using event id from database instead of title
+                                <div key={e.id} className="ne-event-row">
+
+                                    {/* changed this to show event date on the left side */}
+                                    <span className="ne-event-date">{e.start_date}</span>
+
                                     <div className="ne-event-info">
+
                                         <span className="ne-event-name">{e.title}</span>
-                                        <span className="ne-event-time">{e.time}</span>
+
+                                        {/* changed this to show start time and end time under the event title */}
+                                        <span className="ne-event-time">
+                                            {e.start_time} - {e.end_time}
+                                        </span>
+
                                     </div>
+
                                     <span className="ne-event-details">Details</span>
                                 </div>
                             ))}
+
                         </div>
+
                         <div style={{ textAlign: 'center', marginTop: '24px' }}>
                             <button className="btn-primary">View Full Calendar</button>
                         </div>
