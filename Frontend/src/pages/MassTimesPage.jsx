@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
 import './MassTimesPage.css'
 
@@ -39,49 +40,49 @@ export default function MassTimesPage() {
                     <p className="section-subtitle">Join us for the celebration of the Eucharist</p>
 
                     <div className="grid-3 mass-times-grid">
-                        {/* Sunday Mass Card */}
+                        {/* Sunday Mass Wrexham */}
                         <div className="card mass-time-card">
                             <div className="mt-icon-box">
                                 <span className="mt-icon-large">🕒</span>
                             </div>
-                            <h3 className="mt-card-title">Sunday Mass Times</h3>
+                            <h3 className="mt-card-title">Sunday Mass Times Wrexham</h3>
+                            <div className="mt-card-details">
+                                <p><strong>10:30 AM</strong></p>
+                                <p><strong>7:00 PM</strong></p>
+                            </div>
+                            <p className="mt-card-note">St Mary's Cathedral</p>
+                        </div>
+
+                        {/* Sunday Mass Coedpoeth */}
+                        <div className="card mass-time-card">
+                            <div className="mt-icon-box">
+                                <span className="mt-icon-large">🏠</span>
+                            </div>
+                            <h3 className="mt-card-title">Sunday Mass Time Coedpoeth</h3>
                             <div className="mt-card-details">
                                 <p><strong>9:00 AM</strong></p>
-                                <p><strong>11:00 AM (Family Mass)</strong></p>
-                                <p><strong>6:30 PM</strong></p>
                             </div>
-                            <p className="mt-card-note">All Masses held at St Mary's Cathedral</p>
+                            <p className="mt-card-note">Holy Family Church</p>
                         </div>
 
                         {/* Weekday Mass Card */}
                         <div className="card mass-time-card">
                             <div className="mt-icon-box">
-                                <span className="mt-icon-large">🕒</span>
+                                <span className="mt-icon-large">📅</span>
                             </div>
-                            <h3 className="mt-card-title">Weekday Mass Times</h3>
+                            <h3 className="mt-card-title">Weekdays Mass Times</h3>
                             <div className="mt-card-details">
-                                <p><strong>Monday - Saturday</strong></p>
-                                <p>10:00 AM</p>
+                                <p><strong>Please see newsletter</strong></p>
+                                <p>for latest schedule</p>
                             </div>
-                            <p className="mt-card-note">Confessions available 30 minutes before Mass</p>
-                        </div>
-
-                        {/* Holy Days Card */}
-                        <div className="card mass-time-card">
-                            <div className="mt-icon-box">
-                                <span className="mt-icon-large">🕒</span>
-                            </div>
-                            <h3 className="mt-card-title">Holy Days of Obligation</h3>
-                            <div className="mt-card-details">
-                                <p><strong>9:00 AM</strong></p>
-                                <p><strong>7:00 PM</strong></p>
-                            </div>
-                            <p className="mt-card-note">Please check the newsletter for specific dates</p>
+                            <p className="mt-card-note">Includes Holy Days</p>
                         </div>
                     </div>
 
-                    <div className="text-center mt-32">
-                        <button className="btn-primary">View Full Mass Times & Schedule</button>
+                    <div className="text-center mt-48 newsletter-cta">
+                        <Link to="/newsletter" className="newsletter-link-full">
+                            For more details, please see our latest weekly newsletter <span>→</span>
+                        </Link>
                     </div>
                 </section>
 
@@ -138,12 +139,12 @@ export default function MassTimesPage() {
                     <h2 className="section-title">Have questions about Mass or Sacraments?</h2>
                     <p className="section-subtitle">Our parish office is here to help. Whether you're enquiring about Mass times, preparing for a sacrament, or have any questions about the liturgical life of the Cathedral, please don't hesitate to get in touch.</p>
                     <div className="questions-actions">
-                        <button className="btn-primary">
+                        <Link to="/contact" className="btn-primary">
                             <span>📞</span> Contact the Parish Office
-                        </button>
-                        <button className="btn-outline-navy">
+                        </Link>
+                        <Link to="/contact?subject=Sacramental Enquiry" className="btn-outline-navy">
                             <span>✉️</span> Sacramental Enquiry
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
