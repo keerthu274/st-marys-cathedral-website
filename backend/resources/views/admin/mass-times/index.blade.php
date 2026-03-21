@@ -53,10 +53,6 @@
                                         Start Time  
                                     </th>
 
-                                    <th class="w-2/12 text-left py-3 px-4 font-semibold">
-                                        End Time
-                                    </th>
-
                                     <th class="w-3/12 text-left py-3 px-4 font-semibold">
                                         Location
                                     </th>
@@ -87,10 +83,6 @@
 
                                         <td class="py-4 px-4 text-gray-700">
                                              {{ \Carbon\Carbon::parse($massTime->start_time)->format('H:i') }}
-                                        </td>
-
-                                        <td class="py-4 px-4 text-gray-700">
-                                             {{ $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '—' }}
                                         </td>
 
                                         <td class="py-4 px-4 text-gray-700">

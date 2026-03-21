@@ -1,9 +1,5 @@
-{{-- resources/views/admin/mass-times/_form.blade.php --}}
-{{-- Shared form for Create & Edit Mass Times --}}
-
 @csrf
 
-{{-- Day --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Day</label>
 
@@ -27,13 +23,12 @@
     @enderror
 </div>
 
-{{-- Start Time --}}
 <div class="mb-4">
-    <label class="block mb-1 font-semibold">Start Time</label>
+    <label class="block mb-1 font-semibold">Time</label>
 
     <input type="time"
            name="start_time"
-           value="{{ old('start_time', isset($massTime) ? \Carbon\Carbon::parse($massTime->start_time)->format('H:i') : '') }}"
+           value="{{ old('start_time', isset($massTime) && $massTime->start_time ? \Carbon\Carbon::parse($massTime->start_time)->format('H:i') : '') }}"
            class="w-full border p-2 rounded">
 
     @error('start_time')
@@ -41,21 +36,6 @@
     @enderror
 </div>
 
-{{-- End Time --}}
-<div class="mb-4">
-    <label class="block mb-1 font-semibold">End Time</label>
-
-    <input type="time"
-           name="end_time"
-           value="{{ old('end_time', isset($massTime) && $massTime->end_time ? \Carbon\Carbon::parse($massTime->end_time)->format('H:i') : '') }}"
-           class="w-full border p-2 rounded">
-
-    @error('end_time')
-        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-    @enderror
-</div>
-
-{{-- Preview box (shows existing Mass times for selected day/location) --}}
 <div id="mass-preview"
      class="mb-4 p-4 rounded border bg-gray-50 text-gray-700 hidden">
     <div class="font-semibold mb-2">Existing Mass Times</div>
@@ -63,7 +43,6 @@
 </div>
 
 <script>
-    // Simple preview: when day or location changes, load existing mass times
     document.addEventListener('DOMContentLoaded', () => {
         const dayEl = document.querySelector('select[name="day"]');
         const locEl = document.querySelector('input[name="location"]');
@@ -74,7 +53,6 @@
             const day = dayEl?.value;
             const location = locEl?.value;
 
-            // Only show preview when day is selected
             if (!day) {
                 box.classList.add('hidden');
                 list.innerHTML = '';
@@ -98,11 +76,10 @@
 
             data.forEach(item => {
                 const name = item.language ? `${item.language} Mass` : 'Mass';
-                const start = (item.start_time || '').slice(0,5);
-                const end = (item.end_time || '').slice(0,5);
+                const time = (item.start_time || '').slice(0,5);
 
                 const li = document.createElement('li');
-                li.textContent = `${name} (${start} - ${end})`;
+                li.textContent = `${name} (${time})`;
                 list.appendChild(li);
             });
 
@@ -110,17 +87,12 @@
         }
 
         dayEl?.addEventListener('change', loadPreview);
-        locEl?.addEventListener('input', () => {
-            // Small delay would be nicer, but keep it simple
-            loadPreview();
-        });
+        locEl?.addEventListener('input', loadPreview);
 
-        // Load once on edit page
         loadPreview();
     });
 </script>
 
-{{-- Location --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Location (optional)</label>
     <input type="text"
@@ -130,7 +102,6 @@
            placeholder="e.g., Cathedral">
 </div>
 
-{{-- Language --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Language (optional)</label>
     <input type="text"
@@ -140,7 +111,6 @@
            placeholder="e.g., English">
 </div>
 
-{{-- Notes --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Notes (optional)</label>
     <textarea name="notes"
@@ -149,7 +119,6 @@
               placeholder="Any extra details...">{{ old('notes', $massTime->notes ?? '') }}</textarea>
 </div>
 
-{{-- Status --}}
 <div class="mb-4">
     <label class="block mb-1 font-semibold">Status</label>
     <select name="status" class="w-full border p-2 rounded">
@@ -162,7 +131,6 @@
     </select>
 </div>
 
-{{-- Form actions --}}
 <div class="flex gap-3">
     <button type="submit"
             class="px-4 py-2 bg-black text-white rounded hover:bg-gray-800">

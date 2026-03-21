@@ -148,7 +148,8 @@
                         const startTimeInput = document.getElementById('start_time');
                         const endTimeInput = document.getElementById('end_time');
 
-                        const currentEventId = {{ $event->id }};
+                        const currentEventId = parseInt("{{ $event->id }}");
+                        const url = "{{ route('admin.events.by-date') }}";
 
                         function formatTime(t) {
                             if (!t) return '';
@@ -161,7 +162,7 @@
                                 return;
                             }
 
-                            const res = await fetch(`{{ route('admin.events.by-date') }}?date=${date}`);
+                            const res = await fetch(`${url}?date=${date}`);
                             const data = await res.json();
 
                             const filtered = data.filter(e => e.id !== currentEventId);
@@ -194,8 +195,13 @@
                             loadEvents(dateInput.value);
                         }
 
-                        dateInput?.addEventListener('change', e => loadEvents(e.target.value));
-                        allDayCheckbox?.addEventListener('change', toggleAllDay);
+                        if (dateInput) {
+                            dateInput.addEventListener('change', e => loadEvents(e.target.value));
+                        }
+
+                        if (allDayCheckbox) {
+                            allDayCheckbox.addEventListener('change', toggleAllDay);
+                        }
 
                         toggleAllDay();
                     });
