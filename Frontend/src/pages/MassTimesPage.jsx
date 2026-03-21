@@ -1,13 +1,9 @@
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
+import { useEffect, useState } from 'react' // added for API
 import './MassTimesPage.css'
 
-const sundayMasses = [
-    { time: '9:00 AM', name: 'Sunday Mass' },
-    { time: '11:00 AM', name: 'Sunday Mass (Family)' },
-    { time: '6:30 PM', name: 'Sunday Evening Mass' },
-]
-
+// keep existing arrays
 const sacraments = [
     { id: 'baptism', title: 'Baptism', description: 'The first sacrament welcoming new members into the Catholic faith', icon: '💧' },
     { id: 'communion', title: 'First Holy Communion', description: 'Receiving the Body and Christ for the first time', icon: '🤝' },
@@ -25,6 +21,64 @@ const otherServices = [
 ]
 
 export default function MassTimesPage() {
+
+    // store mass times from backend
+    const [massTimes, setMassTimes] = useState([])
+
+    // loading state
+    const [loading, setLoading] = useState(true)
+
+    // error state
+    const [error, setError] = useState(null)
+
+    useEffect(() => {
+        // fetch data from API when page loads
+        const fetchMassTimes = async () => {
+            try {
+                setLoading(true)
+
+                const response = await fetch('http://127.0.0.1:8000/api/v1/mass-times')
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch mass times')
+                }
+
+                const data = await response.json()
+
+                // handle both response formats (array or data inside object)
+                if (Array.isArray(data)) {
+                    setMassTimes(data)
+                } else if (Array.isArray(data.data)) {
+                    setMassTimes(data.data)
+                } else {
+                    setMassTimes([])
+                }
+
+            } catch (err) {
+                setError(err.message)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchMassTimes()
+    }, [])
+
+    // format time from 24hr to AM/PM
+    const formatTime = (time) => {
+        if (!time) return ''
+
+        const [hours, minutes] = time.split(':')
+        const date = new Date()
+        date.setHours(hours)
+        date.setMinutes(minutes)
+
+        return date.toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+        })
+    }
+
     return (
         <div className="mass-sac-page">
             <PageHero
@@ -34,49 +88,48 @@ export default function MassTimesPage() {
             />
 
             <div className="container">
+
                 {/* Mass Times Section */}
                 <section className="section">
                     <h2 className="section-title">Mass Times</h2>
                     <p className="section-subtitle">Join us for the celebration of the Eucharist</p>
 
+                    {/* loading state */}
+                    {loading && <p>Loading mass times...</p>}
+
+                    {/* error state */}
+                    {error && <p style={{ color: 'red' }}>{error}</p>}
+
+                    {/* dynamic data from API */}
                     <div className="grid-3 mass-times-grid">
-                        {/* Sunday Mass Wrexham */}
-                        <div className="card mass-time-card">
-                            <div className="mt-icon-box">
-                                <span className="mt-icon-large">🕒</span>
-                            </div>
-                            <h3 className="mt-card-title">Sunday Mass Times Wrexham</h3>
-                            <div className="mt-card-details">
-                                <p><strong>10:30 AM</strong></p>
-                                <p><strong>7:00 PM</strong></p>
-                            </div>
-                            <p className="mt-card-note">St Mary's Cathedral</p>
-                        </div>
 
-                        {/* Sunday Mass Coedpoeth */}
-                        <div className="card mass-time-card">
-                            <div className="mt-icon-box">
-                                <span className="mt-icon-large">🏠</span>
-                            </div>
-                            <h3 className="mt-card-title">Sunday Mass Time Coedpoeth</h3>
-                            <div className="mt-card-details">
-                                <p><strong>9:00 AM</strong></p>
-                            </div>
-                            <p className="mt-card-note">Holy Family Church</p>
-                        </div>
+                        {Array.isArray(massTimes) && massTimes.map((mass) => (
+                            <div key={mass.id} className="card mass-time-card">
 
-                        {/* Weekday Mass Card */}
-                        <div className="card mass-time-card">
-                            <div className="mt-icon-box">
-                                <span className="mt-icon-large">📅</span>
+                                {/* keep icon */}
+                                <div className="mt-icon-box">
+                                    <span className="mt-icon-large">🕒</span>
+                                </div>
+
+                                {/* day first */}
+                                <h3 className="mt-card-title">{mass.day}</h3>
+
+                                {/* time underneath (using single time field now) */}
+                                <div className="mt-card-details">
+                                    <p>
+                                        <strong>
+                                            {formatTime(mass.start_time)} {/* using start_time from API */}
+                                        </strong>
+                                    </p>
+                                </div>
+
+                                {/* optional details */}
+                                {mass.location && (
+                                    <p className="mt-card-note">{mass.location}</p>
+                                )}
                             </div>
-                            <h3 className="mt-card-title">Weekdays Mass Times</h3>
-                            <div className="mt-card-details">
-                                <p><strong>Please see newsletter</strong></p>
-                                <p>for latest schedule</p>
-                            </div>
-                            <p className="mt-card-note">Includes Holy Days</p>
-                        </div>
+                        ))}
+
                     </div>
 
                     <div className="text-center mt-48 newsletter-cta">
@@ -105,12 +158,11 @@ export default function MassTimesPage() {
                             ))}
                         </div>
 
-                        {/* Important Info Banner */}
                         <div className="info-banner">
                             <div className="info-banner-icon">ℹ️</div>
                             <div className="info-banner-content">
                                 <h3>Important Information</h3>
-                                <p>Each sacrament has specific preparation and requirements. Please read the relevant page before making an enquiry. If you have any questions, our parish office is here to help guide you through the process.</p>
+                                <p>Each sacrament has specific preparation and requirements.</p>
                             </div>
                         </div>
                     </div>
@@ -119,7 +171,6 @@ export default function MassTimesPage() {
                 {/* Other Services Section */}
                 <section className="section">
                     <h2 className="section-title">Other Liturgical Services</h2>
-                    <p className="section-subtitle">Additional opportunities for prayer and worship</p>
 
                     <div className="grid-2 other-services-grid">
                         {otherServices.map((service, index) => (
@@ -132,22 +183,6 @@ export default function MassTimesPage() {
                     </div>
                 </section>
             </div>
-
-            {/* Questions Section */}
-            <section className="questions-section">
-                <div className="container">
-                    <h2 className="section-title">Have questions about Mass or Sacraments?</h2>
-                    <p className="section-subtitle">Our parish office is here to help. Whether you're enquiring about Mass times, preparing for a sacrament, or have any questions about the liturgical life of the Cathedral, please don't hesitate to get in touch.</p>
-                    <div className="questions-actions">
-                        <Link to="/contact" className="btn-primary">
-                            <span>📞</span> Contact the Parish Office
-                        </Link>
-                        <Link to="/contact?subject=Sacramental Enquiry" className="btn-outline-navy">
-                            <span>✉️</span> Sacramental Enquiry
-                        </Link>
-                    </div>
-                </div>
-            </section>
         </div>
     )
 }
