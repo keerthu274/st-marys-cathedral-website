@@ -19,10 +19,23 @@ class ParishRegistration extends Model
         'address_line1',
         'city',
         'postcode',
+        'partner_name',
         'phone',
         'email',
         'consent_confirmed',
         'signature',
         'signed_date'
     ];
+
+// added: relationship with children
+    public function children()
+      {
+        return $this->hasMany(\App\Models\ParishChild::class, 'registration_id');
+      }
+
+// added: relationship with interests
+    public function interest()
+      {
+        return $this->hasOne(\App\Models\ParishInterest::class, 'registration_id');
+      }
 }
