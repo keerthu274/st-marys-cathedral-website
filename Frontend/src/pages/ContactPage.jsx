@@ -16,6 +16,15 @@ export default function ContactPage() {
         message: ''
     })
 
+    // ✅ added loading state
+    const [loading, setLoading] = useState(false)
+
+    // ✅ added success message state
+    const [success, setSuccess] = useState('')
+
+    // ✅ added error message state
+    const [error, setError] = useState('')
+
     useEffect(() => {
         window.scrollTo(0, 0)
         const subj = searchParams.get('subject')
@@ -26,10 +35,41 @@ export default function ContactPage() {
 
     const handleContactChange = e => setContactForm({ ...contactForm, [e.target.name]: e.target.value })
     
-    const handleContactSubmit = e => {
+    // ✅ updated submit function to connect API
+    const handleContactSubmit = async (e) => {
         e.preventDefault()
-        alert('Thank you for your message. We will get back to you soon.')
-        setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+
+        setLoading(true) // start loading
+        setSuccess('') // clear old success
+        setError('') // clear old error
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/v1/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(contactForm)
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Something went wrong')
+            }
+
+            // ✅ success message
+            setSuccess('Message sent successfully!')
+
+            // ✅ reset form after success
+            setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+
+        } catch (err) {
+            // ✅ show error message
+            setError(err.message)
+        } finally {
+            setLoading(false) // stop loading
+        }
     }
 
     return (
@@ -120,6 +160,13 @@ export default function ContactPage() {
                         {/* Column 2: Contact Form */}
                         <div className="contact-column">
                             <h3>Contact Form</h3>
+
+                            {/* ✅ show success message */}
+                            {success && <p style={{ color: 'green' }}>{success}</p>}
+
+                            {/* ✅ show error message */}
+                            {error && <p style={{ color: 'red' }}>{error}</p>}
+
                             <form className="contact-form-minimal" onSubmit={handleContactSubmit}>
                                 <div className="grid-2" style={{ gap: '15px' }}>
                                     <div className="form-group">
@@ -157,7 +204,11 @@ export default function ContactPage() {
                                 </div>
                                 <div className="form-actions-row">
                                     <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => setContactForm({name:'', email:'', phone:'', subject:'', isMember:'yes', message:''})}>Clear</button>
-                                    <button type="submit" className="btn-minimal-dark">Send Message</button>
+                                    
+                                    {/* ✅ disable button when loading */}
+                                    <button type="submit" className="btn-minimal-dark" disabled={loading}>
+                                        {loading ? 'Sending...' : 'Send Message'}
+                                    </button>
                                 </div>
                             </form>
                         </div>
