@@ -12,35 +12,35 @@ const publicAsset = (path) => `${import.meta.env.BASE_URL}${path}`
 const heroSlides = [
   {
     image: publicAsset('image 01.jpg'),
-    label: "WELCOME TO ST MARY'S",
-    title: 'Loving God, Loving Others',
-    desc: "Welcome to the Wrexham Diocese Cathedral Church of Our Lady of Sorrows, St Mary's Cathedral, home to St Mary's Cathedral Parish and the Church of the Holy Family, Coedpoeth.",
+    label: 'MASS TIMES',
+    title: 'Join Us For Worship',
+    desc: "Find weekday and weekend Mass times at St Mary's Cathedral and the Church of the Holy Family, Coedpoeth.",
     btnText: 'View Mass Times',
     link: '/mass-times',
   },
   {
     image: publicAsset('image 02.jpg'),
-    label: 'WORSHIP WITH US',
-    title: 'Centred in Prayer and Praise',
-    desc: 'Join us for our daily and weekend services. Experience the peace and beauty of our sacred space.',
-    btnText: 'Full Mass Schedule',
-    link: '/mass-times',
+    label: 'UPCOMING EVENTS',
+    title: 'See What Is Happening',
+    desc: 'Keep up with parish events, special celebrations, and community gatherings across cathedral life.',
+    btnText: 'Explore Events',
+    link: '/news-events',
   },
   {
     image: publicAsset('image 03.jpg'),
-    label: 'PARISH COMMUNITY',
-    title: 'A Vibrant and Growing Family',
-    desc: 'Discover our upcoming events, social groups, and ways to get involved in the life of the Cathedral.',
-    btnText: 'Explore Events',
-    link: '#upcoming-events',
+    label: 'PARISH REGISTRATION',
+    title: 'Become Part Of Our Parish',
+    desc: 'Register with the parish so we can welcome you, support your household, and help you stay connected.',
+    btnText: 'Register Now',
+    link: '/registration',
   },
   {
     image: publicAsset('image 04.jpg'),
-    label: 'JOIN OUR PARISH',
-    title: "Become Part of St Mary's",
-    desc: 'We are always happy to welcome new parishioners. Register today and stay connected with our community.',
-    btnText: 'Register Now',
-    link: '/registration',
+    label: 'NEWSLETTER',
+    title: 'Stay In Touch Each Week',
+    desc: 'Read the weekly newsletter for parish notices, Mass updates, diocesan news, and seasonal services.',
+    btnText: 'View Newsletter',
+    link: '/newsletter',
   },
 ]
 
@@ -90,23 +90,10 @@ function formatTime(timeString) {
   })
 }
 
-function formatEventDate(dateString) {
-  if (!dateString) {
-    return { day: '--', month: '--' }
-  }
-
-  const date = new Date(`${dateString}T00:00:00`)
-
-  return {
-    day: date.toLocaleDateString('en-GB', { day: '2-digit' }),
-    month: date.toLocaleDateString('en-GB', { month: 'short' }),
-  }
-}
-
 export default function HomePage() {
   const [heroIdx, setHeroIdx] = useState(0)
-  const [homeEvents, setHomeEvents] = useState([])
   const [homeMassTimes, setHomeMassTimes] = useState([])
+  const activeHeroSlide = heroSlides[heroIdx]
 
   useEffect(() => {
     const timer = setInterval(() => setHeroIdx((i) => (i + 1) % heroSlides.length), 5000)
@@ -118,22 +105,11 @@ export default function HomePage() {
 
     async function loadHomeData() {
       try {
-        const [eventsResponse, massTimesResponse] = await Promise.all([
-          fetch(getBackendUrl('/api/v1/events')),
-          fetch(getBackendUrl('/api/v1/mass-times')),
-        ])
-
-        const [eventsPayload, massTimesPayload] = await Promise.all([
-          eventsResponse.json(),
-          massTimesResponse.json(),
-        ])
+        const massTimesResponse = await fetch(getBackendUrl('/api/v1/mass-times'))
+        const massTimesPayload = await massTimesResponse.json()
 
         if (ignore) {
           return
-        }
-
-        if (eventsResponse.ok && Array.isArray(eventsPayload.data)) {
-          setHomeEvents(eventsPayload.data.slice(0, 3))
         }
 
         if (massTimesResponse.ok && Array.isArray(massTimesPayload.data)) {
@@ -141,7 +117,6 @@ export default function HomePage() {
         }
       } catch {
         if (!ignore) {
-          setHomeEvents([])
           setHomeMassTimes([])
         }
       }
@@ -190,16 +165,14 @@ export default function HomePage() {
         </div>
 
         <div className="container hero-content-centered">
-          {heroSlides.map((slide, index) => (
-            <div key={index} className={`hero-text-layer ${index === heroIdx ? 'active' : ''}`}>
-              <p className="hero-label-stately">{slide.label} • EST. 1857</p>
-              <h1 className="hero-title-grand">{slide.title}</h1>
-              <p className="hero-desc">{slide.desc}</p>
-              <div className="hero-btns">
-                <Link to={slide.link} className="btn-primary-grand">{slide.btnText}</Link>
-              </div>
+          <div key={heroIdx} className="hero-text-layer active">
+            <p className="hero-label-stately">{activeHeroSlide.label} • EST. 1857</p>
+            <h1 className="hero-title-grand">{activeHeroSlide.title}</h1>
+            <p className="hero-desc">{activeHeroSlide.desc}</p>
+            <div className="hero-btns">
+              <Link to={activeHeroSlide.link} className="btn-primary-grand">{activeHeroSlide.btnText}</Link>
             </div>
-          ))}
+          </div>
 
           <div className="hero-dots">
             {heroSlides.map((_, index) => (
@@ -212,8 +185,6 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-
-        <div className="hero-accent-shape"></div>
       </section>
 
       <section className="info-bar">
@@ -351,48 +322,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="upcoming-events" className="section" style={{ background: 'var(--off-white)' }}>
-        <div className="container">
-          <h2 className="section-title">Upcoming Events</h2>
-          <p className="section-subtitle">Join us for these special occasions</p>
-          <div className="grid-3">
-            {homeEvents.length ? (
-              homeEvents.map((event) => {
-                const { day, month } = formatEventDate(event.start_date)
-
-                return (
-                  <div key={event.id} className="card event-card">
-                    <div className="event-date">
-                      <span className="event-day">{day}</span>
-                      <span className="event-month">{month}</span>
-                    </div>
-                    <div className="event-info">
-                      <h3 className="event-title">{event.title}</h3>
-                      <p className="event-desc">
-                        {event.description || `${formatTime(event.start_time)}${event.location ? ` • ${event.location}` : ''}`}
-                      </p>
-                      <Link to={`/events/${event.id}`} className="read-more">View Details →</Link>
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
-              <div className="card event-card">
-                <div className="event-date">
-                  <span className="event-day">--</span>
-                  <span className="event-month">---</span>
-                </div>
-                <div className="event-info">
-                  <h3 className="event-title">Upcoming events will appear here</h3>
-                  <p className="event-desc">As parish events are published, the home page will update automatically.</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
+      <section className="section home-news-section">
         <div className="container news-newsletter-grid">
           <div className="news-col">
             <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '24px' }}>Latest News</h2>

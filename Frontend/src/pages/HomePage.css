@@ -159,17 +159,6 @@
     box-shadow: 0 0 10px rgba(201, 168, 76, 0.5);
 }
 
-.hero-accent-shape {
-    position: absolute;
-    bottom: -1px;
-    right: 0;
-    width: 60%;
-    height: 12vh;
-    background: var(--white);
-    clip-path: polygon(100% 0, 0% 100%, 100% 100%);
-    z-index: 10;
-}
-
 /* Info Bar */
 .info-bar {
     background: var(--white);
@@ -672,6 +661,10 @@
 }
 
 /* News + Newsletter */
+.home-news-section {
+    padding-top: 36px;
+}
+
 .news-newsletter-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
