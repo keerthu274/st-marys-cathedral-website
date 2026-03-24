@@ -158,3 +158,12 @@ export function updateRegistration(id, data) {
 export function deleteRegistration(id) {
   return adminRequest(`/admin/parish-registrations/${id}`, { method: 'DELETE' })
 }
+
+export function listContactMessages(page = 1) {
+  const params = new URLSearchParams({ page: String(page) })
+  return adminRequest(`/admin/contact-messages?${params.toString()}`)
+}
+
+export function getContactMessage(id) {
+  return adminRequest(`/admin/contact-messages/${id}`)
+}

@@ -1,43 +1,36 @@
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
-import { useEffect, useState } from 'react' // added for API
+import { useEffect, useState } from 'react'
+import { getBackendUrl } from '../lib/auth'
 import './MassTimesPage.css'
 
-// keep existing arrays
 const sacraments = [
-    { id: 'baptism', title: 'Baptism', description: 'The first sacrament welcoming new members into the Catholic faith', icon: '💧' },
-    { id: 'communion', title: 'First Holy Communion', description: 'Receiving the Body and Christ for the first time', icon: '🤝' },
-    { id: 'confirmation', title: 'Confirmation', description: 'Completing Christian initiation through the gifts of the Holy Spirit', icon: '✨' },
-    { id: 'marriage', title: 'Marriage', description: 'The sacred union of a man and woman in the presence of God', icon: '❤️' },
-    { id: 'reconciliation', title: 'Reconciliation', description: 'The sacrament of healing and forgiveness', icon: '🙌' },
-    { id: 'anointing', title: 'Anointing of the Sick', description: 'Spiritual comfort and strength for those who are ill', icon: '🙏' },
+    { id: 'baptism', title: 'Baptism', description: 'The first sacrament welcoming new members into the Catholic faith', icon: 'B' },
+    { id: 'communion', title: 'First Holy Communion', description: 'Receiving the Body and Christ for the first time', icon: 'HC' },
+    { id: 'confirmation', title: 'Confirmation', description: 'Completing Christian initiation through the gifts of the Holy Spirit', icon: 'C' },
+    { id: 'marriage', title: 'Marriage', description: 'The sacred union of a man and woman in the presence of God', icon: 'M' },
+    { id: 'reconciliation', title: 'Reconciliation', description: 'The sacrament of healing and forgiveness', icon: 'R' },
+    { id: 'anointing', title: 'Anointing of the Sick', description: 'Spiritual comfort and strength for those who are ill', icon: 'AS' },
 ]
 
 const otherServices = [
-    { title: 'Adoration of the Blessed Sacrament', schedule: 'Every Friday following 10:00 AM Mass until 12:00 PM', description: 'A beautiful opportunity to spend time in silent prayer before the Blessed Sacrament.' },
-    { title: 'Stations of the Cross', schedule: 'Every Friday during Lent at 7:00 PM', description: 'Join us in meditating on the Passion of Christ during the Lenten season.' },
-    { title: 'The Rosary', schedule: 'Saturdays at 9:30 AM before Mass', description: 'Praying the Rosary together as a community before Saturday morning Mass.' },
-    { title: 'Divine Mercy Chaplet', schedule: 'Daily at 3:00 PM', description: 'The Cathedral is open for private prayer and the Divine Mercy Chaplet at the hour of mercy.' },
+    { title: 'Ignatian Prayer Group', schedule: 'Fortnightly during term time, 7:00 PM - 8:30 PM', description: 'Praying with the Sunday Mass readings in person or online.' },
+    { title: 'Rosary', schedule: 'Fridays at 6:00 PM in Malayali and Saturdays after 9:00 AM Mass', description: 'All are welcome to join the parish in Marian prayer.' },
+    { title: 'Exposition And Rosary', schedule: 'Every second Friday, 4:00 PM - 5:45 PM', description: 'Time for adoration, prayer, and reflection before the Blessed Sacrament.' },
+    { title: 'Stations Of The Cross', schedule: 'During Lent at the Cathedral and Coedpoeth', description: 'Please check the weekly newsletter for seasonal times and additional services.' },
 ]
 
 export default function MassTimesPage() {
-
-    // store mass times from backend
     const [massTimes, setMassTimes] = useState([])
-
-    // loading state
     const [loading, setLoading] = useState(true)
-
-    // error state
     const [error, setError] = useState(null)
 
     useEffect(() => {
-        // fetch data from API when page loads
         const fetchMassTimes = async () => {
             try {
                 setLoading(true)
 
-                const response = await fetch('http://127.0.0.1:8000/api/v1/mass-times')
+                const response = await fetch(getBackendUrl('/api/v1/mass-times'))
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch mass times')
@@ -45,7 +38,6 @@ export default function MassTimesPage() {
 
                 const data = await response.json()
 
-                // handle both response formats (array or data inside object)
                 if (Array.isArray(data)) {
                     setMassTimes(data)
                 } else if (Array.isArray(data.data)) {
@@ -53,7 +45,6 @@ export default function MassTimesPage() {
                 } else {
                     setMassTimes([])
                 }
-
             } catch (err) {
                 setError(err.message)
             } finally {
@@ -64,7 +55,6 @@ export default function MassTimesPage() {
         fetchMassTimes()
     }, [])
 
-    // format time from 24hr to AM/PM
     const formatTime = (time) => {
         if (!time) return ''
 
@@ -79,6 +69,25 @@ export default function MassTimesPage() {
         })
     }
 
+    const groupedMassTimes = massTimes.reduce((groups, mass) => {
+        const location = mass.location || "St Mary's Cathedral"
+        const existing = groups.find(group => group.day === mass.day && group.location === location)
+
+        if (existing) {
+            existing.times.push(formatTime(mass.start_time))
+            return groups
+        }
+
+        groups.push({
+            id: `${mass.day}-${location}`,
+            day: mass.day,
+            location,
+            times: [formatTime(mass.start_time)],
+        })
+
+        return groups
+    }, [])
+
     return (
         <div className="mass-sac-page">
             <PageHero
@@ -88,48 +97,44 @@ export default function MassTimesPage() {
             />
 
             <div className="container">
-
-                {/* Mass Times Section */}
                 <section className="section">
                     <h2 className="section-title">Mass Times</h2>
                     <p className="section-subtitle">Join us for the celebration of the Eucharist</p>
 
-                    {/* loading state */}
                     {loading && <p>Loading mass times...</p>}
-
-                    {/* error state */}
                     {error && <p style={{ color: 'red' }}>{error}</p>}
 
-                    {/* dynamic data from API */}
                     <div className="grid-3 mass-times-grid">
-
-                        {Array.isArray(massTimes) && massTimes.map((mass) => (
+                        {groupedMassTimes.map((mass, index) => (
                             <div key={mass.id} className="card mass-time-card">
-
-                                {/* keep icon */}
-                                <div className="mt-icon-box">
-                                    <span className="mt-icon-large">🕒</span>
+                                <div className="mt-card-header">
+                                    <div className={`mt-icon-box mt-icon-variant-${(index % 3) + 1}`}>
+                                        <span className={`mt-clock mt-clock-${(index % 3) + 1}`} aria-hidden="true"></span>
+                                    </div>
+                                    <div className="mt-card-heading">
+                                        <h3 className="mt-card-title">{mass.location}</h3>
+                                        <div className="mt-card-day">{mass.day}</div>
+                                    </div>
+                                    <div className="mt-card-count">{mass.times.length} time{mass.times.length > 1 ? 's' : ''}</div>
                                 </div>
 
-                                {/* day first */}
-                                <h3 className="mt-card-title">{mass.day}</h3>
+                                <p className="mt-card-note">
+                                    {mass.location === "St Mary's Cathedral"
+                                        ? 'Cathedral celebration schedule'
+                                        : 'Community worship location'}
+                                </p>
 
-                                {/* time underneath (using single time field now) */}
+                                <div className="mt-section-label">Service Times</div>
+
                                 <div className="mt-card-details">
-                                    <p>
-                                        <strong>
-                                            {formatTime(mass.start_time)} {/* using start_time from API */}
-                                        </strong>
-                                    </p>
+                                    {mass.times.map((time) => (
+                                        <p key={`${mass.id}-${time}`} className="mt-time-chip">
+                                            <strong>{time}</strong>
+                                        </p>
+                                    ))}
                                 </div>
-
-                                {/* optional details */}
-                                {mass.location && (
-                                    <p className="mt-card-note">{mass.location}</p>
-                                )}
                             </div>
                         ))}
-
                     </div>
 
                     <div className="text-center mt-48 newsletter-cta">
@@ -139,7 +144,6 @@ export default function MassTimesPage() {
                     </div>
                 </section>
 
-                {/* Sacraments Section */}
                 <section className="section bg-light-full-width">
                     <div className="container">
                         <h2 className="section-title">Sacraments</h2>
@@ -159,7 +163,7 @@ export default function MassTimesPage() {
                         </div>
 
                         <div className="info-banner">
-                            <div className="info-banner-icon">ℹ️</div>
+                            <div className="info-banner-icon">i</div>
                             <div className="info-banner-content">
                                 <h3>Important Information</h3>
                                 <p>Each sacrament has specific preparation and requirements.</p>
@@ -168,7 +172,6 @@ export default function MassTimesPage() {
                     </div>
                 </section>
 
-                {/* Other Services Section */}
                 <section className="section">
                     <h2 className="section-title">Other Liturgical Services</h2>
 

@@ -1,18 +1,17 @@
-import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
 import './AboutPage.css'
 
 const values = [
-    { icon: '⛪', title: 'Faith', desc: 'Rooted in Catholic tradition and guided by the teachings of Christ' },
-    { icon: '👥', title: 'Community', desc: 'A welcoming family united in worship and service' },
-    { icon: '♡', title: 'Service', desc: 'Committed to serving those in need with compassion' },
-    { icon: '📖', title: 'Formation', desc: 'Growing in faith through learning and spiritual development' },
+    { icon: 'F', title: 'Faith', desc: 'Rooted in Catholic worship, prayer, and the sacraments at the heart of parish life.' },
+    { icon: 'C', title: 'Community', desc: 'A welcoming Cathedral parish made up of families and individuals from many backgrounds and nations.' },
+    { icon: 'S', title: 'Service', desc: 'Committed to pastoral care, home visits, safeguarding, volunteering, and support for those in need.' },
+    { icon: 'G', title: 'Growth', desc: 'Growing in faith through sacramental preparation, RCIA, prayer groups, schools, and parish learning.' },
 ]
 
 const staff = [
-    { role: 'Bishop of Wrexham', name: 'Most Rev. Peter Brignall', title: 'Diocesan Bishop' },
-    { role: 'Cathedral Dean', name: 'Very Rev. James Smith', title: 'Parish Priest' },
-    { role: 'Associate Priest', name: 'Rev. Michael Jones', title: 'Assistant Priest' },
+    { role: 'Bishop of Wrexham', name: 'Bishop Peter Brignall', title: 'Diocesan Bishop' },
+    { role: 'Cathedral Dean', name: 'Fr Nicolas Enzama', title: 'Cathedral Dean and Parish Priest' },
+    { role: 'Permanent Deacons', name: 'Michael Schoonjans and Steve Davies', title: 'Serving Cathedral parish life and ministry' },
 ]
 
 export default function AboutPage() {
@@ -20,22 +19,21 @@ export default function AboutPage() {
         <div>
             <PageHero
                 title="About St Mary's Cathedral"
-                subtitle="Mother Church of the Diocese of Wrexham"
+                subtitle="Mother church of the Diocese of Wrexham and home to a welcoming parish community"
             />
 
-            {/* History */}
             <section className="section">
                 <div className="container about-history">
                     <div className="history-text">
                         <h2 className="about-heading">Our History</h2>
                         <p>
-                            St Mary's Cathedral has been the spiritual heart of Catholic life in North Wales for over 150 years. Built in 1857, the cathedral stands as a testament to the faith and dedication of generations of Catholics in the Wrexham area.
+                            After the Reformation, Catholics in Wrexham continued to practise their faith in difficult circumstances, often gathering for Mass in private homes and hidden chapels. Saint Richard Gwyn, the local schoolmaster and martyr, remains one of the great witnesses from that period.
                         </p>
                         <p>
-                            As the Mother Church of the Diocese of Wrexham, established in 1987, St Mary's holds a special place in the life of the Catholic community across North Wales. The cathedral serves not only as a place of worship but also as a center for diocesan celebrations and important Church events.
+                            As legal restrictions eased, Saint David's Chapel was built in 1828, but the growing Catholic population soon required a larger church. In 1856 Richard Thompson commissioned the present church on Regent Street in memory of his wife Ellen, and the building opened on 19 November 1857.
                         </p>
                         <p>
-                            Throughout its history, the cathedral has been lovingly maintained and enhanced by successive generations. The beautiful architecture, stained glass windows, and sacred art create a space that inspires prayer and devotion.
+                            Designed by Edward Welby Pugin in the Decorated Gothic style, the church later became the pro-cathedral of Menevia in 1907 and was elevated to cathedral status when the Diocese of Wrexham was created in 1987. Its stained glass, cloister, shrine of St Richard Gwyn, and memorials continue to tell the story of faith in North Wales.
                         </p>
                     </div>
                     <div className="history-image">
@@ -47,7 +45,6 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Values */}
             <section className="section" style={{ background: 'var(--off-white)' }}>
                 <div className="container">
                     <h2 className="section-title">Our Values</h2>
@@ -63,19 +60,18 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Diocese */}
             <section className="section">
                 <div className="container about-diocese">
                     <div className="diocese-text">
                         <h2 className="about-heading">Our Diocese</h2>
                         <p>
-                            The Diocese of Wrexham was established in 1987, covering the historic counties of Anglesey, Caernarfonshire, Denbighshire, Flintshire, Merionethshire, and Montgomeryshire in North Wales.
+                            The Diocese of Wrexham was created in 1987 and serves Catholic communities across North Wales. St Mary's Cathedral is its episcopal seat and the focal point for major diocesan liturgies and celebrations.
                         </p>
                         <p>
-                            St Mary's Cathedral serves as the seat of the Bishop of Wrexham and is the focal point for diocesan celebrations, ordinations, and major liturgical events.
+                            Cathedral life is shaped by clergy, deacons, religious sisters, schools, volunteers, and parish families. The community has been enriched over time by people from many national and cultural backgrounds, including Polish, Italian, Filipino, and other international communities.
                         </p>
                         <p>
-                            The diocese is home to a diverse Catholic community, serving English and Welsh-speaking Catholics as well as many ethnic communities who have made North Wales their home.
+                            Today the Cathedral continues to support worship, education, sacramental preparation, pastoral care, and outreach as part of the wider life of the Diocese of Wrexham.
                         </p>
                     </div>
                     <div className="diocese-image">
@@ -87,14 +83,13 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Staff */}
             <section className="section" style={{ background: 'var(--off-white)' }}>
                 <div className="container">
-                    <h2 className="section-title">Cathedral Staff</h2>
+                    <h2 className="section-title">Cathedral Leadership</h2>
                     <div className="grid-3" style={{ marginTop: '40px' }}>
                         {staff.map(s => (
                             <div key={s.role} className="card staff-card">
-                                <div className="staff-avatar">👤</div>
+                                <div className="staff-avatar">SM</div>
                                 <h3 className="staff-role">{s.role}</h3>
                                 <p className="staff-name">{s.name}</p>
                                 <p className="staff-title">{s.title}</p>
@@ -104,12 +99,11 @@ export default function AboutPage() {
                 </div>
             </section>
 
-            {/* Mission */}
             <section className="mission-banner">
                 <div className="container" style={{ textAlign: 'center' }}>
                     <h2 className="mission-title">Our Mission</h2>
                     <p className="mission-quote">
-                        "To be a vibrant Catholic community, centered on Christ and the Eucharist, welcoming all people to encounter God's love, grow in faith, and serve one another with joy and compassion."
+                        "To be a welcoming Cathedral parish, centred on Christ and the Eucharist, helping people grow in faith, prayer, service, and fellowship."
                     </p>
                 </div>
             </section>

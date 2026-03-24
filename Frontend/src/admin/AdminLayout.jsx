@@ -7,6 +7,7 @@ const navItems = [
   { to: '/dashboard/events', label: 'Events', meta: 'Schedule and publish events' },
   { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times' },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records' },
+  { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
 ]
 
 export default function AdminLayout() {

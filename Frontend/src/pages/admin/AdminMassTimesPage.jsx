@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import FeedbackDialog from '../../components/FeedbackDialog'
 import { createMassTime, deleteMassTime, getMassTime, listMassTimes, listMassTimesByDay, updateMassTime } from '../../lib/admin'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -29,19 +30,6 @@ function FieldError({ errors, name }) {
   return <p className="admin-field-error">{errors[name][0]}</p>
 }
 
-function Notice({ notice, onDismiss }) {
-  if (!notice.message) {
-    return null
-  }
-
-  return (
-    <div className={`admin-notice ${notice.type}`}>
-      <span>{notice.message}</span>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss notification">x</button>
-    </div>
-  )
-}
-
 export default function AdminMassTimesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [massTimes, setMassTimes] = useState([])
@@ -50,7 +38,13 @@ export default function AdminMassTimesPage() {
   const [selectedMassTimeId, setSelectedMassTimeId] = useState(null)
   const [massTimeForm, setMassTimeForm] = useState(emptyMassTimeForm)
   const [massTimeErrors, setMassTimeErrors] = useState({})
-  const [notice, setNotice] = useState({ type: '', message: '' })
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    tone: 'neutral',
+    title: '',
+    message: '',
+  })
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [isSavingMassTime, setIsSavingMassTime] = useState(false)
   const [isLoadingMassTimeEditor, setIsLoadingMassTimeEditor] = useState(false)
 
@@ -112,8 +106,12 @@ export default function AdminMassTimesPage() {
     }
   }, [massTimeForm.day, massTimeForm.location, selectedMassTimeId])
 
-  function dismissNotice() {
-    setNotice({ type: '', message: '' })
+  function closeDialog() {
+    setDialogState(current => ({ ...current, open: false }))
+  }
+
+  function openDialog(tone, title, message) {
+    setDialogState({ open: true, tone, title, message })
   }
 
   async function refreshMassTimes(page = massTimeMeta.current_page || 1) {
@@ -130,7 +128,6 @@ export default function AdminMassTimesPage() {
 
   async function editMassTime(id) {
     setIsLoadingMassTimeEditor(true)
-    dismissNotice()
 
     try {
       const payload = await getMassTime(id)
@@ -148,7 +145,7 @@ export default function AdminMassTimesPage() {
       setMassTimeErrors({})
       setSearchParams({ edit: String(id) })
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to load the selected Mass time.' })
+      openDialog('error', 'Unable to load Mass time', error.message || 'The selected Mass time could not be opened.')
     } finally {
       setIsLoadingMassTimeEditor(false)
     }
@@ -164,7 +161,6 @@ export default function AdminMassTimesPage() {
   async function submitMassTime(event) {
     event.preventDefault()
     setIsSavingMassTime(true)
-    dismissNotice()
 
     try {
       const payload = selectedMassTimeId
@@ -172,27 +168,17 @@ export default function AdminMassTimesPage() {
         : await createMassTime(massTimeForm)
 
       await refreshMassTimes()
-      setNotice({ type: 'success', message: payload.message || 'Mass time saved successfully.' })
-
-      if (!selectedMassTimeId && payload.mass_time?.id) {
-        setSelectedMassTimeId(payload.mass_time.id)
-        setSearchParams({ edit: String(payload.mass_time.id) })
-      }
+      startNewMassTime()
+      openDialog('success', 'Mass time saved successfully', payload.message || 'The Mass time has been saved and the form has been cleared.')
     } catch (error) {
       setMassTimeErrors(error.errors || {})
-      setNotice({ type: 'error', message: error.message || 'Unable to save the Mass time.' })
+      openDialog('error', 'Unable to save Mass time', error.message || 'Please review the Mass time details and try again.')
     } finally {
       setIsSavingMassTime(false)
     }
   }
 
   async function removeMassTime(id) {
-    if (!window.confirm('Delete this Mass time?')) {
-      return
-    }
-
-    dismissNotice()
-
     try {
       const payload = await deleteMassTime(id)
       await refreshMassTimes()
@@ -201,17 +187,17 @@ export default function AdminMassTimesPage() {
         startNewMassTime()
       }
 
-      setNotice({ type: 'success', message: payload.message || 'Mass time deleted successfully.' })
+      openDialog('success', 'Mass time deleted successfully', payload.message || 'The Mass time has been removed.')
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to delete the Mass time.' })
+      openDialog('error', 'Unable to delete Mass time', error.message || 'The Mass time could not be deleted at this time.')
+    } finally {
+      setConfirmDeleteId(null)
     }
   }
 
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
-        <Notice notice={notice} onDismiss={dismissNotice} />
-
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
@@ -234,7 +220,7 @@ export default function AdminMassTimesPage() {
                 </div>
                 <div className="admin-row-actions">
                   <button type="button" onClick={() => editMassTime(item.id)}>Edit</button>
-                  <button type="button" className="danger" onClick={() => removeMassTime(item.id)}>Delete</button>
+                  <button type="button" className="danger" onClick={() => setConfirmDeleteId(item.id)}>Delete</button>
                 </div>
               </div>
             ))}
@@ -323,6 +309,25 @@ export default function AdminMassTimesPage() {
           </div>
         </form>
       </article>
+      <FeedbackDialog
+        open={dialogState.open}
+        tone={dialogState.tone}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel="Close"
+        onClose={closeDialog}
+      />
+      <FeedbackDialog
+        open={confirmDeleteId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this Mass time?"
+        message="This action will permanently remove the selected Mass time from the timetable."
+        confirmLabel="Delete Mass Time"
+        cancelLabel="Keep Mass Time"
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => removeMassTime(confirmDeleteId)}
+      />
     </div>
   )
 }

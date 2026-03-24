@@ -35,6 +35,7 @@ import AdminOverviewPage from './pages/admin/AdminOverviewPage'
 import AdminEventsPage from './pages/admin/AdminEventsPage'
 import AdminMassTimesPage from './pages/admin/AdminMassTimesPage'
 import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage'
+import AdminContactMessagesPage from './pages/admin/AdminContactMessagesPage'
 
 function AppContent() {
   const location = useLocation()
@@ -64,6 +65,7 @@ function AppContent() {
             <Route path="events" element={<AdminEventsPage />} />
             <Route path="mass-times" element={<AdminMassTimesPage />} />
             <Route path="registrations" element={<AdminRegistrationsPage />} />
+            <Route path="contact-messages" element={<AdminContactMessagesPage />} />
           </Route>
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />

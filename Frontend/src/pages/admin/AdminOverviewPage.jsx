@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listEvents, listMassTimes, listRegistrations } from '../../lib/admin'
+import { listContactMessages, listEvents, listMassTimes, listRegistrations } from '../../lib/admin'
 
 function formatDate(value) {
   if (!value) {
@@ -36,15 +36,18 @@ export default function AdminOverviewPage() {
   const [massTimeMeta, setMassTimeMeta] = useState({ total: 0 })
   const [registrations, setRegistrations] = useState([])
   const [registrationMeta, setRegistrationMeta] = useState({ total: 0 })
+  const [contactMessages, setContactMessages] = useState([])
+  const [contactMeta, setContactMeta] = useState({ total: 0 })
 
   useEffect(() => {
     let ignore = false
 
     async function loadData() {
-      const [eventPayload, massPayload, registrationPayload] = await Promise.all([
+      const [eventPayload, massPayload, registrationPayload, contactPayload] = await Promise.all([
         listEvents(),
         listMassTimes(1),
         listRegistrations(1),
+        listContactMessages(1),
       ])
 
       if (ignore) {
@@ -56,6 +59,8 @@ export default function AdminOverviewPage() {
       setMassTimeMeta(massPayload.meta || { total: 0 })
       setRegistrations(registrationPayload.registrations || [])
       setRegistrationMeta(registrationPayload.meta || { total: 0 })
+      setContactMessages(contactPayload.messages || [])
+      setContactMeta(contactPayload.meta || { total: 0 })
     }
 
     loadData()
@@ -85,6 +90,11 @@ export default function AdminOverviewPage() {
           <span>Registrations</span>
           <strong>{registrationMeta.total || 0}</strong>
           <small>Parish records available for review</small>
+        </article>
+        <article className="admin-surface admin-stat-card">
+          <span>Contact</span>
+          <strong>{contactMeta.total || 0}</strong>
+          <small>Messages received through the website</small>
         </article>
       </div>
 
@@ -143,6 +153,25 @@ export default function AdminOverviewPage() {
               </Link>
             ))}
             {!registrations.length ? <p className="admin-empty">No registrations available yet.</p> : null}
+          </div>
+        </article>
+
+        <article className="admin-surface">
+          <div className="admin-section-head">
+            <div>
+              <h2>Recent Enquiries</h2>
+              <p>Open recent messages from the Contact Us page.</p>
+            </div>
+            <Link className="btn-outline" to="/dashboard/contact-messages">Open Contact</Link>
+          </div>
+          <div className="admin-list">
+            {contactMessages.slice(0, 4).map(item => (
+              <Link key={item.id} className="admin-list-row" to={`/dashboard/contact-messages?message=${item.id}`}>
+                <strong>{item.subject}</strong>
+                <span>{item.name} • {item.email}</span>
+              </Link>
+            ))}
+            {!contactMessages.length ? <p className="admin-empty">No contact messages available yet.</p> : null}
           </div>
         </article>
       </div>

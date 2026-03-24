@@ -1,53 +1,52 @@
-import { Link } from 'react-router-dom'
 import { ParishHero, ParishIntro, ParishInfoCards, ParishCTA } from '../components/parish/ParishSections'
 import './DiocesePage.css'
 
 export default function DiocesePage() {
     const resourceCards = [
         {
-            icon: '📰',
+            icon: 'DN',
             title: 'Diocesan News',
-            content: 'Stay updated with the latest announcements, events, and news from across the Diocese of Wrexham.',
-            link: '#'
+            content: 'Follow diocesan news, pilgrimages, parish updates, and wider Church announcements through Cathedral and diocesan communications.',
+            link: '/news-events'
         },
         {
-            icon: '📝',
-            title: 'Pastoral Letters',
-            content: 'Read official guidance and reflections shared by the Bishop with the faithful of the diocese.',
-            link: '#'
+            icon: 'PL',
+            title: 'Pastoral Leadership',
+            content: 'Learn more about the bishop, Cathedral clergy, deacons, and the pastoral mission that serves communities across North Wales.',
+            link: '/about'
         },
         {
-            icon: '🎓',
+            icon: 'CE',
             title: 'Catholic Education',
-            content: 'Information regarding Catholic schools, religious education, and lifelong faith formation ministries.',
-            link: '#'
+            content: 'St Marys Catholic Primary School and St Josephs Catholic and Anglican High School are part of the wider faith life of the diocese.',
+            link: '/links'
         },
         {
-            icon: '🛡️',
+            icon: 'SG',
             title: 'Safeguarding',
-            content: 'Our commitment to the safety and well-being of all children and vulnerable adults in our care.',
+            content: 'Safeguarding is everyones business, and the Cathedral is committed to providing a safe environment for all.',
             link: '/safeguarding'
         }
     ]
 
     const parishDirectoryCards = [
         {
-            icon: '📍',
-            title: 'Find Nearby Parishes',
-            content: 'Locate other Catholic parishes and churches within the Diocese of Wrexham.',
-            link: '#'
+            icon: 'CP',
+            title: 'Cathedral Parish',
+            content: 'St Marys Cathedral Parish includes the Cathedral in Wrexham and the Church of the Holy Family in Coedpoeth.',
+            link: '/parish'
         },
         {
-            icon: '📂',
-            title: 'Deanery Information',
-            content: 'Explore the different deaneries that make up our diocesan structure.',
-            link: '#'
+            icon: 'PC',
+            title: 'Parish Pastoral Council',
+            content: 'The PPC supports building, finance, formation, pastoral care, communications, fundraising, community cohesion, and youth ministry.',
+            link: '/parish-council'
         },
         {
-            icon: '📖',
-            title: 'Parish Directory',
-            content: 'A comprehensive list of parishes, clergy contact information, and Mass times.',
-            link: '#'
+            icon: 'ML',
+            title: 'Mass And Parish Life',
+            content: 'Mass times, prayer groups, sacramental preparation, and parish activities root diocesan life in worship and service.',
+            link: '/mass-times'
         }
     ]
 
@@ -55,34 +54,33 @@ export default function DiocesePage() {
         <div className="diocese-page">
             <ParishHero
                 title="Diocese of Wrexham"
-                subtitle="Information, resources, and news from the Catholic Diocese of Wrexham."
+                subtitle="Information, resources, and pastoral life from the Catholic Diocese of Wrexham."
                 image="https://images.unsplash.com/photo-1548625313-0404975d49bb?q=80&w=1600"
                 breadcrumb="Diocese"
             />
 
             <ParishIntro
                 title="About the Diocese"
-                text="The Diocese of Wrexham serves Catholic communities across North Wales, covering the counties of Wrexham, Flintshire, Denbighshire, Conwy, Gwynedd, and Anglesey. As the Mother Church of the Diocese, St Mary's Cathedral stands as a symbol of unity and faith for all our parishioners. The Diocese supports our numerous parishes, clergy, Catholic schools, and various ministries, providing essential pastoral care, guidance, and spiritual leadership to thousands of faithful across the region."
+                text="The Diocese of Wrexham serves Catholic communities across North Wales. St Mary's Cathedral is the mother church of the diocese and the episcopal seat of Bishop Peter Brignall. Cathedral life is supported by Fr Nicolas Enzama, Deacons Michael Schoonjans and Steve Davies, the Sisters of the Holy Family Convent, and the wider parish community."
             />
 
-            {/* Bishop Section */}
             <section className="bishop-section">
                 <div className="container bishop-container">
                     <div className="bishop-card">
-                        <div className="bishop-image-placeholder">👤</div>
-                        <h3 className="bishop-name">The Bishop of Wrexham</h3>
-                        <div className="bishop-title">Spiritual Shepherd</div>
+                        <div className="bishop-image-placeholder">BP</div>
+                        <h3 className="bishop-name">Bishop Peter Brignall</h3>
+                        <div className="bishop-title">Bishop of Wrexham</div>
                     </div>
                     <div className="bishop-content">
-                        <h2>Bishop of Wrexham</h2>
+                        <h2>Diocesan Leadership</h2>
                         <p>
-                            The Bishop yields spiritual leadership and pastoral care for the entire Diocese. His role is central to the life of the Church in North Wales, providing a vital link to the wider Catholic community and the Holy See.
+                            The bishop provides spiritual leadership and pastoral care for the whole Diocese of Wrexham. At Cathedral level, that leadership is lived out with clergy, deacons, sisters, schools, volunteers, and parish groups serving communities across North Wales.
                         </p>
                         <ul className="bishop-list">
-                            <li>Providing spiritual leadership and guidance</li>
-                            <li>Offering pastoral care for clergy and the faithful</li>
-                            <li>Supporting diocesan schools and ministries</li>
-                            <li>Leading major diocesan initiatives and celebrations</li>
+                            <li>Leading diocesan worship, celebrations, and pastoral initiatives</li>
+                            <li>Supporting clergy, religious, schools, and parish communities</li>
+                            <li>Encouraging safeguarding, formation, and Catholic witness</li>
+                            <li>Working with the Cathedral community as the mother church of the diocese</li>
                         </ul>
                     </div>
                 </div>
@@ -91,22 +89,22 @@ export default function DiocesePage() {
             <section className="section">
                 <div className="container">
                     <h2 className="section-title">Diocesan Resources</h2>
-                    <p className="section-subtitle">Access important information and official documents</p>
+                    <p className="section-subtitle">Access important information, links, and key areas of diocesan life</p>
                     <ParishInfoCards cards={resourceCards} columns={2} />
                 </div>
             </section>
 
             <section className="section" style={{ backgroundColor: '#f8f9fa' }}>
                 <div className="container">
-                    <h2 className="section-title">Parishes in the Diocese</h2>
-                    <p className="section-subtitle">The Diocese of Wrexham encompasses a diverse range of parishes across North Wales</p>
+                    <h2 className="section-title">Parish And Community Life</h2>
+                    <p className="section-subtitle">Explore some of the ways Cathedral parish life supports the wider diocese</p>
                     <ParishInfoCards cards={parishDirectoryCards} columns={3} />
                 </div>
             </section>
 
             <ParishCTA
                 title="Stay Connected with the Diocese"
-                description="For more detailed information, official diocesan news, and to keep informed about pastoral letters and important announcements, please visit the official website or contact us."
+                description="For more detailed information, diocesan news, and key parish updates, please explore the Cathedral website or contact the parish office."
                 buttons={[
                     { text: 'Visit Diocese Website', link: 'https://www.wrexhamdiocese.org.uk/', primary: true },
                     { text: 'Contact Parish Office', link: '/contact', primary: false }

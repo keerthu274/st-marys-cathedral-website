@@ -134,7 +134,7 @@
 
 .admin-overview-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
 }
 
@@ -218,6 +218,10 @@
   border-color: rgba(30, 58, 95, 0.24);
   box-shadow: 0 16px 28px rgba(17, 35, 62, 0.12);
   background: linear-gradient(180deg, #ffffff, #eef4fb);
+}
+
+.admin-row-stack {
+  grid-template-columns: 1fr;
 }
 
 .admin-row strong,
@@ -380,6 +384,15 @@
 .admin-detail-block h3 {
   margin-bottom: 10px;
   color: var(--navy);
+}
+
+.admin-detail-block-full {
+  grid-column: 1 / -1;
+}
+
+.admin-message-copy {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .admin-detail-block p + p {

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
+import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
+import { getBackendUrl } from '../lib/auth'
 import './ContactPage.css'
 
 export default function ContactPage() {
     const [searchParams] = useSearchParams()
-    
-    // Contact Form State
+
     const [contactForm, setContactForm] = useState({
         name: '',
         email: '',
@@ -15,14 +16,8 @@ export default function ContactPage() {
         isMember: 'yes',
         message: ''
     })
-
-    // ✅ added loading state
     const [loading, setLoading] = useState(false)
-
-    // ✅ added success message state
-    const [success, setSuccess] = useState('')
-
-    // ✅ added error message state
+    const [successDialogOpen, setSuccessDialogOpen] = useState(false)
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -34,17 +29,16 @@ export default function ContactPage() {
     }, [searchParams])
 
     const handleContactChange = e => setContactForm({ ...contactForm, [e.target.name]: e.target.value })
-    
-    // ✅ updated submit function to connect API
+
     const handleContactSubmit = async (e) => {
         e.preventDefault()
 
-        setLoading(true) // start loading
-        setSuccess('') // clear old success
-        setError('') // clear old error
+        setLoading(true)
+        setSuccessDialogOpen(false)
+        setError('')
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/v1/contact', {
+            const response = await fetch(getBackendUrl('/api/v1/contact'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -58,51 +52,45 @@ export default function ContactPage() {
                 throw new Error(data.message || 'Something went wrong')
             }
 
-            // ✅ success message
-            setSuccess('Message sent successfully!')
-
-            // ✅ reset form after success
             setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
-
+            setSuccessDialogOpen(true)
         } catch (err) {
-            // ✅ show error message
             setError(err.message)
         } finally {
-            setLoading(false) // stop loading
+            setLoading(false)
         }
     }
 
     return (
         <div className="contact-page-container">
-            <PageHero 
+            <PageHero
                 title="Contact Us"
                 subtitle="We'd love to hear from you. Get in touch with our parish team."
                 centered={true}
                 image="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=1600"
             />
 
-            {/* Tier 1: Top Section */}
             <section className="contact-top-section">
                 <div className="container">
                     <div className="contact-hero-grid">
                         <div className="contact-map-wrapper">
-                            <iframe 
+                            <iframe
                                 title="Cathedral Location"
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2402.0460492866634!2d-2.9964526841753!3d53.04566497991732!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487ad39f9b5c3b5d%3A0x8e8e8e8e8e8e8e8e!2sSt%20Mary&#39;s%20Cathedral%2C%20Wrexham!5e0!3m2!1sen!2suk!4v1620000000000!5m2!1sen!2suk" 
-                                width="100%" 
-                                height="100%" 
-                                style={{ border: 0 }} 
-                                allowFullScreen="" 
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2402.0460492866634!2d-2.9964526841753!3d53.04566497991732!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487ad39f9b5c3b5d%3A0x8e8e8e8e8e8e8e8e!2sSt%20Mary&#39;s%20Cathedral%2C%20Wrexham!5e0!3m2!1sen!2suk!4v1620000000000!5m2!1sen!2suk"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen=""
                                 loading="lazy"
                             ></iframe>
                         </div>
                         <div className="contact-intro-content">
                             <h2>FIND US</h2>
                             <p>
-                                Thank you for your interest in St Mary's Cathedral. Feel free to contact us via the form below or the contact information provided.
+                                Thank you for your interest in St Mary's Cathedral. Please use the form below or the parish office contact details for enquiries about worship, parish life, sacramental preparation, or pastoral support.
                             </p>
                             <p>
-                                St Mary's Cathedral is a vibrant community that desires to help people discover God and grow in their relationship with Him. We strive to show Christ to the people of our community and beyond through loving them, serving them, and walking together.
+                                St Mary's Cathedral Parish includes the Cathedral in Wrexham and the Church of the Holy Family in Coedpoeth. We are always happy to help parishioners, visitors, and those exploring the Catholic faith.
                             </p>
                             <p>
                                 To learn more about St Mary's, please <Link to="/about" className="click-here-link">click here</Link>.
@@ -115,12 +103,9 @@ export default function ContactPage() {
                 </div>
             </section>
 
-            {/* Tier 2: Bottom Grid */}
             <section className="section">
                 <div className="container">
                     <div className="contact-bottom-grid two-columns">
-                        
-                        {/* Column 1: Address */}
                         <div className="contact-column">
                             <h3>Address</h3>
                             <div className="address-list">
@@ -130,7 +115,7 @@ export default function ContactPage() {
                                         <strong>Cathedral Location</strong><br/>
                                         St Mary's Cathedral<br/>
                                         Regent Street, Wrexham<br/>
-                                        LL11 1RR, United Kingdom
+                                        LL11 1RB, United Kingdom
                                     </div>
                                 </div>
                                 <div className="address-item">
@@ -139,17 +124,18 @@ export default function ContactPage() {
                                         <strong>Parish Office / Mailing</strong><br/>
                                         Cathedral House<br/>
                                         Regent Street, Wrexham<br/>
-                                        LL11 1RR
+                                        LL11 1RB
                                     </div>
                                 </div>
                                 <div className="address-item">
                                     <span className="address-icon">📞</span>
-                                    <div className="address-text">01978 262 826</div>
+                                    <div className="address-text">01978 263943</div>
                                 </div>
                                 <div className="address-item">
                                     <span className="address-icon">✉️</span>
                                     <div className="address-text">
                                         secretarywrexhamcathedral@rcdwxm.org.uk<br/>
+                                        Office hours: Tuesday, Wednesday and Friday, 9:30 AM - 2:30 PM<br/>
                                         To subscribe to our emails,<br/>
                                         please <Link to="/newsletter" className="click-here-link">click here</Link>.
                                     </div>
@@ -157,14 +143,9 @@ export default function ContactPage() {
                             </div>
                         </div>
 
-                        {/* Column 2: Contact Form */}
                         <div className="contact-column">
                             <h3>Contact Form</h3>
 
-                            {/* ✅ show success message */}
-                            {success && <div className="contact-feedback success">{success}</div>}
-
-                            {/* ✅ show error message */}
                             {error && <div className="contact-feedback error">{error}</div>}
 
                             <form className="contact-form-minimal" onSubmit={handleContactSubmit}>
@@ -203,19 +184,25 @@ export default function ContactPage() {
                                     <textarea name="message" value={contactForm.message} onChange={handleContactChange} rows={5} required></textarea>
                                 </div>
                                 <div className="form-actions-row">
-                                    <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => setContactForm({name:'', email:'', phone:'', subject:'', isMember:'yes', message:''})}>Clear</button>
-                                    
-                                    {/* ✅ disable button when loading */}
+                                    <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })}>Clear</button>
                                     <button type="submit" className="btn-minimal-dark" disabled={loading}>
                                         {loading ? 'Sending...' : 'Send Message'}
                                     </button>
                                 </div>
                             </form>
                         </div>
-
                     </div>
                 </div>
             </section>
+
+            <FeedbackDialog
+                open={successDialogOpen}
+                tone="success"
+                title="Message sent successfully"
+                message="Thank you for contacting St Mary's Cathedral. Your enquiry has been submitted successfully."
+                confirmLabel="Close"
+                onClose={() => setSuccessDialogOpen(false)}
+            />
         </div>
     )
 }

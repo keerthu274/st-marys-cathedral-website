@@ -14,7 +14,7 @@ const heroSlides = [
     image: publicAsset('image 01.jpg'),
     label: "WELCOME TO ST MARY'S",
     title: 'Loving God, Loving Others',
-    desc: 'A historic place of worship, community, and faith in the Diocese of Wrexham. Join our welcoming family as we grow together.',
+    desc: "Welcome to the Wrexham Diocese Cathedral Church of Our Lady of Sorrows, St Mary's Cathedral, home to St Mary's Cathedral Parish and the Church of the Holy Family, Coedpoeth.",
     btnText: 'View Mass Times',
     link: '/mass-times',
   },
@@ -47,31 +47,31 @@ const heroSlides = [
 const services = [
   {
     icon: churchIcon,
-    title: 'Church Ministry',
-    desc: 'Massa eget egestas purus viverra accumsan malesuada in nisl nisi scelerisque.',
+    title: 'Parish Registration',
+    desc: 'Register with the parish so we can stay connected, support your family, and welcome you fully into Cathedral life.',
   },
   {
     icon: bibleIcon,
-    title: 'Reading a Prayer',
-    desc: 'Venenatis urna cursus eget nunc scelerisque sapien viverra mauris in aliquam.',
+    title: 'Sacramental Life',
+    desc: 'Preparation is available for Baptism, First Holy Communion, Reconciliation, Confirmation, Marriage, and becoming a Catholic through RCIA.',
   },
   {
     icon: doveIcon,
-    title: 'Praise and Worship',
-    desc: 'Faucibus interdum posuere lorem ipsum dolor commodo sit amet consectetur.',
+    title: 'Prayer And Parish Life',
+    desc: 'Join prayer groups, youth ministry, volunteers, fundraising, and pastoral outreach that help our parish live and serve together.',
   },
 ]
 
 const news = [
   {
-    date: 'January 20, 2026',
-    title: 'Cathedral Building Project Update',
-    desc: 'We are pleased to share the latest progress on our restoration project. The roof repairs are now complete.',
+    date: 'Building Project',
+    title: 'Renovation Planning And Floor Repairs',
+    desc: 'The Diocese of Wrexham is progressing a 5-to-10-year renovation plan with priority work focused on heating renewal, asbestos removal, and a new cathedral floor.',
   },
   {
-    date: 'January 10, 2026',
-    title: 'Lenten Season Schedule',
-    desc: 'Join us for special services and activities throughout the Lenten season, including Stations of the Cross.',
+    date: 'Parish Life',
+    title: 'Youth Group And Community Activities',
+    desc: 'Our parish gathers for youth formation, prayer groups, social events, fundraising, and outreach that strengthen faith and friendship across the community.',
   },
 ]
 
@@ -156,7 +156,8 @@ export default function HomePage() {
 
   const groupedMassTimes = homeMassTimes
     .reduce((groups, item) => {
-      const existing = groups.find((group) => group.day === item.day)
+      const location = item.location || "St Mary's Cathedral"
+      const existing = groups.find((group) => group.day === item.day && group.location === location)
 
       if (existing) {
         existing.times.push(formatTime(item.start_time))
@@ -165,7 +166,7 @@ export default function HomePage() {
 
       groups.push({
         day: item.day,
-        location: item.location || "St Mary's Cathedral",
+        location,
         times: [formatTime(item.start_time)],
       })
 
@@ -261,9 +262,9 @@ export default function HomePage() {
           </div>
           <div className="about-text">
             <p className="section-label">ABOUT US</p>
-            <h2 className="section-title" style={{ textAlign: 'left' }}>A church that loves God and people</h2>
+            <h2 className="section-title" style={{ textAlign: 'left' }}>Welcome to our Cathedral parish family</h2>
             <p style={{ color: 'var(--text-mid)', marginBottom: '16px', lineHeight: '1.7' }}>
-              We are people of deep faith who are brought to our Savior. We are a family. People who are passionate to see the kingdom of God advance. We love people. We are people who are open to growth as we strive to always honor God and humbly view other people as better than ourselves.
+              St Mary's Cathedral is the mother church of the Diocese of Wrexham and the home of a welcoming parish community. Alongside the Church of the Holy Family in Coedpoeth, we serve parishioners from many backgrounds through worship, sacramental life, prayer, service, and practical support.
             </p>
             <Link to="/about" className="btn-gold">MORE ABOUT US</Link>
           </div>
@@ -296,21 +297,46 @@ export default function HomePage() {
             {groupedMassTimes.length ? (
               groupedMassTimes.map((mass, index) => (
                 <div key={`${mass.day}-${index}`} className="mass-card">
-                  <div className="mass-icon">{index === 0 ? '🕐' : '📍'}</div>
-                  <div className="mass-day">{mass.day}</div>
-                  <div className="mass-sub">{mass.location}</div>
+                  <div className="mass-card-header">
+                    <div className={`mass-icon mass-icon-variant-${(index % 3) + 1}`}>
+                      <span className={`mass-clock mass-clock-${(index % 3) + 1}`} aria-hidden="true"></span>
+                    </div>
+                    <div className="mass-card-header-copy">
+                      <div className="mass-location">{mass.location}</div>
+                      <div className="mass-day">{mass.day}</div>
+                    </div>
+                    <div className="mass-count">{mass.times.length} time{mass.times.length > 1 ? 's' : ''}</div>
+                  </div>
+                  <div className="mass-sub">
+                    {mass.location === "St Mary's Cathedral"
+                      ? 'Cathedral schedule'
+                      : 'Community worship location'}
+                  </div>
+                  <div className="mass-section-label">Service Times</div>
                   <div className="mass-times-list">
                     {mass.times.map((time) => (
                       <span key={`${mass.day}-${time}`}>{time}</span>
                     ))}
                   </div>
+                  <div className="mass-card-footer">
+                    <span className="mass-footer-day">{mass.day}</span>
+                    <Link to="/mass-times" className="mass-highlight">See full schedule</Link>
+                  </div>
                 </div>
               ))
             ) : (
               <div className="mass-card">
-                <div className="mass-icon">🕐</div>
-                <div className="mass-day">Mass Times</div>
+                <div className="mass-card-header">
+                  <div className="mass-icon mass-icon-variant-1">
+                    <span className="mass-clock mass-clock-1" aria-hidden="true"></span>
+                  </div>
+                  <div className="mass-card-header-copy">
+                    <div className="mass-location">Mass Times</div>
+                    <div className="mass-day">Latest schedule updates</div>
+                  </div>
+                </div>
                 <div className="mass-sub">Published schedule updates will appear here automatically.</div>
+                <div className="mass-section-label">Schedule</div>
                 <div className="mass-times-list">
                   <Link to="/mass-times" className="mass-highlight" style={{ textDecoration: 'underline', cursor: 'pointer' }}>
                     See Schedule
@@ -383,7 +409,7 @@ export default function HomePage() {
             <div className="newsletter-icon">📰</div>
             <h3 className="newsletter-title">Weekly Newsletter</h3>
             <p className="newsletter-desc">
-              Stay informed about Mass times, events, and parish news delivered to your inbox each week.
+              Keep up with weekly Mass updates, parish notices, diocesan news, social events, and seasonal services through the parish newsletter and the Clarion diocesan newsletter.
             </p>
             <button className="btn-gold" style={{ width: '100%', justifyContent: 'center', marginBottom: '12px' }}>
               Subscribe
@@ -398,9 +424,9 @@ export default function HomePage() {
       <section className="donate-cta">
         <div className="container" style={{ textAlign: 'center' }}>
           <div className="donate-heart">♡</div>
-          <h2 className="donate-title">Support Our Cathedral</h2>
+          <h2 className="donate-title">Supporting The Cathedral</h2>
           <p className="donate-desc">
-            Your generous donations help us maintain our historic cathedral, support our ministries, and serve our community. Every contribution, large or small, makes a meaningful difference.
+            The Cathedral parish depends on parishioners, visitors, and grant funders to support daily ministry, ongoing maintenance, and future development projects. Every contribution helps sustain parish life.
           </p>
           <Link to="/donate" className="btn-gold">♡ Donate to Support the Cathedral</Link>
         </div>
@@ -414,17 +440,17 @@ export default function HomePage() {
             <div className="visit-card">
               <div className="visit-card-icon">📍</div>
               <h4>Address</h4>
-              <p>St Mary's Cathedral<br />Regent Street<br />Wrexham, LL11 1RR</p>
+              <p>St Mary's Cathedral<br />Regent Street<br />Wrexham, LL11 1RB</p>
             </div>
             <div className="visit-card">
               <div className="visit-card-icon">🕐</div>
               <h4>Office Hours</h4>
-              <p>Mon - Fri: 9:00 AM - 4:00 PM<br />Saturday: 9:00 AM - 12:00 PM<br />Sunday: Closed</p>
+              <p>Tuesday, Wednesday and Friday<br />9:30 AM - 2:30 PM<br />Please email ahead where possible</p>
             </div>
             <div className="visit-card">
               <div className="visit-card-icon">📞</div>
               <h4>Contact</h4>
-              <p>01978 262 826<br />info@stmaryscathedral.org.uk</p>
+              <p>01978 263943<br />secretarywrexhamcathedral@rcdwxm.org.uk</p>
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: '28px' }}>

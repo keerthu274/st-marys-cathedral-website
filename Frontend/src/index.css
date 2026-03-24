@@ -131,6 +131,15 @@ button {
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled,
+.btn-gold:disabled,
+.btn-outline:disabled,
+.btn-outline-white:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
 .btn-gold {
   display: inline-flex;
   align-items: center;

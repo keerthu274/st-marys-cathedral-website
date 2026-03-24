@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteRegistration, getRegistration, listRegistrations, updateRegistration } from '../../lib/admin'
 
 function formatDate(value) {
@@ -33,19 +34,6 @@ function initialRegistrationForm(registration) {
   }
 }
 
-function Notice({ notice, onDismiss }) {
-  if (!notice.message) {
-    return null
-  }
-
-  return (
-    <div className={`admin-notice ${notice.type}`}>
-      <span>{notice.message}</span>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss notification">x</button>
-    </div>
-  )
-}
-
 export default function AdminRegistrationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [registrations, setRegistrations] = useState([])
@@ -56,7 +44,13 @@ export default function AdminRegistrationsPage() {
   const [isEditingRegistration, setIsEditingRegistration] = useState(false)
   const [isLoadingRegistration, setIsLoadingRegistration] = useState(false)
   const [isSavingRegistration, setIsSavingRegistration] = useState(false)
-  const [notice, setNotice] = useState({ type: '', message: '' })
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    tone: 'neutral',
+    title: '',
+    message: '',
+  })
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -115,7 +109,12 @@ export default function AdminRegistrationsPage() {
         }
       } catch (error) {
         if (!ignore) {
-          setNotice({ type: 'error', message: error.message || 'Unable to load the selected registration.' })
+          setDialogState({
+            open: true,
+            tone: 'error',
+            title: 'Unable to load registration',
+            message: error.message || 'The selected registration could not be opened.',
+          })
         }
       } finally {
         if (!ignore) {
@@ -131,8 +130,12 @@ export default function AdminRegistrationsPage() {
     }
   }, [selectedRegistrationId])
 
-  function dismissNotice() {
-    setNotice({ type: '', message: '' })
+  function closeDialog() {
+    setDialogState(current => ({ ...current, open: false }))
+  }
+
+  function openDialog(tone, title, message) {
+    setDialogState({ open: true, tone, title, message })
   }
 
   async function refreshRegistrations(page = registrationMeta.current_page || 1) {
@@ -191,7 +194,6 @@ export default function AdminRegistrationsPage() {
     }
 
     setIsSavingRegistration(true)
-    dismissNotice()
 
     const payload = {
       ...registrationForm,
@@ -204,35 +206,29 @@ export default function AdminRegistrationsPage() {
       setRegistrationForm(initialRegistrationForm(response.registration))
       setIsEditingRegistration(false)
       await refreshRegistrations()
-      setNotice({ type: 'success', message: response.message || 'Registration updated successfully.' })
+      openDialog('success', 'Registration updated successfully', response.message || 'The parish registration has been updated.')
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to update the registration.' })
+      openDialog('error', 'Unable to update registration', error.message || 'Please review the registration details and try again.')
     } finally {
       setIsSavingRegistration(false)
     }
   }
 
   async function removeRegistration(id) {
-    if (!window.confirm('Delete this parish registration?')) {
-      return
-    }
-
-    dismissNotice()
-
     try {
       const payload = await deleteRegistration(id)
       await refreshRegistrations()
-      setNotice({ type: 'success', message: payload.message || 'Registration deleted successfully.' })
+      openDialog('success', 'Registration deleted successfully', payload.message || 'The parish registration has been removed.')
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to delete the registration.' })
+      openDialog('error', 'Unable to delete registration', error.message || 'The registration could not be deleted at this time.')
+    } finally {
+      setConfirmDeleteId(null)
     }
   }
 
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
-        <Notice notice={notice} onDismiss={dismissNotice} />
-
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
@@ -288,7 +284,7 @@ export default function AdminRegistrationsPage() {
               <button className="btn-outline" type="button" onClick={() => setIsEditingRegistration(current => !current)}>
                 {isEditingRegistration ? 'Cancel Edit' : 'Edit'}
               </button>
-              <button className="btn-primary" type="button" onClick={() => removeRegistration(registrationDetail.id)}>
+              <button className="btn-primary" type="button" onClick={() => setConfirmDeleteId(registrationDetail.id)}>
                 Delete
               </button>
             </div>
@@ -425,6 +421,25 @@ export default function AdminRegistrationsPage() {
           </form>
         ) : null}
       </article>
+      <FeedbackDialog
+        open={dialogState.open}
+        tone={dialogState.tone}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel="Close"
+        onClose={closeDialog}
+      />
+      <FeedbackDialog
+        open={confirmDeleteId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this parish registration?"
+        message="This will permanently remove the parishioner record and its related details."
+        confirmLabel="Delete Registration"
+        cancelLabel="Keep Registration"
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => removeRegistration(confirmDeleteId)}
+      />
     </div>
   )
 }

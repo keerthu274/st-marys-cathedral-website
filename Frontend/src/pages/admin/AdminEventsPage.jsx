@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
 
 const emptyEventForm = {
@@ -51,19 +52,6 @@ function FieldError({ errors, name }) {
   return <p className="admin-field-error">{errors[name][0]}</p>
 }
 
-function Notice({ notice, onDismiss }) {
-  if (!notice.message) {
-    return null
-  }
-
-  return (
-    <div className={`admin-notice ${notice.type}`}>
-      <span>{notice.message}</span>
-      <button type="button" onClick={onDismiss} aria-label="Dismiss notification">x</button>
-    </div>
-  )
-}
-
 export default function AdminEventsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [events, setEvents] = useState([])
@@ -71,7 +59,13 @@ export default function AdminEventsPage() {
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [eventForm, setEventForm] = useState(emptyEventForm)
   const [eventErrors, setEventErrors] = useState({})
-  const [notice, setNotice] = useState({ type: '', message: '' })
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    tone: 'neutral',
+    title: '',
+    message: '',
+  })
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [isSavingEvent, setIsSavingEvent] = useState(false)
   const [isLoadingEventEditor, setIsLoadingEventEditor] = useState(false)
 
@@ -132,8 +126,12 @@ export default function AdminEventsPage() {
     }
   }, [eventForm.start_date, selectedEventId])
 
-  function dismissNotice() {
-    setNotice({ type: '', message: '' })
+  function closeDialog() {
+    setDialogState(current => ({ ...current, open: false }))
+  }
+
+  function openDialog(tone, title, message) {
+    setDialogState({ open: true, tone, title, message })
   }
 
   async function refreshEvents() {
@@ -163,7 +161,6 @@ export default function AdminEventsPage() {
 
   async function editEvent(id) {
     setIsLoadingEventEditor(true)
-    dismissNotice()
 
     try {
       const payload = await getEvent(id)
@@ -185,7 +182,7 @@ export default function AdminEventsPage() {
       setEventErrors({})
       setSearchParams({ edit: String(id) })
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to load the selected event.' })
+      openDialog('error', 'Unable to load event', error.message || 'The selected event could not be opened.')
     } finally {
       setIsLoadingEventEditor(false)
     }
@@ -201,7 +198,6 @@ export default function AdminEventsPage() {
   async function submitEvent(event) {
     event.preventDefault()
     setIsSavingEvent(true)
-    dismissNotice()
 
     try {
       const payload = selectedEventId
@@ -209,27 +205,17 @@ export default function AdminEventsPage() {
         : await createEvent(eventForm)
 
       await refreshEvents()
-      setNotice({ type: 'success', message: payload.message || 'Event saved successfully.' })
-
-      if (!selectedEventId && payload.event?.id) {
-        setSelectedEventId(payload.event.id)
-        setSearchParams({ edit: String(payload.event.id) })
-      }
+      startNewEvent()
+      openDialog('success', 'Event saved successfully', payload.message || 'The event details have been saved and the form has been cleared.')
     } catch (error) {
       setEventErrors(error.errors || {})
-      setNotice({ type: 'error', message: error.message || 'Unable to save the event.' })
+      openDialog('error', 'Unable to save event', error.message || 'Please review the event details and try again.')
     } finally {
       setIsSavingEvent(false)
     }
   }
 
   async function removeEvent(id) {
-    if (!window.confirm('Delete this event?')) {
-      return
-    }
-
-    dismissNotice()
-
     try {
       const payload = await deleteEvent(id)
       await refreshEvents()
@@ -238,17 +224,17 @@ export default function AdminEventsPage() {
         startNewEvent()
       }
 
-      setNotice({ type: 'success', message: payload.message || 'Event deleted successfully.' })
+      openDialog('success', 'Event deleted successfully', payload.message || 'The event has been removed from the schedule.')
     } catch (error) {
-      setNotice({ type: 'error', message: error.message || 'Unable to delete the event.' })
+      openDialog('error', 'Unable to delete event', error.message || 'The event could not be deleted at this time.')
+    } finally {
+      setConfirmDeleteId(null)
     }
   }
 
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
-        <Notice notice={notice} onDismiss={dismissNotice} />
-
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
@@ -271,7 +257,7 @@ export default function AdminEventsPage() {
                 </div>
                 <div className="admin-row-actions">
                   <button type="button" onClick={() => editEvent(item.id)}>Edit</button>
-                  <button type="button" className="danger" onClick={() => removeEvent(item.id)}>Delete</button>
+                  <button type="button" className="danger" onClick={() => setConfirmDeleteId(item.id)}>Delete</button>
                 </div>
               </div>
             ))}
@@ -376,6 +362,25 @@ export default function AdminEventsPage() {
           </div>
         </form>
       </article>
+      <FeedbackDialog
+        open={dialogState.open}
+        tone={dialogState.tone}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel="Close"
+        onClose={closeDialog}
+      />
+      <FeedbackDialog
+        open={confirmDeleteId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this event?"
+        message="This action will permanently remove the event from the admin panel and website listings."
+        confirmLabel="Delete Event"
+        cancelLabel="Keep Event"
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => removeEvent(confirmDeleteId)}
+      />
     </div>
   )
 }
