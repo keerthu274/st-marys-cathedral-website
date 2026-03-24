@@ -32,6 +32,7 @@ class ParishRegistration extends Model
         'address_line2',
         'city',
         'postcode',
+        'partner_name',
         'phone',
         'email',
         'partner_name',

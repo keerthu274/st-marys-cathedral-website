@@ -28,6 +28,11 @@
                         {{ __('Mass Times') }}
                     </x-nav-link>
 
+                    {{-- added: Parish Registrations link --}}
+                    <x-nav-link :href="route('admin.parish-registrations.index')" :active="request()->routeIs('admin.parish-registrations.*')">
+                        {{ __('Parish Registrations') }}
+                    </x-nav-link>
+
                 </div>
             </div>
 
@@ -96,6 +101,11 @@
             {{-- Mass Times link (Mobile) --}}
             <x-responsive-nav-link :href="route('admin.mass-times.index')" :active="request()->routeIs('admin.mass-times.*')">
                 {{ __('Mass Times') }}
+            </x-responsive-nav-link>
+
+            {{-- added: Parish Registrations link (Mobile) --}}
+            <x-responsive-nav-link :href="route('admin.parish-registrations.index')" :active="request()->routeIs('admin.parish-registrations.*')">
+                {{ __('Parish Registrations') }}
             </x-responsive-nav-link>
 
         </div>

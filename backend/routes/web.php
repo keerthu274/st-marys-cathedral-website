@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
+use App\Http\Controllers\Admin\ParishRegistrationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -21,20 +22,36 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
 
-    // Route to get events by selected date (used in create/edit preview box)
     Route::get('events/by-date', [EventController::class, 'byDate'])
-    ->name('events.by-date');
+        ->name('events.by-date');
 
-    // Events CRUD routes
     Route::resource('events', EventController::class);
 
-    // Mass Times CRUD routes
     Route::resource('mass-times', MassTimeController::class)
         ->except(['show']);
 
-    // Mass Times preview endpoint (used in create/edit preview box)
     Route::get('mass-times/by-day', [MassTimeController::class, 'byDay'])
         ->name('mass-times.by-day');
+
+    Route::get('parish-registrations', [ParishRegistrationController::class, 'index'])
+        ->name('parish-registrations.index');
+
+    Route::get('parish-registrations/{parishRegistration}', [ParishRegistrationController::class, 'show'])
+        ->name('parish-registrations.show');
+
+        // added: delete registration
+    Route::delete('/parish-registrations/{parishRegistration}', [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'destroy'])
+       ->name('parish-registrations.destroy');
+
+       // added: edit form
+    Route::get('/parish-registrations/{parishRegistration}/edit',
+        [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'edit'])
+        ->name('parish-registrations.edit');
+
+      // added: update
+    Route::put('/parish-registrations/{parishRegistration}',
+        [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'update'])
+        ->name('parish-registrations.update');
 });
 
 require __DIR__.'/auth.php';

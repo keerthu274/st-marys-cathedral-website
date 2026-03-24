@@ -74,7 +74,16 @@ class MassTimeController extends Controller
             ->when($day, fn($q) => $q->where('day', $day))
             ->when($location, fn($q) => $q->where('location', $location))
             ->orderBy('start_time')
-            ->get(['id', 'day', 'location', 'start_time', 'language']);
+            ->get(['id', 'day', 'location', 'start_time', 'language'])
+            ->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'day' => $m->day,
+                    'location' => $m->location,
+                    'start_time' => \Carbon\Carbon::parse($m->start_time)->format('H:i'),
+                    'language' => $m->language,
+                ];
+            });
 
         return response()->json($massTimes);
     }
