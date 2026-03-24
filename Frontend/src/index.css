@@ -253,6 +253,66 @@ button {
   gap: 8px;
 }
 
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.content-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 28px;
+}
+
+.content-card h3,
+.content-card h4 {
+  color: var(--navy);
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 12px;
+}
+
+.content-card p + p {
+  margin-top: 12px;
+}
+
+.content-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.bullet-list {
+  padding-left: 20px;
+  color: var(--text-mid);
+}
+
+.bullet-list li + li {
+  margin-top: 10px;
+}
+
+.contact-strip {
+  background: linear-gradient(135deg, var(--navy), var(--navy-light));
+  color: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+
+.notice-card {
+  border-left: 4px solid var(--gold);
+}
+
+.quote-panel {
+  background: var(--off-white);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  color: var(--navy);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  line-height: 1.6;
+}
+
 @media (max-width: 1440px) {
   .container {
     max-width: 1200px;
@@ -273,6 +333,10 @@ button {
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -282,7 +346,8 @@ button {
 
   .grid-2,
   .grid-3,
-  .grid-4 {
+  .grid-4,
+  .content-grid {
     grid-template-columns: 1fr;
   }
 

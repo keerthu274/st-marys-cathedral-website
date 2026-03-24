@@ -2,57 +2,29 @@ import { Link } from 'react-router-dom'
 import { ParishHero, ParishIntro, ParishInfoCards, ParishCTA, RelatedParishLinks } from '../components/parish/ParishSections'
 
 const fundraisingActivities = [
-    {
-        icon: '🎫',
-        title: 'Charity Events',
-        content: 'From parish fayres and concerts to trivia nights, our events bring the community together for a good cause.'
-    },
-    {
-        icon: '📢',
-        title: 'Community Appeals',
-        content: 'Targeted appeals for specific needs, such as the Cathedral Building Project or local poverty relief programs.'
-    },
-    {
-        icon: '🤲',
-        title: 'Donation Campaigns',
-        content: 'Regular giving programs that allow us to maintain our services and reach out to those in need throughout Wrexham.'
-    },
-    {
-        icon: '🌟',
-        title: 'Volunteer Support',
-        content: 'Fundraising isn\'t just about money—your time and skills in organizing and supporting events are invaluable.'
-    }
+    { icon: 'EV', title: 'Fundraising Events', content: 'Parish fundraising includes the Summer Garden Party, Christmas Fayre, Christmas Hamper Raffle, cake sales, concerts, exhibitions, and other social events.' },
+    { icon: 'ID', title: 'Committee And Parish Ideas', content: 'Parishioners are invited to join the fundraising committee, share ideas, or plan their own fundraising events.' },
+    { icon: 'EF', title: 'EasyFundraising', content: 'Online shopping through EasyFundraising can generate extra support for the Cathedral through participating retailers.' },
+    { icon: 'CG', title: 'Creative Giving', content: 'Other ideas in the parish material include standing orders, Gift Aid, legacies, hall hire, visitor donations, collections, and resale schemes.' },
 ]
 
 export default function FundraisingPage() {
     return (
         <div className="parish-page">
-            <ParishHero 
-                title="Fundraising"
-                subtitle="Supporting our parish mission and outreach together"
-                image="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=1600"
-                breadcrumb="Fundraising"
-            />
-            
-            <ParishIntro 
-                title="Building a Legacy of Care"
-                text="The mission of St Mary's Cathedral depends on the generosity and collaborative spirit of our parishioners. Every pound raised through our various initiatives helps us provide spiritual care, maintain our historic cathedral, and support the vulnerable in our wider community."
-            />
-
+            <ParishHero title="Fundraising" subtitle="Supporting our parish mission and outreach together" image="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?q=80&w=1600" breadcrumb="Fundraising" />
+            <ParishIntro title="Building a Legacy of Care" text="The mission of St Mary's Cathedral depends on the generosity and collaborative spirit of parishioners. Every pound raised helps support worship, community life, maintenance, and the future of this historic Cathedral site." />
             <ParishInfoCards cards={fundraisingActivities} columns={2} />
 
             <section className="section" style={{ background: '#fcfaf6', padding: '60px 0' }}>
                 <div className="container">
                     <div className="grid-2" style={{ alignItems: 'center', gap: '40px' }}>
                         <div>
-                            <h2 className="text-navy" style={{ fontFamily: 'Playfair Display', fontSize: '1.8rem', marginBottom: '20px' }}>How Your Funds are Used</h2>
-                            <p className="text-mid" style={{ marginBottom: '16px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                                We are committed to complete transparency in our financial management. Your contributions support:
-                            </p>
+                            <h2 className="text-navy" style={{ fontFamily: 'Playfair Display', fontSize: '1.8rem', marginBottom: '20px' }}>How Support Helps</h2>
+                            <p className="text-mid" style={{ marginBottom: '16px', lineHeight: '1.6', fontSize: '0.95rem' }}>Parish support strengthens both daily Cathedral life and long-term projects. Contributions help with:</p>
                             <ul style={{ listStyle: 'none', padding: 0 }}>
-                                {['Daily Parish Operations & Liturgy', 'Maintenance of Historic Cathedral Buildings', 'Cathedral Outreach & Food Support Programs', 'Youth & Family Formation Ministries'].map((item, i) => (
-                                    <li key={i} style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'center', fontWeight: 600, color: 'var(--navy)', fontSize: '0.9rem' }}>
-                                        <span style={{ color: 'var(--gold)' }}>✔</span> {item}
+                                {['Daily parish operations and liturgy', 'Maintenance of Cathedral buildings', 'Youth and family formation', 'Building project and future development'].map((item) => (
+                                    <li key={item} style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'center', fontWeight: 600, color: 'var(--navy)', fontSize: '0.9rem' }}>
+                                        <span style={{ color: 'var(--gold)' }}>✓</span> {item}
                                     </li>
                                 ))}
                             </ul>
@@ -66,15 +38,7 @@ export default function FundraisingPage() {
                 </div>
             </section>
 
-            <ParishCTA 
-                title="Get Involved in Fundraising"
-                description="Have an idea for an event or want to volunteer your time? We would love to hear from you."
-                buttons={[
-                    { text: 'Donate Now', link: '/donate', primary: true },
-                    { text: 'Get Involved', link: '/contact' }
-                ]}
-            />
-
+            <ParishCTA title="Get Involved in Fundraising" description="Have an idea for an event or want to volunteer your time? We would love to hear from you." buttons={[{ text: 'Donate Now', link: '/donate', primary: true }, { text: 'Get Involved', link: '/contact' }]} />
             <RelatedParishLinks current="Fundraising" />
         </div>
     )

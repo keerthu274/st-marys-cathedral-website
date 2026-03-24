@@ -1,71 +1,27 @@
 import { SacramentHero, SacramentIntro, SacramentInfoCards, SacramentSteps, SacramentCTA, RelatedSacraments } from '../components/sacraments/SacramentSections'
 
 const confirmationCards = [
-    {
-        title: 'Who Can Receive Confirmation',
-        content: 'Confirmation is for young people (usually Year 8 and above) and adults who have already been baptized and received their First Holy Communion.'
-    },
-    {
-        title: 'Preparation Classes',
-        content: 'Candidates must attend a series of preparation sessions designed to deepen their understanding of the faith and the gifts of the Holy Spirit.'
-    },
-    {
-        title: 'Requirements',
-        content: 'Candidates need a sponsor who is a practicing Catholic, at least 16 years old, and has themselves been confirmed.'
-    },
-    {
-        title: 'Registration Process',
-        content: 'Registration typically opens in the autumn. Keep an eye on the weekly newsletter for announcement of the next course.'
-    }
+    { title: 'Who Can Join', content: 'Confirmation is open to young people from school year 8 who are baptised Catholics and have already received Holy Communion.' },
+    { title: 'Parish Commitment', content: 'Families should be registered members of Cathedral parish and attending Mass regularly in the parish.' },
+    { title: 'Programme Timing', content: 'Preparation usually starts in October or November, with Confirmation celebrated around Pentecost in the following year.' },
+    { title: 'Registration', content: 'Registration is normally completed online from September each year, and candidates are expected to attend all sessions.' },
 ]
 
 const confirmationSteps = [
-    {
-        title: 'Register for Classes',
-        content: 'Complete the registration form when the enrolment period opens.'
-    },
-    {
-        title: 'Attend Preparation Sessions',
-        content: 'Participate fully in the scheduled sessions, workshops, and retreats.'
-    },
-    {
-        title: 'Participate in Parish Life',
-        content: 'Regular attendance at Sunday Mass is an essential part of the preparation journey.'
-    },
-    {
-        title: 'Receive the Sacrament',
-        content: 'The sacrament is usually conferred by the Bishop during a special celebration.'
-    }
+    { title: 'Register In September', content: 'Follow the parish registration process when enrolment opens.' },
+    { title: 'Attend Every Session', content: 'Candidates are expected to commit to the full programme of meetings and formation.' },
+    { title: 'Stay Rooted In Worship', content: 'Regular Mass attendance is part of preparation for receiving the sacrament.' },
+    { title: 'Celebrate Confirmation', content: 'The sacrament is usually planned for Pentecost Sunday in the following year.' },
 ]
 
 export default function ConfirmationPage() {
     return (
         <div className="sacrament-page">
-            <SacramentHero 
-                title="Confirmation"
-                subtitle="Strengthening faith through the Holy Spirit"
-                image="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1600"
-            />
-            
-            <SacramentIntro 
-                title="Sealed with the Gift of the Spirit"
-                text="Confirmation perfects Baptismal grace; it is the sacrament which gives the Holy Spirit in order to root us more deeply in the divine filiation, incorporate us more firmly into Christ, strengthen our bond with the Church, associate us more closely with her mission, and help us bear witness to the Christian faith in words accompanied by deeds."
-            />
-
+            <SacramentHero title="Confirmation" subtitle="Preparation for young people receiving the gifts of the Holy Spirit" image="https://images.unsplash.com/photo-1544427920-c49ccfb85579?q=80&w=1600" />
+            <SacramentIntro title="Strengthened By The Spirit" text="Confirmation deepens baptismal grace and strengthens a young person's life in Christ and in the Church. Cathedral parish prepares candidates through formation, prayer, and regular participation in parish worship." />
             <SacramentInfoCards cards={confirmationCards} />
-
-            <SacramentSteps 
-                title="The Path to Confirmation"
-                steps={confirmationSteps}
-            />
-
-            <SacramentCTA 
-                title="Ready to confirm your faith?"
-                description="If you or your child would like to join the next Confirmation preparation programme, please register your interest."
-                buttonText="Register for Confirmation"
-                link="/contact?subject=Confirmation Registration"
-            />
-
+            <SacramentSteps title="The Path To Confirmation" steps={confirmationSteps} />
+            <SacramentCTA title="Interested In The Next Confirmation Programme?" description="Use the contact form if you would like to ask about dates, eligibility, or registration." buttonText="Ask About Confirmation" link="/contact?subject=Confirmation Enquiry" />
             <RelatedSacraments current="Confirmation" />
         </div>
     )

@@ -1,135 +1,71 @@
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
-import { useEffect, useState } from 'react'
-import { getBackendUrl } from '../lib/auth'
 import './MassTimesPage.css'
 
-const sacraments = [
-    { id: 'baptism', title: 'Baptism', description: 'The first sacrament welcoming new members into the Catholic faith', icon: 'B' },
-    { id: 'communion', title: 'First Holy Communion', description: 'Receiving the Body and Christ for the first time', icon: 'HC' },
-    { id: 'confirmation', title: 'Confirmation', description: 'Completing Christian initiation through the gifts of the Holy Spirit', icon: 'C' },
-    { id: 'marriage', title: 'Marriage', description: 'The sacred union of a man and woman in the presence of God', icon: 'M' },
-    { id: 'reconciliation', title: 'Reconciliation', description: 'The sacrament of healing and forgiveness', icon: 'R' },
-    { id: 'anointing', title: 'Anointing of the Sick', description: 'Spiritual comfort and strength for those who are ill', icon: 'AS' },
+const regularMasses = [
+    {
+        location: "St Mary's Cathedral",
+        items: ['Sunday: 10.30am and 7.00pm', 'Please check the weekly newsletter for weekday Mass times'],
+    },
+    {
+        location: 'Holy Family Church, Coedpoeth',
+        items: ['Sunday: 9.00am', 'Wednesday: 6.00pm'],
+    },
 ]
 
-const otherServices = [
-    { title: 'Ignatian Prayer Group', schedule: 'Fortnightly during term time, 7:00 PM - 8:30 PM', description: 'Praying with the Sunday Mass readings in person or online.' },
-    { title: 'Rosary', schedule: 'Fridays at 6:00 PM in Malayali and Saturdays after 9:00 AM Mass', description: 'All are welcome to join the parish in Marian prayer.' },
-    { title: 'Exposition And Rosary', schedule: 'Every second Friday, 4:00 PM - 5:45 PM', description: 'Time for adoration, prayer, and reflection before the Blessed Sacrament.' },
-    { title: 'Stations Of The Cross', schedule: 'During Lent at the Cathedral and Coedpoeth', description: 'Please check the weekly newsletter for seasonal times and additional services.' },
+const confessionTimes = [
+    'Saturday: 10.30am to 11.30am',
+    'Saturday: 5.00pm to 6.00pm',
+    'Extra services of Reconciliation during Lent are announced in the newsletter',
+]
+
+const sacramentCards = [
+    { title: 'Baptism', description: 'Preparation and reception for infants, children, and adults entering the Church.', link: '/baptism' },
+    { title: 'First Holy Communion', description: 'Preparation for baptised Catholic children in school year 3 and above.', link: '/first-holy-communion' },
+    { title: 'Confirmation', description: 'Preparation for young people from school year 8 who have received Holy Communion.', link: '/confirmation' },
+    { title: 'Marriage', description: 'Preparation, meetings with clergy, and practical guidance for weddings in the parish.', link: '/marriage' },
+    { title: 'Reconciliation', description: 'Regular confession times and guidance for the Sacrament of Reconciliation.', link: '/reconciliation' },
+    { title: 'Becoming a Catholic', description: 'RCIA for those exploring the Catholic faith or seeking full communion with the Church.', link: '/becoming-catholic' },
+]
+
+const prayerSchedule = [
+    { title: 'Ignatian Prayer Group', schedule: 'Fortnightly during term time, 7.00pm to 8.30pm', description: 'Praying with the Sunday Mass readings in person or online.' },
+    { title: 'Rosary', schedule: 'Fridays at 6.00pm in Malayali and Saturdays after 9.00am Mass', description: 'All are welcome to join this regular parish devotion.' },
+    { title: 'Exposition and Rosary', schedule: 'Every second Friday, 4.00pm to 5.45pm', description: 'Prayer and reflection before the Blessed Sacrament.' },
+    { title: 'Stations of the Cross', schedule: 'During Lent at the Cathedral and Coedpoeth', description: 'See the weekly newsletter for published seasonal times.' },
 ]
 
 export default function MassTimesPage() {
-    const [massTimes, setMassTimes] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
-
-    useEffect(() => {
-        const fetchMassTimes = async () => {
-            try {
-                setLoading(true)
-
-                const response = await fetch(getBackendUrl('/api/v1/mass-times'))
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch mass times')
-                }
-
-                const data = await response.json()
-
-                if (Array.isArray(data)) {
-                    setMassTimes(data)
-                } else if (Array.isArray(data.data)) {
-                    setMassTimes(data.data)
-                } else {
-                    setMassTimes([])
-                }
-            } catch (err) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchMassTimes()
-    }, [])
-
-    const formatTime = (time) => {
-        if (!time) return ''
-
-        const [hours, minutes] = time.split(':')
-        const date = new Date()
-        date.setHours(hours)
-        date.setMinutes(minutes)
-
-        return date.toLocaleTimeString([], {
-            hour: 'numeric',
-            minute: '2-digit',
-        })
-    }
-
-    const groupedMassTimes = massTimes.reduce((groups, mass) => {
-        const location = mass.location || "St Mary's Cathedral"
-        const existing = groups.find(group => group.day === mass.day && group.location === location)
-
-        if (existing) {
-            existing.times.push(formatTime(mass.start_time))
-            return groups
-        }
-
-        groups.push({
-            id: `${mass.day}-${location}`,
-            day: mass.day,
-            location,
-            times: [formatTime(mass.start_time)],
-        })
-
-        return groups
-    }, [])
-
     return (
         <div className="mass-sac-page">
             <PageHero
                 title="Mass & Sacraments"
-                subtitle="Information about Mass times and sacramental life at St Mary's Cathedral"
+                subtitle="Regular worship, confession, sacramental preparation, and prayer at St Mary's Cathedral"
                 centered={true}
             />
 
             <div className="container">
                 <section className="section">
                     <h2 className="section-title">Mass Times</h2>
-                    <p className="section-subtitle">Join us for the celebration of the Eucharist</p>
+                    <p className="section-subtitle">Please check the weekly newsletter for weekday updates and seasonal notices</p>
 
-                    {loading && <p>Loading mass times...</p>}
-                    {error && <p style={{ color: 'red' }}>{error}</p>}
-
-                    <div className="grid-3 mass-times-grid">
-                        {groupedMassTimes.map((mass, index) => (
-                            <div key={mass.id} className="card mass-time-card">
+                    <div className="grid-2 mass-times-grid">
+                        {regularMasses.map((mass, index) => (
+                            <div key={mass.location} className="card mass-time-card">
                                 <div className="mt-card-header">
-                                    <div className={`mt-icon-box mt-icon-variant-${(index % 3) + 1}`}>
-                                        <span className={`mt-clock mt-clock-${(index % 3) + 1}`} aria-hidden="true"></span>
+                                    <div className={`mt-icon-box mt-icon-variant-${(index % 2) + 1}`}>
+                                        <span className={`mt-clock mt-clock-${(index % 2) + 1}`} aria-hidden="true"></span>
                                     </div>
                                     <div className="mt-card-heading">
                                         <h3 className="mt-card-title">{mass.location}</h3>
-                                        <div className="mt-card-day">{mass.day}</div>
+                                        <div className="mt-card-day">Regular schedule</div>
                                     </div>
-                                    <div className="mt-card-count">{mass.times.length} time{mass.times.length > 1 ? 's' : ''}</div>
                                 </div>
 
-                                <p className="mt-card-note">
-                                    {mass.location === "St Mary's Cathedral"
-                                        ? 'Cathedral celebration schedule'
-                                        : 'Community worship location'}
-                                </p>
-
-                                <div className="mt-section-label">Service Times</div>
-
-                                <div className="mt-card-details">
-                                    {mass.times.map((time) => (
-                                        <p key={`${mass.id}-${time}`} className="mt-time-chip">
-                                            <strong>{time}</strong>
+                                <div className="mt-card-details" style={{ marginTop: '20px' }}>
+                                    {mass.items.map((item) => (
+                                        <p key={item} className="mt-time-chip">
+                                            <strong>{item}</strong>
                                         </p>
                                     ))}
                                 </div>
@@ -137,27 +73,36 @@ export default function MassTimesPage() {
                         ))}
                     </div>
 
+                    <div className="contact-strip" style={{ marginTop: '32px' }}>
+                        <h3 style={{ marginBottom: '12px', fontFamily: 'Playfair Display, serif' }}>Confession Times</h3>
+                        <ul className="bullet-list" style={{ color: 'var(--white)' }}>
+                            {confessionTimes.map((item) => (
+                                <li key={item}>{item}</li>
+                            ))}
+                        </ul>
+                    </div>
+
                     <div className="text-center mt-48 newsletter-cta">
                         <Link to="/newsletter" className="newsletter-link-full">
-                            For more details, please see our latest weekly newsletter <span>→</span>
+                            See the weekly newsletter for the latest liturgical schedule and parish notices <span>→</span>
                         </Link>
                     </div>
                 </section>
 
                 <section className="section bg-light-full-width">
                     <div className="container">
-                        <h2 className="section-title">Sacraments</h2>
-                        <p className="section-subtitle">Receiving God's grace through the sacraments of the Church</p>
+                        <h2 className="section-title">Sacramental Life</h2>
+                        <p className="section-subtitle">Preparation and guidance for the sacraments celebrated in Cathedral parish</p>
 
                         <div className="grid-3 sacrament-grid">
-                            {sacraments.map(sac => (
-                                <div key={sac.id} className="card sacrament-card">
+                            {sacramentCards.map((sac) => (
+                                <div key={sac.title} className="card sacrament-card">
                                     <div className="sac-icon-box">
-                                        <span className="sac-icon">{sac.icon}</span>
+                                        <span className="sac-icon">{sac.title.slice(0, 2).toUpperCase()}</span>
                                     </div>
                                     <h3 className="sac-title">{sac.title}</h3>
                                     <p className="sac-desc">{sac.description}</p>
-                                    <button className="btn-outline-sm">Learn More</button>
+                                    <Link to={sac.link} className="btn-outline-sm">Learn More</Link>
                                 </div>
                             ))}
                         </div>
@@ -165,24 +110,30 @@ export default function MassTimesPage() {
                         <div className="info-banner">
                             <div className="info-banner-icon">i</div>
                             <div className="info-banner-content">
-                                <h3>Important Information</h3>
-                                <p>Each sacrament has specific preparation and requirements.</p>
+                                <h3>Other Sacramental Support</h3>
+                                <p>
+                                    Funerals, the Sacrament of the Sick, home Communion visits, vocations, and diaconate enquiries should begin with the parish office or clergy team.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </section>
 
                 <section className="section">
-                    <h2 className="section-title">Other Liturgical Services</h2>
+                    <h2 className="section-title">Prayer And Devotion</h2>
 
                     <div className="grid-2 other-services-grid">
-                        {otherServices.map((service, index) => (
-                            <div key={index} className="card service-card">
+                        {prayerSchedule.map((service) => (
+                            <div key={service.title} className="card service-card">
                                 <h3 className="service-title">{service.title}</h3>
                                 <p className="service-schedule">{service.schedule}</p>
                                 <p className="service-desc">{service.description}</p>
                             </div>
                         ))}
+                    </div>
+
+                    <div style={{ textAlign: 'center', marginTop: '28px' }}>
+                        <Link to="/prayer-devotions" className="btn-primary">Prayer & Devotions Page</Link>
                     </div>
                 </section>
             </div>

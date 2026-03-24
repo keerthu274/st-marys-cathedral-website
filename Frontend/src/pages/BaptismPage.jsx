@@ -1,77 +1,28 @@
-import { SacramentHero, SacramentIntro, SacramentInfoCards, SacramentSchedule, SacramentSteps, SacramentCTA, RelatedSacraments } from '../components/sacraments/SacramentSections'
+import { SacramentHero, SacramentIntro, SacramentInfoCards, SacramentSteps, SacramentCTA, RelatedSacraments } from '../components/sacraments/SacramentSections'
 import baptismHero from '../assets/baptism-hero.jpg'
 
 const baptismCards = [
-    {
-        title: 'Who Can Receive Baptism',
-        content: 'Baptism is available to infants of Catholic parents, as well as adults who wish to join the Catholic Church through the RCIA process.'
-    },
-    {
-        title: 'Requirements',
-        content: 'At least one parent must be a practicing Catholic. Godparents must be over 16, confirmed, and active in their faith.'
-    },
-    {
-        title: 'Documents Needed',
-        content: 'A copy of the child’s birth certificate and, if parents are not from this parish, a letter of permission from their home parish priest.'
-    },
-    {
-        title: 'Preparation',
-        content: 'Parents and godparents are required to attend a preparation session to understand the significance and responsibilities of the sacrament.'
-    }
+    { title: 'Who Can Apply', content: 'Infant or child Baptism is normally for children under the age of 7 where at least one parent is a baptised, regularly practising Catholic registered in the parish.' },
+    { title: 'Older Children', content: 'Children or young people over 8 need to attend a preparation programme accompanied by an adult before a date is arranged.' },
+    { title: 'Adult Baptism', content: 'Adult Baptism is prepared for through the RCIA journey for those becoming Catholic.' },
+    { title: 'How To Begin', content: 'The process starts with the parish office, a Baptism request form, and attendance at the Baptism Preparation Programme.' },
 ]
 
 const baptismSteps = [
-    {
-        title: 'Contact Parish Office',
-        content: 'Reach out to us to express your interest in baptism for your child or yourself.'
-    },
-    {
-        title: 'Complete Baptism Form',
-        content: 'Fill out the necessary registration forms provided by the parish office.'
-    },
-    {
-        title: 'Attend Preparation Meeting',
-        content: 'Join other parents for a short session on the meaning of Baptism and the ceremony details.'
-    },
-    {
-        title: 'Schedule Baptism Date',
-        content: 'Once preparation is complete, we will confirm the date for the celebration.'
-    }
+    { title: 'Email The Parish Office', content: 'Begin with an enquiry to secretarywrexhamcathedral@rcdwxm.org.uk.' },
+    { title: 'Complete The Form', content: 'The office will guide you through the initial request and details needed.' },
+    { title: 'Attend Preparation', content: 'Attendance at the Baptism Preparation Programme is required.' },
+    { title: 'Arrange The Date', content: 'After preparation, the parish will confirm the celebration arrangements.' },
 ]
 
 export default function BaptismPage() {
     return (
         <div className="sacrament-page">
-            <SacramentHero 
-                title="Baptism"
-                subtitle="Welcoming new members into the Catholic faith"
-                image={baptismHero}
-            />
-            
-            <SacramentIntro 
-                title="Sacrament of New Life"
-                text="Holy Baptism is the basis of the whole Christian life, the gateway to life in the Spirit, and the door which gives access to the other sacraments. Through Baptism we are freed from sin and reborn as sons of God; we become members of Christ, are incorporated into the Church and made sharers in her mission."
-            />
-
+            <SacramentHero title="Baptism" subtitle="Preparation and reception of Baptism in Cathedral parish" image={baptismHero} />
+            <SacramentIntro title="Sacrament of New Life" text="Baptism is the foundation of Christian life and the gateway to the other sacraments. Cathedral parish offers preparation for infants, children, young people, and adults according to age and circumstance." />
             <SacramentInfoCards cards={baptismCards} />
-
-            <SacramentSchedule 
-                title="Schedule"
-                content="Baptisms are typically held after Sunday Mass or by special appointment."
-            />
-
-            <SacramentSteps 
-                title="Steps to Baptism"
-                steps={baptismSteps}
-            />
-
-            <SacramentCTA 
-                title="Is your child ready for Baptism?"
-                description="We are delighted to welcome your child into our faith community. Contact us today to begin the registration process and join a preparation meeting."
-                buttonText="Register for Baptism"
-                link="/contact?subject=Baptism Enquiry"
-            />
-
+            <SacramentSteps title="How Baptism Is Arranged" steps={baptismSteps} />
+            <SacramentCTA title="Start A Baptism Enquiry" description="If you would like to arrange Baptism or ask about the preparation programme, please contact the parish office." buttonText="Contact Parish Office" link="/contact?subject=Baptism Enquiry" />
             <RelatedSacraments current="Baptism" />
         </div>
     )

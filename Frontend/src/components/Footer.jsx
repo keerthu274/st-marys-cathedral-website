@@ -51,6 +51,7 @@ export default function Footer() {
                         <li><Link to="/events">Events Calendar</Link></li>
                         <li><Link to="/news">News & Announcements</Link></li>
                         <li><Link to="/parish">Our Parish</Link></li>
+                        <li><Link to="/prayer-devotions">Prayer & Devotions</Link></li>
                     </ul>
                 </div>
 
@@ -60,6 +61,7 @@ export default function Footer() {
                     <ul className="footer-links-list">
                         <li><Link to="/registration">Parish Registration</Link></li>
                         <li><Link to="/safeguarding">Safeguarding</Link></li>
+                        <li><Link to="/schools">Schools Links</Link></li>
                         <li><Link to="/contact">Contact Us</Link></li>
                         <li><a href="https://www.wrexhamdiocese.org.uk/" target="_blank" rel="noopener noreferrer">Diocese of Wrexham</a></li>
                     </ul>

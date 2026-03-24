@@ -1,71 +1,27 @@
 import { SacramentHero, SacramentIntro, SacramentInfoCards, SacramentSteps, SacramentCTA, RelatedSacraments } from '../components/sacraments/SacramentSections'
 
 const marriageCards = [
-    {
-        title: 'Eligibility',
-        content: 'At least one of the parties must be a baptized Catholic. Couples from outside the parish are welcome but need permission from their home parish.'
-    },
-    {
-        title: 'Preparation',
-        content: 'Couples must participate in a Marriage Preparation Course to reflect on the meaning of Christian marriage and their future life together.'
-    },
-    {
-        title: 'Required Documents',
-        content: 'Recent baptism certificates (issued within 6 months), evidence of freedom to marry, and civil marriage marriage documents are required.'
-    },
-    {
-        title: 'Booking the Church',
-        content: 'It is essential to contact the parish at least six months (preferably a year) before your intended wedding date.'
-    }
+    { title: 'Initial Enquiry', content: 'Marriage enquiries should begin with the parish office. An appointment is then arranged with the Parish Priest or a Deacon.' },
+    { title: 'Who Can Marry Here', content: 'At least one partner should be a baptised Catholic regularly practising the faith. If one partner is not Catholic, diocesan permission may be needed.' },
+    { title: 'Timing', content: 'The first meeting should ideally happen 12 months before the proposed date so the parish can confirm freedom to marry and practical availability.' },
+    { title: 'Civil And Church Requirements', content: 'The couple must complete church paperwork, marriage preparation, and registration with the Registrar of Marriages for Wrexham.' },
 ]
 
 const marriageSteps = [
-    {
-        title: 'Contact Parish Priest',
-        content: 'Arrange an initial meeting with the priest to discuss your intention to marry.'
-    },
-    {
-        title: 'Complete Marriage Forms',
-        content: 'Work with the priest to complete the necessary canonical paperwork.'
-    },
-    {
-        title: 'Attend Preparation Course',
-        content: 'Enrol in and complete an approved Catholic Marriage Preparation course.'
-    },
-    {
-        title: 'Confirm Wedding Date',
-        content: 'Finalise the date, time, and liturgical details for your celebration.'
-    }
+    { title: 'Contact The Parish Office', content: 'Email secretarywrexhamcathedral@rcdwxm.org.uk to begin the process.' },
+    { title: 'Attend A Preliminary Meeting', content: 'Clergy will discuss freedom to marry, Catholic status, documents, and the proposed date.' },
+    { title: 'Complete Further Meetings', content: 'At least two more meetings are needed, together with the Marriage Care programme.' },
+    { title: 'Provide Civil Registration Schedule', content: 'Before the marriage takes place, the Cathedral office must receive the registrar’s schedule.' },
 ]
 
 export default function MarriagePage() {
     return (
         <div className="sacrament-page">
-            <SacramentHero 
-                title="Marriage"
-                subtitle="A sacred covenant of love before God"
-                image="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1600"
-            />
-            
-            <SacramentIntro 
-                title="Two Become One"
-                text="The matrimonial covenant, by which a man and a woman establish between themselves a partnership of the whole of life, is by its nature ordered toward the good of the spouses and the procreation and education of offspring; this covenant between baptized persons has been raised by Christ the Lord to the dignity of a sacrament."
-            />
-
+            <SacramentHero title="Marriage" subtitle="Preparation for Catholic marriage at St Mary's Cathedral" image="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1600" />
+            <SacramentIntro title="Planning Marriage In The Church" text="Marriage in the Catholic Church is a sacramental covenant and requires both pastoral preparation and legal arrangements. Cathedral parish asks couples to begin early so the spiritual, practical, and civil elements can all be completed carefully." />
             <SacramentInfoCards cards={marriageCards} />
-
-            <SacramentSteps 
-                title="Planning Your Wedding"
-                steps={marriageSteps}
-            />
-
-            <SacramentCTA 
-                title="Thinking of getting married?"
-                description="Congratulations on your engagement! Please get in touch with us to begin the beautiful journey toward the sacrament of Matrimony."
-                buttonText="Enquire About Marriage"
-                link="/contact?subject=Marriage Enquiry"
-            />
-
+            <SacramentSteps title="Marriage Preparation Process" steps={marriageSteps} />
+            <SacramentCTA title="Planning To Marry?" description="If you are considering marriage at St Mary's Cathedral, please contact the parish office to arrange an initial appointment." buttonText="Enquire About Marriage" link="/contact?subject=Marriage Enquiry" />
             <RelatedSacraments current="Marriage" />
         </div>
     )

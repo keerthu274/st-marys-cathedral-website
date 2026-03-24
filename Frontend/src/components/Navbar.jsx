@@ -10,9 +10,12 @@ const navItems = [
         children: [
             { label: 'Mass & Sacraments', path: '/mass-sacraments' },
             { label: 'Baptism', path: '/baptism' },
+            { label: 'First Holy Communion', path: '/first-holy-communion' },
             { label: 'Confirmation', path: '/confirmation' },
             { label: 'Marriage', path: '/marriage' },
             { label: 'Reconciliation', path: '/reconciliation' },
+            { label: 'Becoming a Catholic', path: '/becoming-catholic' },
+            { label: 'Prayer & Devotions', path: '/prayer-devotions' },
         ],
     },
     {
@@ -25,6 +28,10 @@ const navItems = [
             { label: 'Building Project', path: '/building-project' },
             { label: 'Fundraising', path: '/fundraising' },
             { label: 'Policies & Safeguarding', path: '/safeguarding' },
+            { label: 'Pastoral Care', path: '/pastoral-care' },
+            { label: 'Schools Links', path: '/schools' },
+            { label: 'Parking', path: '/parking' },
+            { label: 'Cathedral Hire', path: '/cathedral-hire' },
         ],
     },
     {

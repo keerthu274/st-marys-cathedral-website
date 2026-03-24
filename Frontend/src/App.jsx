@@ -24,9 +24,16 @@ import NewsletterArchivePage from './pages/NewsletterArchivePage'
 import UsefulLinksPage from './pages/UsefulLinksPage'
 import RegistrationPage from './pages/RegistrationPage'
 import BaptismPage from './pages/BaptismPage'
+import FirstHolyCommunionPage from './pages/FirstHolyCommunionPage'
 import ConfirmationPage from './pages/ConfirmationPage'
 import MarriagePage from './pages/MarriagePage'
 import ReconciliationPage from './pages/ReconciliationPage'
+import BecomingCatholicPage from './pages/BecomingCatholicPage'
+import PrayerDevotionsPage from './pages/PrayerDevotionsPage'
+import PastoralCarePage from './pages/PastoralCarePage'
+import SchoolsPage from './pages/SchoolsPage'
+import ParkingPage from './pages/ParkingPage'
+import CathedralHirePage from './pages/CathedralHirePage'
 import DiocesePage from './pages/DiocesePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
@@ -53,9 +60,12 @@ function AppContent() {
           <Route path="/mass-times" element={<MassTimesPage />} />
           <Route path="/mass-sacraments" element={<MassTimesPage />} />
           <Route path="/baptism" element={<BaptismPage />} />
+          <Route path="/first-holy-communion" element={<FirstHolyCommunionPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/marriage" element={<MarriagePage />} />
           <Route path="/reconciliation" element={<ReconciliationPage />} />
+          <Route path="/becoming-catholic" element={<BecomingCatholicPage />} />
+          <Route path="/prayer-devotions" element={<PrayerDevotionsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/registration" element={<RegistrationPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -74,6 +84,10 @@ function AppContent() {
           <Route path="/building-project" element={<BuildingProjectPage />} />
           <Route path="/fundraising" element={<FundraisingPage />} />
           <Route path="/safeguarding" element={<SafeguardingPage />} />
+          <Route path="/pastoral-care" element={<PastoralCarePage />} />
+          <Route path="/schools" element={<SchoolsPage />} />
+          <Route path="/parking" element={<ParkingPage />} />
+          <Route path="/cathedral-hire" element={<CathedralHirePage />} />
           <Route path="/news-events" element={<NewsEventsPage />} />
           <Route path="/events" element={<EventsCalendarPage />} />
           <Route path="/events/:eventId" element={<EventDetailPage />} />
