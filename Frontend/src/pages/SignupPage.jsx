@@ -1,0 +1,153 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { signup } from '../lib/auth'
+import './AuthPage.css'
+
+const initialForm = {
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+}
+
+export default function SignupPage() {
+  const navigate = useNavigate()
+  const [form, setForm] = useState(initialForm)
+  const [errors, setErrors] = useState({})
+  const [status, setStatus] = useState({ type: '', message: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  function handleChange(event) {
+    const { name, value } = event.target
+    setForm(current => ({ ...current, [name]: value }))
+    setErrors(current => ({ ...current, [name]: undefined }))
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setIsSubmitting(true)
+    setErrors({})
+    setStatus({ type: '', message: '' })
+
+    try {
+      await signup(form)
+      navigate('/dashboard', { replace: true })
+    } catch (error) {
+      setErrors(error.errors || {})
+      setStatus({
+        type: 'error',
+        message: error.message || 'We could not create the account. Please review the form and try again.',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <section className="auth-page">
+      <div className="container auth-layout">
+        <aside className="auth-panel">
+          <div>
+            <span className="auth-kicker">Create Account</span>
+            <h1>Join the St Mary's Cathedral community.</h1>
+            <p>
+              Create your account to get started and access the parish administration area with ease.
+            </p>
+          </div>
+
+          <div className="auth-highlights">
+            <div className="auth-highlight">
+              <strong>Quick setup</strong>
+              <span>Create your account in a few seconds with your name, email address, and password.</span>
+            </div>
+            <div className="auth-highlight">
+              <strong>Ready to begin</strong>
+              <span>Once your account is created, you can continue straight to your dashboard.</span>
+            </div>
+          </div>
+        </aside>
+
+        <div className="auth-card">
+          <div className="auth-card-header">
+            <h2>Create your account</h2>
+            <p>Fill in your details below to create a new account.</p>
+          </div>
+
+          {status.message ? (
+            <div className={`auth-status ${status.type}`}>{status.message}</div>
+          ) : null}
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label htmlFor="name">Full name</label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+              />
+              {errors.name ? <span className="auth-field-error">{errors.name[0]}</span> : null}
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="signup-email">Email address</label>
+              <input
+                id="signup-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              {errors.email ? <span className="auth-field-error">{errors.email[0]}</span> : null}
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="signup-password">Password</label>
+              <input
+                id="signup-password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+              {errors.password ? <span className="auth-field-error">{errors.password[0]}</span> : null}
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="password_confirmation">Confirm password</label>
+              <input
+                id="password_confirmation"
+                name="password_confirmation"
+                type="password"
+                autoComplete="new-password"
+                value={form.password_confirmation}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="auth-actions">
+              <button className="btn-primary auth-submit" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+              </button>
+              <Link className="auth-link" to="/login">
+                Already registered? Sign in
+              </Link>
+            </div>
+          </form>
+
+          <div className="auth-after">
+            <p>Already have an account? Sign in and continue to your dashboard.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}

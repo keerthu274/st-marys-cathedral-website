@@ -4,11 +4,31 @@ import { useState, useEffect } from 'react'
 import PageHero from '../components/PageHero'
 import './NewsEventsPage.css'
 
-const categories = [
-    { icon: '📅', title: 'Events Calendar', desc: 'Stay up to date with upcoming events, services, and activities at the cathedral.', bg: '#f0f4ff' },
-    { icon: '📋', title: 'News & Announcements', desc: 'Read the latest news and important announcements from St Mary\'s Cathedral.', bg: '#f0f4ff' },
-    { icon: '📄', title: 'Weekly Newsletter', desc: 'Our weekly newsletter keeps you informed about parish life, Mass times, and upcoming events.', bg: '#f0fff4' },
-    { icon: '🗄', title: 'Newsletter Archive', desc: 'Access previous editions of our parish newsletter and browse past announcements.', bg: '#fffbf0' },
+const newsFeatures = [
+    {
+        icon: '📅',
+        title: 'Events Calendar',
+        description: 'Stay updated with upcoming services, events, and community activities at the Cathedral.',
+        link: '/events'
+    },
+    {
+        icon: '📰',
+        title: 'News & Announcements',
+        description: 'Read the latest updates, parish news, and important announcements from our community.',
+        link: '/news'
+    },
+    {
+        icon: '📧',
+        title: 'Weekly Newsletter',
+        description: 'Access the current week’s digital newsletter with Mass times and parish updates.',
+        link: '/newsletter'
+    },
+    {
+        icon: '🗄️',
+        title: 'Newsletter Archive',
+        description: 'Browse and download past editions of the parish newsletter from our digital archive.',
+        link: '/newsletter-archive'
+    }
 ]
 
 // removed hardcoded events because events will now come from the backend API
@@ -24,38 +44,20 @@ export default function NewsEventsPage() {
             .then(res => res.json())
 
             // API returns { success:true, data:[...] } so we take the data array
-            .then(data => {
-                console.log("Events from API:", data) // added this to check if frontend is receiving events
-                setEvents(data.data) // store events from backend in React state
-            })
+            .then(data => setEvents(data.data))
 
             .catch(error => console.log("Error loading events:", error))
     }, [])
 
     return (
-        <div>
-            <PageHero
-                icon="📅"
+        <div className="news-events-page">
+            <PageHero 
                 title="News & Events"
-                subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what's happening at St Mary's Cathedral."
+                subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what’s happening at St Mary’s Cathedral."
                 centered={true}
             />
-            <div className="ne-hero-centered" />
 
-            <section className="section">
-                <div className="container">
-                    <div className="grid-2">
-                        {categories.map(c => (
-                            <div key={c.title} className="ne-cat-card">
-                                <div className="ne-cat-icon" style={{ background: c.bg }}>{c.icon}</div>
-                                <h3 className="ne-cat-title">{c.title}</h3>
-                                <p className="ne-cat-desc">{c.desc}</p>
-                                <span className="read-more">View More →</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            {/* removed EventsList because it was using old dummy data */}
 
             {/* Upcoming Events */}
             <section className="section" style={{ background: 'var(--off-white)' }}>
@@ -71,14 +73,18 @@ export default function NewsEventsPage() {
                                 // using event id from database instead of title
                                 <div key={e.id} className="ne-event-row">
 
-                                    {/* using start_date from backend API */}
+                                    {/* changed this to show event date on the left side */}
                                     <span className="ne-event-date">{e.start_date}</span>
 
                                     <div className="ne-event-info">
+
                                         <span className="ne-event-name">{e.title}</span>
 
-                                        {/* showing start_time from Laravel events table */}
-                                        <span className="ne-event-time">{e.start_time}</span>
+                                        {/* changed this to show start time and end time under the event title */}
+                                        <span className="ne-event-time">
+                                            {e.start_time} - {e.end_time}
+                                        </span>
+
                                     </div>
 
                                     <span className="ne-event-details">Details</span>
@@ -91,17 +97,6 @@ export default function NewsEventsPage() {
                             <button className="btn-primary">View Full Calendar</button>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            {/* Stay Informed */}
-            <section className="ne-stay-informed">
-                <div className="container" style={{ textAlign: 'center' }}>
-                    <h2 className="ne-stay-title">Stay Informed</h2>
-                    <p className="ne-stay-desc">
-                        Subscribe to our weekly newsletter to receive updates about Mass times, events, and parish news directly to your inbox.
-                    </p>
-                    <button className="btn-gold">Subscribe to Newsletter</button>
                 </div>
             </section>
         </div>
