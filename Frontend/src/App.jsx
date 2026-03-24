@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import './index.css'
 import Navbar from './components/Navbar'
 import TopBar from './components/TopBar'
@@ -16,6 +16,7 @@ import BuildingProjectPage from './pages/BuildingProjectPage'
 import FundraisingPage from './pages/FundraisingPage'
 import SafeguardingPage from './pages/SafeguardingPage'
 import NewsEventsPage from './pages/NewsEventsPage'
+import EventDetailPage from './pages/EventDetailPage'
 import EventsCalendarPage from './pages/EventsCalendarPage'
 import NewsAnnouncementsPage from './pages/NewsAnnouncementsPage'
 import WeeklyNewsletterPage from './pages/WeeklyNewsletterPage'
@@ -29,14 +30,21 @@ import ReconciliationPage from './pages/ReconciliationPage'
 import DiocesePage from './pages/DiocesePage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
-import DashboardPage from './pages/DashboardPage'
+import AdminLayout from './admin/AdminLayout'
+import AdminOverviewPage from './pages/admin/AdminOverviewPage'
+import AdminEventsPage from './pages/admin/AdminEventsPage'
+import AdminMassTimesPage from './pages/admin/AdminMassTimesPage'
+import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage'
 
-function App() {
+function AppContent() {
+  const location = useLocation()
+  const isDashboardRoute = location.pathname.startsWith('/dashboard')
+
   return (
-    <BrowserRouter>
+    <>
       <ScrollToTop />
-      <TopBar />
-      <Navbar />
+      {!isDashboardRoute ? <TopBar /> : null}
+      {!isDashboardRoute ? <Navbar /> : null}
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -51,7 +59,12 @@ function App() {
           <Route path="/registration" element={<RegistrationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<AdminLayout />}>
+            <Route index element={<AdminOverviewPage />} />
+            <Route path="events" element={<AdminEventsPage />} />
+            <Route path="mass-times" element={<AdminMassTimesPage />} />
+            <Route path="registrations" element={<AdminRegistrationsPage />} />
+          </Route>
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
           <Route path="/parish-council" element={<ParishCouncilPage />} />
@@ -61,6 +74,7 @@ function App() {
           <Route path="/safeguarding" element={<SafeguardingPage />} />
           <Route path="/news-events" element={<NewsEventsPage />} />
           <Route path="/events" element={<EventsCalendarPage />} />
+          <Route path="/events/:eventId" element={<EventDetailPage />} />
           <Route path="/news" element={<NewsAnnouncementsPage />} />
           <Route path="/newsletter" element={<WeeklyNewsletterPage />} />
           <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
@@ -68,7 +82,15 @@ function App() {
           <Route path="/links" element={<UsefulLinksPage />} />
         </Routes>
       </main>
-      <Footer />
+      {!isDashboardRoute ? <Footer /> : null}
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }

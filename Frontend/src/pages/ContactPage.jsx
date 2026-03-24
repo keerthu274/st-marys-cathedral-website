@@ -162,10 +162,10 @@ export default function ContactPage() {
                             <h3>Contact Form</h3>
 
                             {/* ✅ show success message */}
-                            {success && <p style={{ color: 'green' }}>{success}</p>}
+                            {success && <div className="contact-feedback success">{success}</div>}
 
                             {/* ✅ show error message */}
-                            {error && <p style={{ color: 'red' }}>{error}</p>}
+                            {error && <div className="contact-feedback error">{error}</div>}
 
                             <form className="contact-form-minimal" onSubmit={handleContactSubmit}>
                                 <div className="grid-2" style={{ gap: '15px' }}>

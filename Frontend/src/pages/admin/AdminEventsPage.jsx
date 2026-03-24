@@ -1,0 +1,381 @@
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
+
+const emptyEventForm = {
+  title: '',
+  description: '',
+  start_date: '',
+  start_time: '',
+  end_date: '',
+  end_time: '',
+  location: '',
+  status: 'published',
+  category: '',
+  all_day: false,
+}
+
+function formatDate(value) {
+  if (!value) {
+    return 'Not set'
+  }
+
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function formatTime(value) {
+  if (!value) {
+    return 'Not set'
+  }
+
+  return value.slice(0, 5)
+}
+
+function formatDateTime(date, time) {
+  if (!date) {
+    return 'Not scheduled'
+  }
+
+  return `${formatDate(date)}${time ? ` at ${formatTime(time)}` : ''}`
+}
+
+function FieldError({ errors, name }) {
+  if (!errors?.[name]?.[0]) {
+    return null
+  }
+
+  return <p className="admin-field-error">{errors[name][0]}</p>
+}
+
+function Notice({ notice, onDismiss }) {
+  if (!notice.message) {
+    return null
+  }
+
+  return (
+    <div className={`admin-notice ${notice.type}`}>
+      <span>{notice.message}</span>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss notification">x</button>
+    </div>
+  )
+}
+
+export default function AdminEventsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [events, setEvents] = useState([])
+  const [eventPreview, setEventPreview] = useState([])
+  const [selectedEventId, setSelectedEventId] = useState(null)
+  const [eventForm, setEventForm] = useState(emptyEventForm)
+  const [eventErrors, setEventErrors] = useState({})
+  const [notice, setNotice] = useState({ type: '', message: '' })
+  const [isSavingEvent, setIsSavingEvent] = useState(false)
+  const [isLoadingEventEditor, setIsLoadingEventEditor] = useState(false)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadEventsData() {
+      const payload = await listEvents()
+
+      if (!ignore) {
+        setEvents(payload.events || [])
+      }
+    }
+
+    loadEventsData()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+
+    if (!editId) {
+      return
+    }
+
+    editEvent(Number(editId))
+  }, [searchParams])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadPreview() {
+      if (!eventForm.start_date) {
+        setEventPreview([])
+        return
+      }
+
+      try {
+        const data = await listEventsByDate(eventForm.start_date)
+
+        if (!ignore) {
+          setEventPreview((data || []).filter(item => item.id !== selectedEventId))
+        }
+      } catch {
+        if (!ignore) {
+          setEventPreview([])
+        }
+      }
+    }
+
+    loadPreview()
+
+    return () => {
+      ignore = true
+    }
+  }, [eventForm.start_date, selectedEventId])
+
+  function dismissNotice() {
+    setNotice({ type: '', message: '' })
+  }
+
+  async function refreshEvents() {
+    const payload = await listEvents()
+    setEvents(payload.events || [])
+  }
+
+  function handleEventChange(event) {
+    const { name, value, type, checked } = event.target
+
+    setEventForm(current => {
+      const next = {
+        ...current,
+        [name]: type === 'checkbox' ? checked : value,
+      }
+
+      if (name === 'all_day') {
+        next.start_time = checked ? '00:00' : current.start_time
+        next.end_time = checked ? '23:59' : current.end_time
+      }
+
+      return next
+    })
+
+    setEventErrors(current => ({ ...current, [name]: undefined }))
+  }
+
+  async function editEvent(id) {
+    setIsLoadingEventEditor(true)
+    dismissNotice()
+
+    try {
+      const payload = await getEvent(id)
+      const item = payload.event
+
+      setSelectedEventId(id)
+      setEventForm({
+        title: item.title || '',
+        description: item.description || '',
+        start_date: item.start_date || '',
+        start_time: item.start_time ? item.start_time.slice(0, 5) : '',
+        end_date: item.end_date || '',
+        end_time: item.end_time ? item.end_time.slice(0, 5) : '',
+        location: item.location || '',
+        status: item.status || 'draft',
+        category: item.category || '',
+        all_day: item.start_time === '00:00:00' && item.end_time === '23:59:00',
+      })
+      setEventErrors({})
+      setSearchParams({ edit: String(id) })
+    } catch (error) {
+      setNotice({ type: 'error', message: error.message || 'Unable to load the selected event.' })
+    } finally {
+      setIsLoadingEventEditor(false)
+    }
+  }
+
+  function startNewEvent() {
+    setSelectedEventId(null)
+    setEventForm(emptyEventForm)
+    setEventErrors({})
+    setSearchParams({})
+  }
+
+  async function submitEvent(event) {
+    event.preventDefault()
+    setIsSavingEvent(true)
+    dismissNotice()
+
+    try {
+      const payload = selectedEventId
+        ? await updateEvent(selectedEventId, eventForm)
+        : await createEvent(eventForm)
+
+      await refreshEvents()
+      setNotice({ type: 'success', message: payload.message || 'Event saved successfully.' })
+
+      if (!selectedEventId && payload.event?.id) {
+        setSelectedEventId(payload.event.id)
+        setSearchParams({ edit: String(payload.event.id) })
+      }
+    } catch (error) {
+      setEventErrors(error.errors || {})
+      setNotice({ type: 'error', message: error.message || 'Unable to save the event.' })
+    } finally {
+      setIsSavingEvent(false)
+    }
+  }
+
+  async function removeEvent(id) {
+    if (!window.confirm('Delete this event?')) {
+      return
+    }
+
+    dismissNotice()
+
+    try {
+      const payload = await deleteEvent(id)
+      await refreshEvents()
+
+      if (selectedEventId === id) {
+        startNewEvent()
+      }
+
+      setNotice({ type: 'success', message: payload.message || 'Event deleted successfully.' })
+    } catch (error) {
+      setNotice({ type: 'error', message: error.message || 'Unable to delete the event.' })
+    }
+  }
+
+  return (
+    <div className="admin-page-grid two-col">
+      <div className="admin-page-grid">
+        <Notice notice={notice} onDismiss={dismissNotice} />
+
+        <article className="admin-surface">
+          <div className="admin-section-head">
+            <div>
+              <h2>Event Management</h2>
+              <p>Create, schedule, and publish events for the cathedral website.</p>
+            </div>
+            <button className="btn-primary" type="button" onClick={startNewEvent}>New Event</button>
+          </div>
+
+          <div className="admin-data-table">
+            {events.map(item => (
+              <div key={item.id} className="admin-row">
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{formatDateTime(item.start_date, item.start_time)}</span>
+                </div>
+                <div>
+                  <small>{item.location || 'Location not set'}</small>
+                  <span className="admin-badge">{item.status}</span>
+                </div>
+                <div className="admin-row-actions">
+                  <button type="button" onClick={() => editEvent(item.id)}>Edit</button>
+                  <button type="button" className="danger" onClick={() => removeEvent(item.id)}>Delete</button>
+                </div>
+              </div>
+            ))}
+            {!events.length ? <p className="admin-empty">No events have been added yet.</p> : null}
+          </div>
+        </article>
+      </div>
+
+      <article className="admin-surface">
+        <div className="admin-section-head">
+          <div>
+            <h2>{selectedEventId ? 'Edit Event' : 'Create Event'}</h2>
+            <p>{isLoadingEventEditor ? 'Loading event...' : 'Changes save directly to the backend.'}</p>
+          </div>
+        </div>
+
+        <form className="admin-form" onSubmit={submitEvent}>
+          <label>
+            <span>Title</span>
+            <input name="title" value={eventForm.title} onChange={handleEventChange} required />
+            <FieldError errors={eventErrors} name="title" />
+          </label>
+
+          <label>
+            <span>Description</span>
+            <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} />
+            <FieldError errors={eventErrors} name="description" />
+          </label>
+
+          <div className="admin-form-grid">
+            <label>
+              <span>Start date</span>
+              <input type="date" name="start_date" value={eventForm.start_date} onChange={handleEventChange} required />
+              <FieldError errors={eventErrors} name="start_date" />
+            </label>
+
+            <label>
+              <span>End date</span>
+              <input type="date" name="end_date" value={eventForm.end_date} onChange={handleEventChange} />
+              <FieldError errors={eventErrors} name="end_date" />
+            </label>
+          </div>
+
+          <label className="admin-checkbox">
+            <input type="checkbox" name="all_day" checked={eventForm.all_day} onChange={handleEventChange} />
+            <span>All-day event</span>
+          </label>
+
+          <div className="admin-form-grid">
+            <label>
+              <span>Start time</span>
+              <input type="time" name="start_time" value={eventForm.start_time} onChange={handleEventChange} readOnly={eventForm.all_day} required />
+              <FieldError errors={eventErrors} name="start_time" />
+            </label>
+
+            <label>
+              <span>End time</span>
+              <input type="time" name="end_time" value={eventForm.end_time} onChange={handleEventChange} readOnly={eventForm.all_day} required />
+              <FieldError errors={eventErrors} name="end_time" />
+            </label>
+          </div>
+
+          <div className="admin-panel">
+            <strong>Existing events on this date</strong>
+            <ul>
+              {eventPreview.length ? eventPreview.map(item => (
+                <li key={item.id}>
+                  {item.title} ({formatTime(item.start_time)} - {formatTime(item.end_time)})
+                </li>
+              )) : <li>No other events on the selected date.</li>}
+            </ul>
+          </div>
+
+          <div className="admin-form-grid">
+            <label>
+              <span>Location</span>
+              <input name="location" value={eventForm.location} onChange={handleEventChange} />
+              <FieldError errors={eventErrors} name="location" />
+            </label>
+
+            <label>
+              <span>Category</span>
+              <input name="category" value={eventForm.category} onChange={handleEventChange} />
+              <FieldError errors={eventErrors} name="category" />
+            </label>
+          </div>
+
+          <label>
+            <span>Status</span>
+            <select name="status" value={eventForm.status} onChange={handleEventChange}>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+            <FieldError errors={eventErrors} name="status" />
+          </label>
+
+          <div className="admin-actions">
+            <button className="btn-primary" type="submit" disabled={isSavingEvent}>
+              {isSavingEvent ? 'Saving...' : selectedEventId ? 'Update Event' : 'Create Event'}
+            </button>
+            <button className="btn-outline" type="button" onClick={startNewEvent}>Reset</button>
+          </div>
+        </form>
+      </article>
+    </div>
+  )
+}

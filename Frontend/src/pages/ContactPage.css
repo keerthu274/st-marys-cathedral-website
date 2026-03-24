@@ -120,6 +120,29 @@
     gap: 15px;
 }
 
+.contact-feedback {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid transparent;
+    font-size: 0.94rem;
+    box-shadow:
+        0 10px 20px rgba(17, 35, 62, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.contact-feedback.success {
+    background: linear-gradient(135deg, rgba(237, 248, 241, 0.98), rgba(223, 245, 231, 0.96));
+    border-color: #b9ddc5;
+    color: #1b5e3b;
+}
+
+.contact-feedback.error {
+    background: linear-gradient(135deg, rgba(255, 243, 240, 0.98), rgba(254, 232, 227, 0.96));
+    border-color: #f2c0b6;
+    color: #8e2f23;
+}
+
 .contact-form-minimal .form-group {
     display: flex;
     flex-direction: column;

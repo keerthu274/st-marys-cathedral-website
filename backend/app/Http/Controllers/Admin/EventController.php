@@ -6,16 +6,23 @@ use App\Http\Controllers\Controller;          // Base controller class
 use App\Models\Event;                         // Our Event model (database table)
 use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
     /**
      * Display a list of events (Admin: /admin/events).
      */
-    public function index()
+    public function index(Request $request)
     {
         // Get events from database, newest first (latest created at top)
         $events = Event::orderBy('start_date', 'desc')->get();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'events' => $events,
+            ]);
+        }
 
         // Return the admin list page and pass the events data to it
         return view('admin.events.index', compact('events'));
@@ -56,7 +63,14 @@ class EventController extends Controller
         }
 
         // Create the event in the database using validated data
-        Event::create($validated);
+        $event = Event::create($validated);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Event created successfully.',
+                'event' => $event,
+            ], 201);
+        }
 
         // Redirect back to events list with a success message
         return redirect()
@@ -77,8 +91,14 @@ class EventController extends Controller
     /**
      * Show the form to edit an existing event (Admin: /admin/events/{event}/edit).
      */
-    public function edit(Event $event)
+    public function edit(Request $request, Event $event)
     {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'event' => $event,
+            ]);
+        }
+
         // Show edit form and send the selected event data
         return view('admin.events.edit', compact('event'));
     }
@@ -111,6 +131,13 @@ class EventController extends Controller
         // Update the event using validated data
         $event->update($validated);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Event updated successfully.',
+                'event' => $event->fresh(),
+            ]);
+        }
+
         // Redirect back to list with success message
         return redirect()
             ->route('admin.events.index')
@@ -141,10 +168,16 @@ class EventController extends Controller
     /**
      * Delete an event (DELETE /admin/events/{event}).
      */
-    public function destroy(Event $event)
+    public function destroy(Request $request, Event $event)
     {
         // Delete the selected event from database
         $event->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Event deleted successfully.',
+            ]);
+        }
 
         // Redirect back with success message
         return redirect()
@@ -152,7 +185,6 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-
 
 
 

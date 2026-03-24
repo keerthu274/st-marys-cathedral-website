@@ -1,104 +1,117 @@
-// added useState and useEffect so we can load events from the Laravel API
-import { useState, useEffect } from 'react'
-
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
+import { getBackendUrl } from '../lib/auth'
 import './NewsEventsPage.css'
 
-const newsFeatures = [
-    {
-        icon: '📅',
-        title: 'Events Calendar',
-        description: 'Stay updated with upcoming services, events, and community activities at the Cathedral.',
-        link: '/events'
-    },
-    {
-        icon: '📰',
-        title: 'News & Announcements',
-        description: 'Read the latest updates, parish news, and important announcements from our community.',
-        link: '/news'
-    },
-    {
-        icon: '📧',
-        title: 'Weekly Newsletter',
-        description: 'Access the current week’s digital newsletter with Mass times and parish updates.',
-        link: '/newsletter'
-    },
-    {
-        icon: '🗄️',
-        title: 'Newsletter Archive',
-        description: 'Browse and download past editions of the parish newsletter from our digital archive.',
-        link: '/newsletter-archive'
-    }
-]
+function formatDateLabel(dateString) {
+  if (!dateString) {
+    return 'Date TBC'
+  }
 
-// removed hardcoded events because events will now come from the backend API
+  return new Date(`${dateString}T00:00:00`).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function formatTimeLabel(startTime, endTime) {
+  const formatTime = (timeString) => {
+    if (!timeString) {
+      return ''
+    }
+
+    const [hours, minutes] = timeString.split(':')
+    const date = new Date()
+    date.setHours(Number(hours), Number(minutes))
+
+    return date.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    })
+  }
+
+  const from = formatTime(startTime)
+  const to = formatTime(endTime)
+
+  if (from && to) {
+    return `${from} - ${to}`
+  }
+
+  return from || to || 'Time to be confirmed'
+}
 
 export default function NewsEventsPage() {
+  const [events, setEvents] = useState([])
 
-    // created state to store events coming from Laravel backend
-    const [events, setEvents] = useState([])
+  useEffect(() => {
+    let ignore = false
 
-    // when page loads, request events from the backend API
-    useEffect(() => {
-        fetch("http://127.0.0.1:8000/api/v1/events")
-            .then(res => res.json())
+    async function loadEvents() {
+      try {
+        const response = await fetch(getBackendUrl('/api/v1/events'))
+        const payload = await response.json()
 
-            // API returns { success:true, data:[...] } so we take the data array
-            .then(data => setEvents(data.data))
+        if (!ignore && response.ok && Array.isArray(payload?.data)) {
+          setEvents(payload.data)
+        }
+      } catch (error) {
+        console.log('Error loading events:', error)
+      }
+    }
 
-            .catch(error => console.log("Error loading events:", error))
-    }, [])
+    loadEvents()
 
-    return (
-        <div className="news-events-page">
-            <PageHero 
-                title="News & Events"
-                subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what’s happening at St Mary’s Cathedral."
-                centered={true}
-            />
+    return () => {
+      ignore = true
+    }
+  }, [])
 
-            {/* removed EventsList because it was using old dummy data */}
+  return (
+    <div className="news-events-page">
+      <PageHero
+        title="News & Events"
+        subtitle="Stay connected with the life of our parish. Discover upcoming events, read the latest news, and never miss what is happening at St Mary's Cathedral."
+        centered={true}
+      />
 
-            {/* Upcoming Events */}
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
-                    <div className="card">
-                        <h2 className="ne-events-title">Upcoming Events</h2>
+      <section className="section" style={{ background: 'var(--off-white)' }}>
+        <div className="container">
+          <div className="card">
+            <h2 className="ne-events-title">Upcoming Events</h2>
 
-                        <div className="ne-events-list">
+            <div className="ne-events-list">
+              {events.map((event) => (
+                <div key={event.id} className="ne-event-row">
+                  <span className="ne-event-date">{formatDateLabel(event.start_date)}</span>
 
-                            {/* events now come from backend instead of hardcoded list */}
-                            {events.map(e => (
+                  <div className="ne-event-info">
+                    <span className="ne-event-name">{event.title}</span>
+                    <span className="ne-event-time">{formatTimeLabel(event.start_time, event.end_time)}</span>
+                  </div>
 
-                                // using event id from database instead of title
-                                <div key={e.id} className="ne-event-row">
-
-                                    {/* changed this to show event date on the left side */}
-                                    <span className="ne-event-date">{e.start_date}</span>
-
-                                    <div className="ne-event-info">
-
-                                        <span className="ne-event-name">{e.title}</span>
-
-                                        {/* changed this to show start time and end time under the event title */}
-                                        <span className="ne-event-time">
-                                            {e.start_time} - {e.end_time}
-                                        </span>
-
-                                    </div>
-
-                                    <span className="ne-event-details">Details</span>
-                                </div>
-                            ))}
-
-                        </div>
-
-                        <div style={{ textAlign: 'center', marginTop: '24px' }}>
-                            <button className="btn-primary">View Full Calendar</button>
-                        </div>
-                    </div>
+                  <Link to={`/events/${event.id}`} className="ne-event-details">Details</Link>
                 </div>
-            </section>
+              ))}
+
+              {!events.length ? (
+                <div className="ne-event-row">
+                  <span className="ne-event-date">Soon</span>
+                  <div className="ne-event-info">
+                    <span className="ne-event-name">Upcoming parish events will appear here</span>
+                    <span className="ne-event-time">Published events from the backend will show up automatically.</span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <Link to="/events" className="btn-primary">View Full Calendar</Link>
+            </div>
+          </div>
         </div>
-    )
+      </section>
+    </div>
+  )
 }

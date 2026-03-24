@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     tailwindcss(),
@@ -18,6 +19,10 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/auth-api': {
+        target: process.env.VITE_BACKEND_ORIGIN || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/admin': {
         target: process.env.VITE_BACKEND_ORIGIN || 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

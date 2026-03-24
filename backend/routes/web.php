@@ -1,10 +1,16 @@
 <?php
 
+use App\Models\User;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\Rules;
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,6 +58,83 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::put('/parish-registrations/{parishRegistration}',
         [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'update'])
         ->name('parish-registrations.update');
+});
+
+Route::prefix('auth-api')->group(function () {
+    Route::get('csrf-token', function (Request $request) {
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'csrf_token' => csrf_token(),
+        ]);
+    });
+
+    Route::middleware('guest')->group(function () {
+        Route::post('signup', function (Request $request) {
+            $validated = $request->validate([
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+                'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            ]);
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            event(new Registered($user));
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return response()->json([
+                'message' => 'Account created successfully.',
+                'user' => $request->user(),
+            ], 201);
+        });
+
+        Route::post('login', function (Request $request) {
+            $credentials = $request->validate([
+                'email' => ['required', 'email'],
+                'password' => ['required', 'string'],
+            ]);
+
+            if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+                return response()->json([
+                    'message' => 'These credentials do not match our records.',
+                    'errors' => [
+                        'email' => ['These credentials do not match our records.'],
+                    ],
+                ], 422);
+            }
+
+            $request->session()->regenerate();
+
+            return response()->json([
+                'message' => 'Logged in successfully.',
+                'user' => $request->user(),
+            ]);
+        });
+    });
+
+    Route::middleware('auth')->group(function () {
+        Route::get('me', function (Request $request) {
+            return response()->json([
+                'user' => $request->user(),
+            ]);
+        });
+
+        Route::post('logout', function (Request $request) {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'message' => 'Logged out successfully.',
+            ]);
+        });
+    });
 });
 
 require __DIR__.'/auth.php';

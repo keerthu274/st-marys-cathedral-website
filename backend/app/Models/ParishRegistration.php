@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class ParishRegistration extends Model
 {
@@ -62,5 +64,15 @@ class ParishRegistration extends Model
             // Generate member ID like SMC0001
             $registration->member_id = 'SMC' . str_pad($lastId, 4, '0', STR_PAD_LEFT);
         });
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(ParishChild::class, 'registration_id');
+    }
+
+    public function interest(): HasOne
+    {
+        return $this->hasOne(ParishInterest::class, 'registration_id');
     }
 }

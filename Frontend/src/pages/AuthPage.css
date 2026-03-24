@@ -117,21 +117,48 @@
 
 .auth-status {
   margin-top: 20px;
-  padding: 14px 16px;
-  border-radius: 14px;
+  padding: 15px 18px;
+  border-radius: 18px;
   font-size: 0.95rem;
+  border: 1px solid transparent;
+  box-shadow:
+    0 10px 20px rgba(17, 35, 62, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .auth-status.error {
-  background: #fff3f0;
+  background: linear-gradient(135deg, rgba(255, 243, 240, 0.98), rgba(254, 232, 227, 0.96));
   color: #8e2f23;
-  border: 1px solid #f5c4bb;
+  border-color: #f2c0b6;
 }
 
 .auth-status.success {
-  background: #edf8f1;
-  color: #1f6a41;
-  border: 1px solid #bee3cb;
+  background: linear-gradient(135deg, rgba(237, 248, 241, 0.98), rgba(223, 245, 231, 0.96));
+  color: #1b5e3b;
+  border-color: #b9ddc5;
+  position: relative;
+  padding-left: 86px;
+}
+
+.auth-status.success::before {
+  content: 'Success';
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(27, 94, 59, 0.1);
+  color: #1b5e3b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .auth-form {

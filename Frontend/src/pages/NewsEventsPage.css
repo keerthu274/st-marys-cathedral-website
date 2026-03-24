@@ -88,10 +88,16 @@
 }
 
 .ne-event-details {
+    display: inline-flex;
+    align-items: center;
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--gold);
     cursor: pointer;
+}
+
+.ne-event-details:hover {
+    color: var(--gold-dark);
 }
 
 /* Stay informed */
