@@ -30,8 +30,8 @@ export default function ContactPage() {
 
     const handleContactChange = e => setContactForm({ ...contactForm, [e.target.name]: e.target.value })
 
-    const handleContactSubmit = async (e) => {
-        e.preventDefault()
+    // 🔥 removed e.preventDefault from here (IMPORTANT)
+    const handleContactSubmit = async () => {
 
         setLoading(true)
         setSuccessDialogOpen(false)
@@ -148,7 +148,14 @@ export default function ContactPage() {
 
                             {error && <div className="contact-feedback error">{error}</div>}
 
-                            <form className="contact-form-minimal" onSubmit={handleContactSubmit}>
+                            {/* 🔥 changed form submit handling (IMPORTANT) */}
+                            <form 
+                                className="contact-form-minimal" 
+                                onSubmit={(e) => {
+                                    e.preventDefault()
+                                    handleContactSubmit()
+                                }}
+                            >
                                 <div className="grid-2" style={{ gap: '15px' }}>
                                     <div className="form-group">
                                         <label>Name</label>
@@ -159,6 +166,7 @@ export default function ContactPage() {
                                         <input name="email" type="email" value={contactForm.email} onChange={handleContactChange} required />
                                     </div>
                                 </div>
+
                                 <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
                                     <div className="form-group">
                                         <label>Phone Number</label>
@@ -169,6 +177,7 @@ export default function ContactPage() {
                                         <input name="subject" value={contactForm.subject} onChange={handleContactChange} required />
                                     </div>
                                 </div>
+
                                 <div className="radio-group" style={{ margin: '15px 0' }}>
                                     <label className="radio-option">
                                         <input type="radio" name="isMember" value="yes" checked={contactForm.isMember === 'yes'} onChange={handleContactChange} />
@@ -179,10 +188,12 @@ export default function ContactPage() {
                                         No, I do not attend St Mary's.
                                     </label>
                                 </div>
+
                                 <div className="form-group">
                                     <label>Message</label>
                                     <textarea name="message" value={contactForm.message} onChange={handleContactChange} rows={5} required></textarea>
                                 </div>
+
                                 <div className="form-actions-row">
                                     <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })}>Clear</button>
                                     <button type="submit" className="btn-minimal-dark" disabled={loading}>

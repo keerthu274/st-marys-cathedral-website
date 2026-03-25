@@ -1,17 +1,10 @@
+// added hooks to load mass times from backend
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
 import './MassTimesPage.css'
 
-const regularMasses = [
-    {
-        location: "St Mary's Cathedral",
-        items: ['Sunday: 10.30am and 7.00pm', 'Please check the weekly newsletter for weekday Mass times'],
-    },
-    {
-        location: 'Holy Family Church, Coedpoeth',
-        items: ['Sunday: 9.00am', 'Wednesday: 6.00pm'],
-    },
-]
+// removed hardcoded regularMasses because mass times will now come from the backend API
 
 const confessionTimes = [
     'Saturday: 10.30am to 11.30am',
@@ -36,6 +29,17 @@ const prayerSchedule = [
 ]
 
 export default function MassTimesPage() {
+    // store mass times coming from Laravel backend
+    const [massTimes, setMassTimes] = useState([])
+
+    // when page loads, request mass times from the backend API
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/api/v1/mass-times")
+            .then(res => res.json())
+            .then(data => setMassTimes(data.data))
+            .catch(err => console.log("Error loading mass times:", err))
+    }, [])
+
     return (
         <div className="mass-sac-page">
             <PageHero
@@ -50,8 +54,9 @@ export default function MassTimesPage() {
                     <p className="section-subtitle">Please check the weekly newsletter for weekday updates and seasonal notices</p>
 
                     <div className="grid-2 mass-times-grid">
-                        {regularMasses.map((mass, index) => (
-                            <div key={mass.location} className="card mass-time-card">
+                        {/* using backend mass times instead of hardcoded data */}
+                        {massTimes.map((mass, index) => (
+                            <div key={mass.id} className="card mass-time-card">
                                 <div className="mt-card-header">
                                     <div className={`mt-icon-box mt-icon-variant-${(index % 2) + 1}`}>
                                         <span className={`mt-clock mt-clock-${(index % 2) + 1}`} aria-hidden="true"></span>
@@ -63,11 +68,10 @@ export default function MassTimesPage() {
                                 </div>
 
                                 <div className="mt-card-details" style={{ marginTop: '20px' }}>
-                                    {mass.items.map((item) => (
-                                        <p key={item} className="mt-time-chip">
-                                            <strong>{item}</strong>
-                                        </p>
-                                    ))}
+                                    {/* showing day and time from backend */}
+                                    <p className="mt-time-chip">
+                                        <strong>{mass.day}: {mass.start_time}</strong>
+                                    </p>
                                 </div>
                             </div>
                         ))}

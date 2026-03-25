@@ -50,9 +50,9 @@ export default function NewsEventsPage() {
 
     async function loadEvents() {
       try {
-        const response = await fetch(getBackendUrl('/api/v1/events'))
+        const response = await fetch('http://127.0.0.1:8000/api/v1/events')
         const payload = await response.json()
-
+    
         if (!ignore && response.ok && Array.isArray(payload?.data)) {
           setEvents(payload.data)
         }
