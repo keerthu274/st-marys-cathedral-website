@@ -173,6 +173,18 @@
     outline: none;
 }
 
+.contact-form-minimal input[aria-invalid="true"],
+.contact-form-minimal textarea[aria-invalid="true"] {
+    border-color: #b42318;
+    background: #fff8f6;
+}
+
+.field-error {
+    color: #b42318;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
 .radio-group {
     display: flex;
     flex-direction: column;

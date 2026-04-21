@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
+import { hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder } from '../../lib/validation'
 
 const emptyEventForm = {
   title: '',
@@ -141,22 +142,21 @@ export default function AdminEventsPage() {
 
   function handleEventChange(event) {
     const { name, value, type, checked } = event.target
+    const nextForm = {
+      ...eventForm,
+      [name]: type === 'checkbox' ? checked : value,
+    }
 
-    setEventForm(current => {
-      const next = {
-        ...current,
-        [name]: type === 'checkbox' ? checked : value,
-      }
+    if (name === 'all_day') {
+      nextForm.start_time = checked ? '00:00' : eventForm.start_time
+      nextForm.end_time = checked ? '23:59' : eventForm.end_time
+    }
 
-      if (name === 'all_day') {
-        next.start_time = checked ? '00:00' : current.start_time
-        next.end_time = checked ? '23:59' : current.end_time
-      }
-
-      return next
-    })
-
-    setEventErrors(current => ({ ...current, [name]: undefined }))
+    setEventForm(nextForm)
+    setEventErrors(current => ({
+      ...current,
+      ...validateEventLiveFields(nextForm, name),
+    }))
   }
 
   async function editEvent(id) {
@@ -197,6 +197,14 @@ export default function AdminEventsPage() {
 
   async function submitEvent(event) {
     event.preventDefault()
+    const validationErrors = validateEventForm()
+    setEventErrors(validationErrors)
+
+    if (hasErrors(validationErrors)) {
+      openDialog('error', 'Please check the event form', 'Fix the highlighted fields before saving this event.')
+      return
+    }
+
     setIsSavingEvent(true)
 
     try {
@@ -212,6 +220,73 @@ export default function AdminEventsPage() {
       openDialog('error', 'Unable to save event', error.message || 'Please review the event details and try again.')
     } finally {
       setIsSavingEvent(false)
+    }
+  }
+
+  function validateEventForm() {
+    const nextErrors = {}
+
+    requireField(nextErrors, 'title', eventForm.title, 'Title')
+    validateMaxLength(nextErrors, 'title', eventForm.title, 255, 'Title')
+    requireField(nextErrors, 'start_date', eventForm.start_date, 'Start date')
+    requireField(nextErrors, 'start_time', eventForm.start_time, 'Start time')
+    requireField(nextErrors, 'end_time', eventForm.end_time, 'End time')
+    validateDateOrder(nextErrors, 'end_date', eventForm.start_date, eventForm.end_date, 'End date must be on or after the start date.')
+    validateTimeOrder(nextErrors, 'end_time', eventForm.start_time, eventForm.end_time, 'End time must be after start time.')
+    validateMaxLength(nextErrors, 'location', eventForm.location, 255, 'Location')
+    validateMaxLength(nextErrors, 'category', eventForm.category, 255, 'Category')
+
+    if (!['draft', 'published'].includes(eventForm.status)) {
+      nextErrors.status = ['Select a valid status.']
+    }
+
+    return nextErrors
+  }
+
+  function validateEventLiveFields(form, changedName) {
+    const nextErrors = {}
+
+    if (changedName === 'title') {
+      requireField(nextErrors, 'title', form.title, 'Title')
+      validateMaxLength(nextErrors, 'title', form.title, 255, 'Title')
+    }
+
+    if (changedName === 'start_date') {
+      requireField(nextErrors, 'start_date', form.start_date, 'Start date')
+      validateDateOrder(nextErrors, 'end_date', form.start_date, form.end_date, 'End date must be on or after the start date.')
+    }
+
+    if (changedName === 'end_date') {
+      validateDateOrder(nextErrors, 'end_date', form.start_date, form.end_date, 'End date must be on or after the start date.')
+    }
+
+    if (changedName === 'start_time' || changedName === 'all_day') {
+      requireField(nextErrors, 'start_time', form.start_time, 'Start time')
+      validateTimeOrder(nextErrors, 'end_time', form.start_time, form.end_time, 'End time must be after start time.')
+    }
+
+    if (changedName === 'end_time' || changedName === 'all_day') {
+      requireField(nextErrors, 'end_time', form.end_time, 'End time')
+      validateTimeOrder(nextErrors, 'end_time', form.start_time, form.end_time, 'End time must be after start time.')
+    }
+
+    if (changedName === 'location') {
+      validateMaxLength(nextErrors, 'location', form.location, 255, 'Location')
+    }
+
+    if (changedName === 'category') {
+      validateMaxLength(nextErrors, 'category', form.category, 255, 'Category')
+    }
+
+    if (changedName === 'status' && !['draft', 'published'].includes(form.status)) {
+      nextErrors.status = ['Select a valid status.']
+    }
+
+    return {
+      [changedName]: nextErrors[changedName],
+      end_date: changedName === 'start_date' || changedName === 'end_date' ? nextErrors.end_date : undefined,
+      end_time: ['start_time', 'end_time', 'all_day'].includes(changedName) ? nextErrors.end_time : undefined,
+      start_time: ['start_time', 'all_day'].includes(changedName) ? nextErrors.start_time : undefined,
     }
   }
 
@@ -274,29 +349,29 @@ export default function AdminEventsPage() {
           </div>
         </div>
 
-        <form className="admin-form" onSubmit={submitEvent}>
+        <form className="admin-form" onSubmit={submitEvent} noValidate>
           <label>
             <span>Title</span>
-            <input name="title" value={eventForm.title} onChange={handleEventChange} required />
+            <input name="title" value={eventForm.title} onChange={handleEventChange} required aria-invalid={Boolean(eventErrors.title)} />
             <FieldError errors={eventErrors} name="title" />
           </label>
 
           <label>
             <span>Description</span>
-            <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} />
+            <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.description)} />
             <FieldError errors={eventErrors} name="description" />
           </label>
 
           <div className="admin-form-grid">
             <label>
               <span>Start date</span>
-              <input type="date" name="start_date" value={eventForm.start_date} onChange={handleEventChange} required />
+              <input type="date" name="start_date" value={eventForm.start_date} onChange={handleEventChange} required aria-invalid={Boolean(eventErrors.start_date)} />
               <FieldError errors={eventErrors} name="start_date" />
             </label>
 
             <label>
               <span>End date</span>
-              <input type="date" name="end_date" value={eventForm.end_date} onChange={handleEventChange} />
+              <input type="date" name="end_date" value={eventForm.end_date} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.end_date)} />
               <FieldError errors={eventErrors} name="end_date" />
             </label>
           </div>
@@ -309,13 +384,13 @@ export default function AdminEventsPage() {
           <div className="admin-form-grid">
             <label>
               <span>Start time</span>
-              <input type="time" name="start_time" value={eventForm.start_time} onChange={handleEventChange} readOnly={eventForm.all_day} required />
+              <input type="time" name="start_time" value={eventForm.start_time} onChange={handleEventChange} readOnly={eventForm.all_day} required aria-invalid={Boolean(eventErrors.start_time)} />
               <FieldError errors={eventErrors} name="start_time" />
             </label>
 
             <label>
               <span>End time</span>
-              <input type="time" name="end_time" value={eventForm.end_time} onChange={handleEventChange} readOnly={eventForm.all_day} required />
+              <input type="time" name="end_time" value={eventForm.end_time} onChange={handleEventChange} readOnly={eventForm.all_day} required aria-invalid={Boolean(eventErrors.end_time)} />
               <FieldError errors={eventErrors} name="end_time" />
             </label>
           </div>
@@ -334,20 +409,20 @@ export default function AdminEventsPage() {
           <div className="admin-form-grid">
             <label>
               <span>Location</span>
-              <input name="location" value={eventForm.location} onChange={handleEventChange} />
+              <input name="location" value={eventForm.location} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.location)} />
               <FieldError errors={eventErrors} name="location" />
             </label>
 
             <label>
               <span>Category</span>
-              <input name="category" value={eventForm.category} onChange={handleEventChange} />
+              <input name="category" value={eventForm.category} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.category)} />
               <FieldError errors={eventErrors} name="category" />
             </label>
           </div>
 
           <label>
             <span>Status</span>
-            <select name="status" value={eventForm.status} onChange={handleEventChange}>
+            <select name="status" value={eventForm.status} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.status)}>
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>

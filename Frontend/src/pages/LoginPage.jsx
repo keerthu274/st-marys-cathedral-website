@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../lib/auth'
+import { hasErrors, validateEmail, requireField } from '../lib/validation'
 import './AuthPage.css'
 
 const initialForm = {
@@ -17,15 +18,45 @@ export default function LoginPage() {
 
   function handleChange(event) {
     const { name, value } = event.target
-    setForm(current => ({ ...current, [name]: value }))
-    setErrors(current => ({ ...current, [name]: undefined }))
+    const nextForm = { ...form, [name]: value }
+    const nextErrors = {}
+
+    if (name === 'email') {
+      validateEmail(nextErrors, 'email', value)
+    }
+
+    if (name === 'password') {
+      requireField(nextErrors, 'password', value, 'Password')
+    }
+
+    setForm(nextForm)
+    setErrors(current => ({ ...current, [name]: nextErrors[name] }))
+  }
+
+  function validateForm() {
+    const nextErrors = {}
+
+    validateEmail(nextErrors, 'email', form.email)
+    requireField(nextErrors, 'password', form.password, 'Password')
+
+    return nextErrors
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setIsSubmitting(true)
-    setErrors({})
+    const validationErrors = validateForm()
+    setErrors(validationErrors)
     setStatus({ type: '', message: '' })
+
+    if (hasErrors(validationErrors)) {
+      setStatus({
+        type: 'error',
+        message: 'Please fix the highlighted fields before signing in.',
+      })
+      return
+    }
+
+    setIsSubmitting(true)
 
     try {
       await login(form)
@@ -75,7 +106,7 @@ export default function LoginPage() {
             <div className={`auth-status ${status.type}`}>{status.message}</div>
           ) : null}
 
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
               <label htmlFor="email">Email address</label>
               <input
@@ -86,6 +117,7 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.email)}
               />
               {errors.email ? <span className="auth-field-error">{errors.email[0]}</span> : null}
             </div>
@@ -100,6 +132,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.password)}
               />
               {errors.password ? <span className="auth-field-error">{errors.password[0]}</span> : null}
             </div>

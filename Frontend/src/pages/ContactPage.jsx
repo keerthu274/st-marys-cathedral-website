@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
 import { getBackendUrl } from '../lib/auth'
+import { firstError, hasErrors, requireField, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../lib/validation'
 import './ContactPage.css'
 
 export default function ContactPage() {
@@ -19,6 +20,7 @@ export default function ContactPage() {
     const [loading, setLoading] = useState(false)
     const [successDialogOpen, setSuccessDialogOpen] = useState(false)
     const [error, setError] = useState('')
+    const [contactErrors, setContactErrors] = useState({})
 
     useEffect(() => {
         window.scrollTo(0, 0)
@@ -28,17 +30,58 @@ export default function ContactPage() {
         }
     }, [searchParams])
 
-    const handleContactChange = e => setContactForm({ ...contactForm, [e.target.name]: e.target.value })
+    const handleContactChange = e => {
+        const { name, value } = e.target
+        const nextErrors = {}
+
+        if (name === 'name') {
+            validateNameText(nextErrors, 'name', value, 'Name', true)
+            validateMaxLength(nextErrors, 'name', value, 255, 'Name')
+        } else if (name === 'email') {
+            validateEmail(nextErrors, 'email', value)
+        } else if (name === 'phone') {
+            validatePhone(nextErrors, 'phone', value)
+        } else if (name === 'subject') {
+            requireField(nextErrors, 'subject', value, 'Subject')
+            validateMaxLength(nextErrors, 'subject', value, 255, 'Subject')
+        } else if (name === 'message') {
+            requireField(nextErrors, 'message', value, 'Message')
+        }
+
+        setContactForm({ ...contactForm, [name]: value })
+        setContactErrors(current => ({ ...current, [name]: nextErrors[name] }))
+    }
+
+    const validateContactForm = () => {
+        const nextErrors = {}
+
+        validateNameText(nextErrors, 'name', contactForm.name, 'Name', true)
+        validateMaxLength(nextErrors, 'name', contactForm.name, 255, 'Name')
+        validateEmail(nextErrors, 'email', contactForm.email)
+        validatePhone(nextErrors, 'phone', contactForm.phone)
+        requireField(nextErrors, 'subject', contactForm.subject, 'Subject')
+        validateMaxLength(nextErrors, 'subject', contactForm.subject, 255, 'Subject')
+        requireField(nextErrors, 'message', contactForm.message, 'Message')
+
+        return nextErrors
+    }
 
     // 🔥 removed e.preventDefault from here (IMPORTANT)
     const handleContactSubmit = async () => {
+        const validationErrors = validateContactForm()
+        setContactErrors(validationErrors)
+
+        if (hasErrors(validationErrors)) {
+            setError(firstError(validationErrors) || 'Please review the highlighted fields.')
+            return
+        }
 
         setLoading(true)
         setSuccessDialogOpen(false)
         setError('')
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/v1/contact', {
+            const response = await fetch(getBackendUrl('/api/v1/contact'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -53,6 +96,7 @@ export default function ContactPage() {
             }
 
             setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+            setContactErrors({})
             setSuccessDialogOpen(true)
         } catch (err) {
             setError(err.message)
@@ -155,26 +199,31 @@ export default function ContactPage() {
                                     e.preventDefault()
                                     handleContactSubmit()
                                 }}
+                                noValidate
                             >
                                 <div className="grid-2" style={{ gap: '15px' }}>
                                     <div className="form-group">
                                         <label>Name</label>
-                                        <input name="name" value={contactForm.name} onChange={handleContactChange} required />
+                                        <input name="name" value={contactForm.name} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.name)} />
+                                        {contactErrors.name ? <span className="field-error">{contactErrors.name[0]}</span> : null}
                                     </div>
                                     <div className="form-group">
                                         <label>Email</label>
-                                        <input name="email" type="email" value={contactForm.email} onChange={handleContactChange} required />
+                                        <input name="email" type="email" value={contactForm.email} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.email)} />
+                                        {contactErrors.email ? <span className="field-error">{contactErrors.email[0]}</span> : null}
                                     </div>
                                 </div>
 
                                 <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
                                     <div className="form-group">
                                         <label>Phone Number</label>
-                                        <input name="phone" value={contactForm.phone} onChange={handleContactChange} />
+                                        <input name="phone" value={contactForm.phone} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.phone)} />
+                                        {contactErrors.phone ? <span className="field-error">{contactErrors.phone[0]}</span> : null}
                                     </div>
                                     <div className="form-group">
                                         <label>Subject</label>
-                                        <input name="subject" value={contactForm.subject} onChange={handleContactChange} required />
+                                        <input name="subject" value={contactForm.subject} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.subject)} />
+                                        {contactErrors.subject ? <span className="field-error">{contactErrors.subject[0]}</span> : null}
                                     </div>
                                 </div>
 
@@ -191,11 +240,16 @@ export default function ContactPage() {
 
                                 <div className="form-group">
                                     <label>Message</label>
-                                    <textarea name="message" value={contactForm.message} onChange={handleContactChange} rows={5} required></textarea>
+                                    <textarea name="message" value={contactForm.message} onChange={handleContactChange} rows={5} required aria-invalid={Boolean(contactErrors.message)}></textarea>
+                                    {contactErrors.message ? <span className="field-error">{contactErrors.message[0]}</span> : null}
                                 </div>
 
                                 <div className="form-actions-row">
-                                    <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })}>Clear</button>
+                                    <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => {
+                                        setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+                                        setContactErrors({})
+                                        setError('')
+                                    }}>Clear</button>
                                     <button type="submit" className="btn-minimal-dark" disabled={loading}>
                                         {loading ? 'Sending...' : 'Send Message'}
                                     </button>

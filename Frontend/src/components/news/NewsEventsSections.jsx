@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { hasErrors, validateEmail } from '../../lib/validation'
 import './NewsEvents.css'
 
 export const NewsHero = ({ title, subtitle, image, breadcrumb }) => (
@@ -100,20 +102,58 @@ export const NewsGrid = ({ articles }) => (
     </section>
 )
 
-export const SubscribeSection = () => (
-    <section className="subscribe-section">
-        <div className="container">
-            <div className="subscribe-container">
-                <h2 style={{ fontFamily: 'Playfair Display', fontSize: '2rem', marginBottom: '12px' }}>Stay Informed</h2>
-                <p style={{ opacity: 0.9 }}>Subscribe to receive weekly updates and digital newsletters from St Mary's Cathedral.</p>
-                <form className="subscribe-form" onSubmit={(e) => e.preventDefault()}>
-                    <input type="email" placeholder="Your email address" className="subscribe-input" required />
-                    <button type="submit" className="btn-gold">Subscribe</button>
-                </form>
+export const SubscribeSection = () => {
+    const [email, setEmail] = useState('')
+    const [errors, setErrors] = useState({})
+    const [message, setMessage] = useState('')
+
+    function handleSubmit(event) {
+        event.preventDefault()
+        const nextErrors = {}
+        validateEmail(nextErrors, 'email', email)
+        setErrors(nextErrors)
+
+        if (hasErrors(nextErrors)) {
+            setMessage('')
+            return
+        }
+
+        setMessage('Thank you. Your email address is ready for newsletter subscription.')
+        setEmail('')
+    }
+
+    return (
+        <section className="subscribe-section">
+            <div className="container">
+                <div className="subscribe-container">
+                    <h2 style={{ fontFamily: 'Playfair Display', fontSize: '2rem', marginBottom: '12px' }}>Stay Informed</h2>
+                    <p style={{ opacity: 0.9 }}>Subscribe to receive weekly updates and digital newsletters from St Mary's Cathedral.</p>
+                    <form className="subscribe-form" onSubmit={handleSubmit} noValidate>
+                        <input
+                            type="email"
+                            placeholder="Your email address"
+                            className="subscribe-input"
+                            value={email}
+                            onChange={event => {
+                                const nextErrors = {}
+                                validateEmail(nextErrors, 'email', event.target.value)
+
+                                setEmail(event.target.value)
+                                setErrors(nextErrors)
+                                setMessage('')
+                            }}
+                            required
+                            aria-invalid={Boolean(errors.email)}
+                        />
+                        <button type="submit" className="btn-gold">Subscribe</button>
+                    </form>
+                    {errors.email ? <span className="subscribe-feedback error">{errors.email[0]}</span> : null}
+                    {message ? <span className="subscribe-feedback success">{message}</span> : null}
+                </div>
             </div>
-        </div>
-    </section>
-)
+        </section>
+    )
+}
 
 export const NewsCTA = ({ title, description, buttonText, buttonLink }) => (
     <section className="section" style={{ background: 'var(--navy)', color: 'var(--white)', textAlign: 'center', padding: '60px 0' }}>

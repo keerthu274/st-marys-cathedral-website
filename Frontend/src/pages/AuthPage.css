@@ -195,6 +195,11 @@
   transform: translateY(-1px);
 }
 
+.auth-field input[aria-invalid="true"] {
+  border-color: #b42318;
+  background: #fff8f6;
+}
+
 .auth-field-error {
   font-size: 0.85rem;
   color: #a93d32;

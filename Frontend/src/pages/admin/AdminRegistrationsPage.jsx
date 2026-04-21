@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteRegistration, getRegistration, listRegistrations, updateRegistration } from '../../lib/admin'
+import { asError, hasErrors, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../../lib/validation'
 
 function formatDate(value) {
   if (!value) {
@@ -34,6 +35,14 @@ function initialRegistrationForm(registration) {
   }
 }
 
+function FieldError({ errors, name }) {
+  if (!errors?.[name]?.[0]) {
+    return null
+  }
+
+  return <p className="admin-field-error">{errors[name][0]}</p>
+}
+
 export default function AdminRegistrationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [registrations, setRegistrations] = useState([])
@@ -44,6 +53,7 @@ export default function AdminRegistrationsPage() {
   const [isEditingRegistration, setIsEditingRegistration] = useState(false)
   const [isLoadingRegistration, setIsLoadingRegistration] = useState(false)
   const [isSavingRegistration, setIsSavingRegistration] = useState(false)
+  const [registrationErrors, setRegistrationErrors] = useState({})
   const [dialogState, setDialogState] = useState({
     open: false,
     tone: 'neutral',
@@ -105,6 +115,7 @@ export default function AdminRegistrationsPage() {
         if (!ignore) {
           setRegistrationDetail(payload.registration || null)
           setRegistrationForm(initialRegistrationForm(payload.registration))
+          setRegistrationErrors({})
           setIsEditingRegistration(false)
         }
       } catch (error) {
@@ -158,18 +169,69 @@ export default function AdminRegistrationsPage() {
 
   function handleRegistrationChange(event) {
     const { name, value, type, checked } = event.target
-    setRegistrationForm(current => ({
-      ...current,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
+    const nextValue = type === 'checkbox' ? checked : value
+    const nextErrors = {}
+
+    if (name === 'full_name') {
+      validateNameText(nextErrors, 'full_name', value, 'Full name', true)
+      validateMaxLength(nextErrors, 'full_name', value, 255, 'Full name')
+    } else if (name === 'email') {
+      validateEmail(nextErrors, 'email', value)
+    } else if (name === 'phone') {
+      validatePhone(nextErrors, 'phone', value, 'Phone', true)
+    } else if (name === 'partner_name') {
+      validateNameText(nextErrors, 'partner_name', value, 'Partner name')
+      validateMaxLength(nextErrors, 'partner_name', value, 255, 'Partner name')
+    }
+
+    setRegistrationForm({
+      ...registrationForm,
+      [name]: nextValue,
+    })
+    setRegistrationErrors(current => ({ ...current, [name]: nextErrors[name] }))
+  }
+
+  function validateRegistrationChild(child, index) {
+    const nextErrors = {}
+    const hasName = child.child_name.trim() !== ''
+    const hasAge = String(child.age).trim() !== ''
+
+    if (!hasName && hasAge) {
+      nextErrors[`children.${index}.child_name`] = asError('Child name is required when age is entered.')
+    }
+
+    if (hasName) {
+      validateNameText(nextErrors, `children.${index}.child_name`, child.child_name, 'Child name')
+    }
+
+    if (hasName && !hasAge) {
+      nextErrors[`children.${index}.age`] = asError('Child age is required when name is entered.')
+    }
+
+    if (hasAge) {
+      const age = Number(child.age)
+      if (!Number.isInteger(age) || age < 0 || age > 18) {
+        nextErrors[`children.${index}.age`] = asError('Child age must be a whole number between 0 and 18.')
+      }
+    }
+
+    return nextErrors
   }
 
   function handleChildChange(index, field, value) {
-    setRegistrationForm(current => ({
+    const nextChildren = registrationForm.children.map((child, childIndex) =>
+      childIndex === index ? { ...child, [field]: value } : child,
+    )
+    const childErrors = validateRegistrationChild(nextChildren[index], index)
+
+    setRegistrationForm({
+      ...registrationForm,
+      children: nextChildren,
+    })
+    setRegistrationErrors(current => ({
       ...current,
-      children: current.children.map((child, childIndex) =>
-        childIndex === index ? { ...child, [field]: value } : child,
-      ),
+      [`children.${index}.child_name`]: childErrors[`children.${index}.child_name`],
+      [`children.${index}.age`]: childErrors[`children.${index}.age`],
     }))
   }
 
@@ -193,6 +255,14 @@ export default function AdminRegistrationsPage() {
       return
     }
 
+    const validationErrors = validateRegistrationEditForm()
+    setRegistrationErrors(validationErrors)
+
+    if (hasErrors(validationErrors)) {
+      openDialog('error', 'Please check the registration form', 'Fix the highlighted fields before saving this registration.')
+      return
+    }
+
     setIsSavingRegistration(true)
 
     const payload = {
@@ -204,6 +274,7 @@ export default function AdminRegistrationsPage() {
       const response = await updateRegistration(registrationDetail.id, payload)
       setRegistrationDetail(response.registration || null)
       setRegistrationForm(initialRegistrationForm(response.registration))
+      setRegistrationErrors({})
       setIsEditingRegistration(false)
       await refreshRegistrations()
       openDialog('success', 'Registration updated successfully', response.message || 'The parish registration has been updated.')
@@ -212,6 +283,43 @@ export default function AdminRegistrationsPage() {
     } finally {
       setIsSavingRegistration(false)
     }
+  }
+
+  function validateRegistrationEditForm() {
+    const nextErrors = {}
+
+    validateNameText(nextErrors, 'full_name', registrationForm.full_name, 'Full name', true)
+    validateMaxLength(nextErrors, 'full_name', registrationForm.full_name, 255, 'Full name')
+    validateEmail(nextErrors, 'email', registrationForm.email)
+    validatePhone(nextErrors, 'phone', registrationForm.phone, 'Phone', true)
+    validateNameText(nextErrors, 'partner_name', registrationForm.partner_name, 'Partner name')
+    validateMaxLength(nextErrors, 'partner_name', registrationForm.partner_name, 255, 'Partner name')
+
+    registrationForm.children.forEach((child, index) => {
+      const hasName = child.child_name.trim() !== ''
+      const hasAge = String(child.age).trim() !== ''
+
+      if (!hasName && hasAge) {
+        nextErrors[`children.${index}.child_name`] = asError('Child name is required when age is entered.')
+      }
+
+      if (hasName && !hasAge) {
+        nextErrors[`children.${index}.age`] = asError('Child age is required when name is entered.')
+      }
+
+      if (hasName) {
+        validateNameText(nextErrors, `children.${index}.child_name`, child.child_name, 'Child name')
+      }
+
+      if (hasAge) {
+        const age = Number(child.age)
+        if (!Number.isInteger(age) || age < 0 || age > 18) {
+          nextErrors[`children.${index}.age`] = asError('Child age must be a whole number between 0 and 18.')
+        }
+      }
+    })
+
+    return nextErrors
   }
 
   async function removeRegistration(id) {
@@ -352,28 +460,32 @@ export default function AdminRegistrationsPage() {
         ) : null}
 
         {registrationDetail && isEditingRegistration ? (
-          <form className="admin-form" onSubmit={saveRegistration}>
+          <form className="admin-form" onSubmit={saveRegistration} noValidate>
             <div className="admin-form-grid">
               <label>
                 <span>Full name</span>
-                <input name="full_name" value={registrationForm.full_name} onChange={handleRegistrationChange} />
+                <input name="full_name" value={registrationForm.full_name} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.full_name)} />
+                <FieldError errors={registrationErrors} name="full_name" />
               </label>
 
               <label>
                 <span>Email</span>
-                <input type="email" name="email" value={registrationForm.email} onChange={handleRegistrationChange} />
+                <input type="email" name="email" value={registrationForm.email} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.email)} />
+                <FieldError errors={registrationErrors} name="email" />
               </label>
             </div>
 
             <div className="admin-form-grid">
               <label>
                 <span>Phone</span>
-                <input name="phone" value={registrationForm.phone} onChange={handleRegistrationChange} />
+                <input name="phone" value={registrationForm.phone} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.phone)} />
+                <FieldError errors={registrationErrors} name="phone" />
               </label>
 
               <label>
                 <span>Partner name</span>
-                <input name="partner_name" value={registrationForm.partner_name} onChange={handleRegistrationChange} />
+                <input name="partner_name" value={registrationForm.partner_name} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.partner_name)} />
+                <FieldError errors={registrationErrors} name="partner_name" />
               </label>
             </div>
 
@@ -382,8 +494,14 @@ export default function AdminRegistrationsPage() {
               <div className="admin-children-list">
                 {registrationForm.children.map((child, index) => (
                   <div key={`${index}-${child.child_name}`} className="admin-child-row">
-                    <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} />
-                    <input placeholder="Age" type="number" value={child.age} onChange={event => handleChildChange(index, 'age', event.target.value)} />
+                    <div>
+                      <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
+                      <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
+                    </div>
+                    <div>
+                      <input placeholder="Age" type="number" min="0" max="18" value={child.age} onChange={event => handleChildChange(index, 'age', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.age`])} />
+                      <FieldError errors={registrationErrors} name={`children.${index}.age`} />
+                    </div>
                     <button type="button" className="admin-link-btn danger" onClick={() => removeChildRow(index)}>
                       Remove
                     </button>

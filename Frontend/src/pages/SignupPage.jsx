@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signup } from '../lib/auth'
+import { asError, hasErrors, validateEmail, validateMaxLength, validateNameText } from '../lib/validation'
 import './AuthPage.css'
 
 const initialForm = {
@@ -19,15 +20,81 @@ export default function SignupPage() {
 
   function handleChange(event) {
     const { name, value } = event.target
-    setForm(current => ({ ...current, [name]: value }))
-    setErrors(current => ({ ...current, [name]: undefined }))
+    const nextForm = { ...form, [name]: value }
+    const nextErrors = {}
+
+    if (name === 'name') {
+      validateNameText(nextErrors, 'name', value, 'Full name', true)
+      validateMaxLength(nextErrors, 'name', value, 255, 'Full name')
+    }
+
+    if (name === 'email') {
+      validateEmail(nextErrors, 'email', value)
+    }
+
+    if (name === 'password') {
+      if (!value) {
+        nextErrors.password = asError('Password is required.')
+      } else if (value.length < 8) {
+        nextErrors.password = asError('Password must be at least 8 characters.')
+      }
+
+      if (nextForm.password_confirmation && value !== nextForm.password_confirmation) {
+        nextErrors.password_confirmation = asError('Passwords do not match.')
+      } else if (nextForm.password_confirmation) {
+        nextErrors.password_confirmation = undefined
+      }
+    }
+
+    if (name === 'password_confirmation') {
+      if (!value) {
+        nextErrors.password_confirmation = asError('Please confirm your password.')
+      } else if (nextForm.password !== value) {
+        nextErrors.password_confirmation = asError('Passwords do not match.')
+      }
+    }
+
+    setForm(nextForm)
+    setErrors(current => ({ ...current, [name]: nextErrors[name], password_confirmation: nextErrors.password_confirmation ?? (name === 'password' ? undefined : current.password_confirmation) }))
+  }
+
+  function validateForm() {
+    const nextErrors = {}
+
+    validateNameText(nextErrors, 'name', form.name, 'Full name', true)
+    validateMaxLength(nextErrors, 'name', form.name, 255, 'Full name')
+    validateEmail(nextErrors, 'email', form.email)
+
+    if (!form.password) {
+      nextErrors.password = asError('Password is required.')
+    } else if (form.password.length < 8) {
+      nextErrors.password = asError('Password must be at least 8 characters.')
+    }
+
+    if (!form.password_confirmation) {
+      nextErrors.password_confirmation = asError('Please confirm your password.')
+    } else if (form.password !== form.password_confirmation) {
+      nextErrors.password_confirmation = asError('Passwords do not match.')
+    }
+
+    return nextErrors
   }
 
   async function handleSubmit(event) {
     event.preventDefault()
-    setIsSubmitting(true)
-    setErrors({})
+    const validationErrors = validateForm()
+    setErrors(validationErrors)
     setStatus({ type: '', message: '' })
+
+    if (hasErrors(validationErrors)) {
+      setStatus({
+        type: 'error',
+        message: 'Please fix the highlighted fields before creating your account.',
+      })
+      return
+    }
+
+    setIsSubmitting(true)
 
     try {
       await signup(form)
@@ -77,7 +144,7 @@ export default function SignupPage() {
             <div className={`auth-status ${status.type}`}>{status.message}</div>
           ) : null}
 
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
               <label htmlFor="name">Full name</label>
               <input
@@ -88,6 +155,7 @@ export default function SignupPage() {
                 value={form.name}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.name)}
               />
               {errors.name ? <span className="auth-field-error">{errors.name[0]}</span> : null}
             </div>
@@ -102,6 +170,7 @@ export default function SignupPage() {
                 value={form.email}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.email)}
               />
               {errors.email ? <span className="auth-field-error">{errors.email[0]}</span> : null}
             </div>
@@ -116,6 +185,7 @@ export default function SignupPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.password)}
               />
               {errors.password ? <span className="auth-field-error">{errors.password[0]}</span> : null}
             </div>
@@ -130,7 +200,9 @@ export default function SignupPage() {
                 value={form.password_confirmation}
                 onChange={handleChange}
                 required
+                aria-invalid={Boolean(errors.password_confirmation)}
               />
+              {errors.password_confirmation ? <span className="auth-field-error">{errors.password_confirmation[0]}</span> : null}
             </div>
 
             <div className="auth-actions">

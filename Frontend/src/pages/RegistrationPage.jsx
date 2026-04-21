@@ -1,7 +1,27 @@
 import { useRef, useState } from 'react'
 import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
+import {
+    asError,
+    firstError,
+    hasErrors,
+    requireField,
+    UK_POSTCODE_PATTERN,
+    validateDateNotFuture,
+    validateEmail,
+    validateMaxLength,
+    validateNameText,
+    validatePhone,
+} from '../lib/validation'
 import './RegistrationPage.css'
+
+function FieldError({ errors, name }) {
+    if (!errors?.[name]?.[0]) {
+        return null
+    }
+
+    return <span className="field-error">{errors[name][0]}</span>
+}
 
 export default function RegistrationPage() {
     const [regType, setRegType] = useState('individual')
@@ -14,21 +34,34 @@ export default function RegistrationPage() {
         message: null
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [formErrors, setFormErrors] = useState({})
     const formRef = useRef(null)
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
-
-        setFormData({
+        const nextValue = type === 'checkbox' ? checked : value
+        const nextFormData = {
             ...formData,
-            [name]: type === 'checkbox' ? checked : value
-        })
+            [name]: nextValue
+        }
+
+        setFormData(nextFormData)
+        setFormErrors(current => ({ ...current, [name]: validateRegistrationField(name, nextValue, nextFormData) }))
     }
 
     const handleChildChange = (id, field, value) => {
-        setChildren(children.map(child =>
+        const nextChildren = children.map(child =>
             child.id === id ? { ...child, [field]: value } : child
-        ))
+        )
+        const changedChild = nextChildren.find(child => child.id === id)
+        const childErrors = validateChildFields(changedChild)
+
+        setChildren(nextChildren)
+        setFormErrors(current => ({
+            ...current,
+            [`children.${id}.name`]: childErrors.name,
+            [`children.${id}.age`]: childErrors.age
+        }))
     }
 
     const handleAddChild = () => {
@@ -44,12 +77,163 @@ export default function RegistrationPage() {
     const resetRegistrationForm = () => {
         formRef.current?.reset()
         setFormData({})
+        setFormErrors({})
         setChildren([{ id: 1, name: '', age: '' }])
         setRegType('individual')
     }
 
+    const validateRegistrationForm = () => {
+        const nextErrors = {}
+
+        validateNameText(nextErrors, 'full_name', formData.full_name, 'Full name', true)
+        validateMaxLength(nextErrors, 'full_name', formData.full_name, 255, 'Full name')
+        requireField(nextErrors, 'date_of_birth', formData.date_of_birth, 'Date of birth')
+        validateDateNotFuture(nextErrors, 'date_of_birth', formData.date_of_birth, 'Date of birth')
+        requireField(nextErrors, 'gender', formData.gender, 'Gender')
+
+        validateMaxLength(nextErrors, 'nationality', formData.nationality, 255, 'Nationality')
+        validateMaxLength(nextErrors, 'occupation', formData.occupation, 255, 'Occupation')
+        requireField(nextErrors, 'address_line1', formData.address_line1, 'Home address')
+        validateNameText(nextErrors, 'city', formData.city, 'City or town', true)
+        requireField(nextErrors, 'city', formData.city, 'City or town')
+        requireField(nextErrors, 'postcode', formData.postcode, 'Postcode')
+
+        if (formData.postcode && !UK_POSTCODE_PATTERN.test(formData.postcode.trim())) {
+            nextErrors.postcode = asError('Enter a valid UK postcode.')
+        }
+
+        validatePhone(nextErrors, 'phone', formData.phone, 'Telephone number', true)
+        validateEmail(nextErrors, 'email', formData.email)
+        validateNameText(nextErrors, 'partner_name', formData.partner_name, 'Partner name')
+        validateMaxLength(nextErrors, 'partner_name', formData.partner_name, 255, 'Partner name')
+
+        if (regType === 'family') {
+            children.forEach(child => {
+                const hasName = child.name.trim() !== ''
+                const hasAge = String(child.age).trim() !== ''
+
+                if (!hasName && hasAge) {
+                    nextErrors[`children.${child.id}.name`] = asError('Child name is required when age is entered.')
+                }
+
+                if (hasName && !hasAge) {
+                    nextErrors[`children.${child.id}.age`] = asError('Child age is required when name is entered.')
+                }
+
+                if (hasName) {
+                    validateNameText(nextErrors, `children.${child.id}.name`, child.name, 'Child name')
+                }
+
+                if (hasAge) {
+                    const age = Number(child.age)
+                    if (!Number.isInteger(age) || age < 0 || age > 18) {
+                        nextErrors[`children.${child.id}.age`] = asError('Child age must be a whole number between 0 and 18.')
+                    }
+                }
+            })
+        }
+
+        if (!formData.consent) {
+            nextErrors.consent = asError('Consent is required before submitting.')
+        }
+
+        validateNameText(nextErrors, 'signature', formData.signature, 'Signature', true)
+        requireField(nextErrors, 'signed_date', formData.signed_date, 'Signed date')
+        validateDateNotFuture(nextErrors, 'signed_date', formData.signed_date, 'Signed date')
+
+        return nextErrors
+    }
+
+    const validateRegistrationField = (name, value, data) => {
+        const nextErrors = {}
+
+        if (name === 'full_name') {
+            validateNameText(nextErrors, 'full_name', value, 'Full name', true)
+            validateMaxLength(nextErrors, 'full_name', value, 255, 'Full name')
+        } else if (name === 'date_of_birth') {
+            requireField(nextErrors, 'date_of_birth', value, 'Date of birth')
+            validateDateNotFuture(nextErrors, 'date_of_birth', value, 'Date of birth')
+        } else if (name === 'gender') {
+            requireField(nextErrors, 'gender', value, 'Gender')
+        } else if (name === 'nationality') {
+            validateMaxLength(nextErrors, 'nationality', value, 255, 'Nationality')
+        } else if (name === 'occupation') {
+            validateMaxLength(nextErrors, 'occupation', value, 255, 'Occupation')
+        } else if (name === 'address_line1') {
+            requireField(nextErrors, 'address_line1', value, 'Home address')
+        } else if (name === 'city') {
+            validateNameText(nextErrors, 'city', value, 'City or town', true)
+        } else if (name === 'postcode') {
+            requireField(nextErrors, 'postcode', value, 'Postcode')
+            if (value && !UK_POSTCODE_PATTERN.test(value.trim())) {
+                nextErrors.postcode = asError('Enter a valid UK postcode.')
+            }
+        } else if (name === 'phone') {
+            validatePhone(nextErrors, 'phone', value, 'Telephone number', true)
+        } else if (name === 'email') {
+            validateEmail(nextErrors, 'email', value)
+        } else if (name === 'partner_name') {
+            validateNameText(nextErrors, 'partner_name', value, 'Partner name')
+            validateMaxLength(nextErrors, 'partner_name', value, 255, 'Partner name')
+        } else if (name === 'consent' && !data.consent) {
+            nextErrors.consent = asError('Consent is required before submitting.')
+        } else if (name === 'signature') {
+            validateNameText(nextErrors, 'signature', value, 'Signature', true)
+        } else if (name === 'signed_date') {
+            requireField(nextErrors, 'signed_date', value, 'Signed date')
+            validateDateNotFuture(nextErrors, 'signed_date', value, 'Signed date')
+        }
+
+        return nextErrors[name]
+    }
+
+    const validateChildFields = (child) => {
+        const nextErrors = {}
+
+        if (!child) {
+            return nextErrors
+        }
+
+        const hasName = child.name.trim() !== ''
+        const hasAge = String(child.age).trim() !== ''
+
+        if (!hasName && hasAge) {
+            nextErrors.name = asError('Child name is required when age is entered.')
+        }
+
+        if (hasName) {
+            validateNameText(nextErrors, 'name', child.name, 'Child name')
+        }
+
+        if (hasName && !hasAge) {
+            nextErrors.age = asError('Child age is required when name is entered.')
+        }
+
+        if (hasAge) {
+            const age = Number(child.age)
+            if (!Number.isInteger(age) || age < 0 || age > 18) {
+                nextErrors.age = asError('Child age must be a whole number between 0 and 18.')
+            }
+        }
+
+        return nextErrors
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
+        const validationErrors = validateRegistrationForm()
+        setFormErrors(validationErrors)
+
+        if (hasErrors(validationErrors)) {
+            setDialogState({
+                open: true,
+                tone: 'error',
+                title: 'Please check the form',
+                message: firstError(validationErrors) || 'Please review the highlighted fields and try again.'
+            })
+            return
+        }
+
         setIsSubmitting(true)
 
         try {
@@ -135,7 +319,7 @@ export default function RegistrationPage() {
                     <p>We are delighted that you have chosen to join St Mary's Cathedral. Please fill out the form below so we can keep you informed and involved in our community.</p>
                 </div>
 
-                <form ref={formRef} onSubmit={handleSubmit}>
+                <form ref={formRef} onSubmit={handleSubmit} noValidate>
 
                     {/* Registration Type Select */}
                     <div className="reg-section">
@@ -164,13 +348,15 @@ export default function RegistrationPage() {
 
                         <div className="form-group">
                             <label>Full Name <span className="required">*</span></label>
-                            <input type="text" className="form-input" placeholder="Enter your full title and name" required name="full_name" onChange={handleChange} />
+                            <input type="text" className="form-input" placeholder="Enter your full title and name" required name="full_name" onChange={handleChange} aria-invalid={Boolean(formErrors.full_name)} />
+                            <FieldError errors={formErrors} name="full_name" />
                         </div>
 
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>Date of Birth <span className="required">*</span></label>
-                                <input type="date" className="form-input" required name="date_of_birth" onChange={handleChange} />
+                                <input type="date" className="form-input" required name="date_of_birth" onChange={handleChange} aria-invalid={Boolean(formErrors.date_of_birth)} />
+                                <FieldError errors={formErrors} name="date_of_birth" />
                             </div>
                             <div className="form-group">
                                 <label>Gender <span className="required">*</span></label>
@@ -182,17 +368,20 @@ export default function RegistrationPage() {
                                         <input type="radio" name="gender" value="female" required onChange={handleChange} /> Female
                                     </label>
                                 </div>
+                                <FieldError errors={formErrors} name="gender" />
                             </div>
                         </div>
 
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>Nationality</label>
-                                <input type="text" className="form-input" placeholder="e.g. British" name="nationality" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="e.g. British" name="nationality" onChange={handleChange} aria-invalid={Boolean(formErrors.nationality)} />
+                                <FieldError errors={formErrors} name="nationality" />
                             </div>
                             <div className="form-group">
                                 <label>Occupation</label>
-                                <input type="text" className="form-input" placeholder="Your profession" name="occupation" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="Your profession" name="occupation" onChange={handleChange} aria-invalid={Boolean(formErrors.occupation)} />
+                                <FieldError errors={formErrors} name="occupation" />
                             </div>
                         </div>
                     </div>
@@ -203,29 +392,34 @@ export default function RegistrationPage() {
 
                         <div className="form-group">
                             <label>Home Address <span className="required">*</span></label>
-                            <input type="text" className="form-input" placeholder="House number and street name" style={{ marginBottom: '12px' }} required name="address_line1" onChange={handleChange} />
+                            <input type="text" className="form-input" placeholder="House number and street name" style={{ marginBottom: '12px' }} required name="address_line1" onChange={handleChange} aria-invalid={Boolean(formErrors.address_line1)} />
+                            <FieldError errors={formErrors} name="address_line1" />
                             <input type="text" className="form-input" placeholder="Address line 2 (optional)" name="address_line2" onChange={handleChange} />
                         </div>
 
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>City / Town <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="e.g. Wrexham" required name="city" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="e.g. Wrexham" required name="city" onChange={handleChange} aria-invalid={Boolean(formErrors.city)} />
+                                <FieldError errors={formErrors} name="city" />
                             </div>
                             <div className="form-group">
                                 <label>Postcode <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="e.g. LL11 1RR" required name="postcode" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="e.g. LL11 1RR" required name="postcode" onChange={handleChange} aria-invalid={Boolean(formErrors.postcode)} />
+                                <FieldError errors={formErrors} name="postcode" />
                             </div>
                         </div>
 
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>Telephone Number <span className="required">*</span></label>
-                                <input type="tel" className="form-input" placeholder="Mobile or landline" required name="phone" onChange={handleChange} />
+                                <input type="tel" className="form-input" placeholder="Mobile or landline" required name="phone" onChange={handleChange} aria-invalid={Boolean(formErrors.phone)} />
+                                <FieldError errors={formErrors} name="phone" />
                             </div>
                             <div className="form-group">
                                 <label>Email Address <span className="required">*</span></label>
-                                <input type="email" className="form-input" placeholder="your.email@example.com" required name="email" onChange={handleChange} />
+                                <input type="email" className="form-input" placeholder="your.email@example.com" required name="email" onChange={handleChange} aria-invalid={Boolean(formErrors.email)} />
+                                <FieldError errors={formErrors} name="email" />
                             </div>
                         </div>
                     </div>
@@ -236,7 +430,8 @@ export default function RegistrationPage() {
                             <h2 className="reg-section-title">Partner Information (Optional)</h2>
                             <div className="form-group">
                                 <label>Spouse / Partner Name</label>
-                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} aria-invalid={Boolean(formErrors.partner_name)} />
+                                <FieldError errors={formErrors} name="partner_name" />
                             </div>
                         </div>
                     ) : (
@@ -244,7 +439,8 @@ export default function RegistrationPage() {
                             <h2 className="reg-section-title">Family Information</h2>
                             <div className="form-group">
                                 <label>Spouse / Partner Name</label>
-                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} aria-invalid={Boolean(formErrors.partner_name)} />
+                                <FieldError errors={formErrors} name="partner_name" />
                             </div>
 
                             <div className="children-header">
@@ -263,8 +459,10 @@ export default function RegistrationPage() {
                                             className="form-input"
                                             placeholder="Full name"
                                             value={child.name}
+                                            aria-invalid={Boolean(formErrors[`children.${child.id}.name`])}
                                             onChange={(e) => handleChildChange(child.id, 'name', e.target.value)}
                                         />
+                                        <FieldError errors={formErrors} name={`children.${child.id}.name`} />
                                     </div>
                                     <div className="form-group" style={{ marginBottom: 0 }}>
                                         <label>{index === 0 ? 'Age' : 'Age'}</label>
@@ -275,8 +473,10 @@ export default function RegistrationPage() {
                                             min="0"
                                             max="18"
                                             value={child.age}
+                                            aria-invalid={Boolean(formErrors[`children.${child.id}.age`])}
                                             onChange={(e) => handleChildChange(child.id, 'age', e.target.value)}
                                         />
+                                        <FieldError errors={formErrors} name={`children.${child.id}.age`} />
                                     </div>
                                     <div style={{ paddingTop: '28px' }}>
                                         <button type="button" className="btn-remove-child" onClick={() => handleRemoveChild(child.id)}>×</button>
@@ -345,16 +545,19 @@ export default function RegistrationPage() {
                                 <input type="checkbox" required name="consent" onChange={handleChange} />
                                 <span>I confirm that I consent to the parish maintaining my records as detailed above *</span>
                             </label>
+                            <FieldError errors={formErrors} name="consent" />
                         </div>
 
                         <div className="form-grid-2" style={{ marginTop: '32px' }}>
                             <div className="form-group">
                                 <label>Signed (Type your full name) <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="Your signature" required name="signature" onChange={handleChange} />
+                                <input type="text" className="form-input" placeholder="Your signature" required name="signature" onChange={handleChange} aria-invalid={Boolean(formErrors.signature)} />
+                                <FieldError errors={formErrors} name="signature" />
                             </div>
                             <div className="form-group">
                                 <label>Date <span className="required">*</span></label>
-                                <input type="date" className="form-input" required name="signed_date" onChange={handleChange} />
+                                <input type="date" className="form-input" required name="signed_date" onChange={handleChange} aria-invalid={Boolean(formErrors.signed_date)} />
+                                <FieldError errors={formErrors} name="signed_date" />
                             </div>
                         </div>
                     </div>

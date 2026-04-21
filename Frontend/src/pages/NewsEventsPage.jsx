@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
-import { getBackendUrl } from '../lib/auth'
 import './NewsEventsPage.css'
 
 function formatDateLabel(dateString) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createMassTime, deleteMassTime, getMassTime, listMassTimes, listMassTimesByDay, updateMassTime } from '../../lib/admin'
+import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -122,8 +123,26 @@ export default function AdminMassTimesPage() {
 
   function handleMassTimeChange(event) {
     const { name, value } = event.target
-    setMassTimeForm(current => ({ ...current, [name]: value }))
-    setMassTimeErrors(current => ({ ...current, [name]: undefined }))
+    const nextForm = { ...massTimeForm, [name]: value }
+    const nextErrors = {}
+
+    if (name === 'day') {
+      requireField(nextErrors, 'day', value, 'Day')
+      validateMaxLength(nextErrors, 'day', value, 20, 'Day')
+    } else if (name === 'start_time') {
+      requireField(nextErrors, 'start_time', value, 'Start time')
+    } else if (name === 'location') {
+      validateMaxLength(nextErrors, 'location', value, 100, 'Location')
+    } else if (name === 'language') {
+      validateMaxLength(nextErrors, 'language', value, 50, 'Language')
+    } else if (name === 'notes') {
+      validateMaxLength(nextErrors, 'notes', value, 1000, 'Notes')
+    } else if (name === 'status' && !['draft', 'published'].includes(value)) {
+      nextErrors.status = ['Select a valid status.']
+    }
+
+    setMassTimeForm(nextForm)
+    setMassTimeErrors(current => ({ ...current, [name]: nextErrors[name] }))
   }
 
   async function editMassTime(id) {
@@ -160,6 +179,14 @@ export default function AdminMassTimesPage() {
 
   async function submitMassTime(event) {
     event.preventDefault()
+    const validationErrors = validateMassTimeForm()
+    setMassTimeErrors(validationErrors)
+
+    if (hasErrors(validationErrors)) {
+      openDialog('error', 'Please check the Mass time form', 'Fix the highlighted fields before saving this Mass time.')
+      return
+    }
+
     setIsSavingMassTime(true)
 
     try {
@@ -176,6 +203,23 @@ export default function AdminMassTimesPage() {
     } finally {
       setIsSavingMassTime(false)
     }
+  }
+
+  function validateMassTimeForm() {
+    const nextErrors = {}
+
+    requireField(nextErrors, 'day', massTimeForm.day, 'Day')
+    requireField(nextErrors, 'start_time', massTimeForm.start_time, 'Start time')
+    validateMaxLength(nextErrors, 'day', massTimeForm.day, 20, 'Day')
+    validateMaxLength(nextErrors, 'location', massTimeForm.location, 100, 'Location')
+    validateMaxLength(nextErrors, 'language', massTimeForm.language, 50, 'Language')
+    validateMaxLength(nextErrors, 'notes', massTimeForm.notes, 1000, 'Notes')
+
+    if (!['draft', 'published'].includes(massTimeForm.status)) {
+      nextErrors.status = ['Select a valid status.']
+    }
+
+    return nextErrors
   }
 
   async function removeMassTime(id) {
@@ -247,10 +291,10 @@ export default function AdminMassTimesPage() {
           </div>
         </div>
 
-        <form className="admin-form" onSubmit={submitMassTime}>
+        <form className="admin-form" onSubmit={submitMassTime} noValidate>
           <label>
             <span>Day</span>
-            <select name="day" value={massTimeForm.day} onChange={handleMassTimeChange} required>
+            <select name="day" value={massTimeForm.day} onChange={handleMassTimeChange} required aria-invalid={Boolean(massTimeErrors.day)}>
               <option value="">Select a day</option>
               {DAYS.map(day => <option key={day} value={day}>{day}</option>)}
             </select>
@@ -259,7 +303,7 @@ export default function AdminMassTimesPage() {
 
           <label>
             <span>Start time</span>
-            <input type="time" name="start_time" value={massTimeForm.start_time} onChange={handleMassTimeChange} required />
+            <input type="time" name="start_time" value={massTimeForm.start_time} onChange={handleMassTimeChange} required aria-invalid={Boolean(massTimeErrors.start_time)} />
             <FieldError errors={massTimeErrors} name="start_time" />
           </label>
 
@@ -276,25 +320,25 @@ export default function AdminMassTimesPage() {
 
           <label>
             <span>Location</span>
-            <input name="location" value={massTimeForm.location} onChange={handleMassTimeChange} placeholder="e.g. Cathedral" />
+            <input name="location" value={massTimeForm.location} onChange={handleMassTimeChange} placeholder="e.g. Cathedral" aria-invalid={Boolean(massTimeErrors.location)} />
             <FieldError errors={massTimeErrors} name="location" />
           </label>
 
           <label>
             <span>Language</span>
-            <input name="language" value={massTimeForm.language} onChange={handleMassTimeChange} placeholder="e.g. English" />
+            <input name="language" value={massTimeForm.language} onChange={handleMassTimeChange} placeholder="e.g. English" aria-invalid={Boolean(massTimeErrors.language)} />
             <FieldError errors={massTimeErrors} name="language" />
           </label>
 
           <label>
             <span>Notes</span>
-            <textarea name="notes" rows="4" value={massTimeForm.notes} onChange={handleMassTimeChange} />
+            <textarea name="notes" rows="4" value={massTimeForm.notes} onChange={handleMassTimeChange} aria-invalid={Boolean(massTimeErrors.notes)} />
             <FieldError errors={massTimeErrors} name="notes" />
           </label>
 
           <label>
             <span>Status</span>
-            <select name="status" value={massTimeForm.status} onChange={handleMassTimeChange}>
+            <select name="status" value={massTimeForm.status} onChange={handleMassTimeChange} aria-invalid={Boolean(massTimeErrors.status)}>
               <option value="draft">Draft</option>
               <option value="published">Published</option>
             </select>

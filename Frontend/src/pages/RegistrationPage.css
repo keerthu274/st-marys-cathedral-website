@@ -155,6 +155,19 @@
     background: var(--white);
 }
 
+.form-input[aria-invalid="true"] {
+    border-color: #b42318;
+    background: #fff8f6;
+}
+
+.field-error {
+    display: block;
+    margin-top: 6px;
+    color: #b42318;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
 /* Radio Group */
 .radio-group {
     display: flex;

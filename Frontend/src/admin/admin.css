@@ -316,6 +316,14 @@
   outline: 3px solid rgba(30, 58, 95, 0.1);
 }
 
+.admin-form input[aria-invalid="true"],
+.admin-form select[aria-invalid="true"],
+.admin-form textarea[aria-invalid="true"],
+.admin-child-row input[aria-invalid="true"] {
+  border-color: #b42318;
+  background: #fff8f6;
+}
+
 .admin-form-grid,
 .admin-detail-grid {
   display: grid;
