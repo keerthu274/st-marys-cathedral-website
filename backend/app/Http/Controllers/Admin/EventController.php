@@ -158,8 +158,8 @@ class EventController extends Controller
 
         // Get events that are happening on that date (including multi-day events)
         $events = Event::whereDate('start_date', '<=', $date)
-            ->whereRaw("IFNULL(end_date, start_date) >= ?", [$date])
-            ->orderByRaw("IFNULL(start_time, '00:00') ASC")
+            ->whereRaw("COALESCE(end_date, start_date) >= ?", [$date])
+            ->orderByRaw("COALESCE(start_time, '00:00') ASC")
             ->get(['id', 'title', 'start_date', 'start_time', 'end_date', 'end_time']);
 
         return response()->json($events);
@@ -185,6 +185,5 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-
 
 
