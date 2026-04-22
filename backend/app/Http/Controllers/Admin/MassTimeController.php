@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MassTimeRequest;
+use App\Http\Resources\MassTimeResource;
 use App\Models\MassTime;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class MassTimeController extends Controller
@@ -31,16 +31,7 @@ class MassTimeController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'mass_times' => collect($massTimes->items())->map(fn (MassTime $massTime) => [
-                    'id' => $massTime->id,
-                    'day' => $massTime->day,
-                    'start_time' => Carbon::parse($massTime->start_time)->format('H:i'),
-                    'end_time' => $massTime->end_time ? Carbon::parse($massTime->end_time)->format('H:i') : null,
-                    'location' => $massTime->location,
-                    'language' => $massTime->language,
-                    'notes' => $massTime->notes,
-                    'status' => $massTime->status,
-                ])->values(),
+                'mass_times' => MassTimeResource::collection(collect($massTimes->items()))->resolve($request),
                 'meta' => [
                     'current_page' => $massTimes->currentPage(),
                     'last_page' => $massTimes->lastPage(),
@@ -65,16 +56,7 @@ class MassTimeController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Mass time created successfully.',
-                'mass_time' => [
-                    'id' => $massTime->id,
-                    'day' => $massTime->day,
-                    'start_time' => Carbon::parse($massTime->start_time)->format('H:i'),
-                    'end_time' => $massTime->end_time ? Carbon::parse($massTime->end_time)->format('H:i') : null,
-                    'location' => $massTime->location,
-                    'language' => $massTime->language,
-                    'notes' => $massTime->notes,
-                    'status' => $massTime->status,
-                ],
+                'mass_time' => MassTimeResource::make($massTime)->resolve($request),
             ], 201);
         }
 
@@ -87,16 +69,7 @@ class MassTimeController extends Controller
     {
         if ($request->expectsJson()) {
             return response()->json([
-                'mass_time' => [
-                    'id' => $massTime->id,
-                    'day' => $massTime->day,
-                    'start_time' => Carbon::parse($massTime->start_time)->format('H:i'),
-                    'end_time' => $massTime->end_time ? Carbon::parse($massTime->end_time)->format('H:i') : null,
-                    'location' => $massTime->location,
-                    'language' => $massTime->language,
-                    'notes' => $massTime->notes,
-                    'status' => $massTime->status,
-                ],
+                'mass_time' => MassTimeResource::make($massTime)->resolve($request),
             ]);
         }
 
@@ -110,16 +83,7 @@ class MassTimeController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Mass time updated successfully.',
-                'mass_time' => [
-                    'id' => $massTime->id,
-                    'day' => $massTime->day,
-                    'start_time' => Carbon::parse($massTime->start_time)->format('H:i'),
-                    'end_time' => $massTime->end_time ? Carbon::parse($massTime->end_time)->format('H:i') : null,
-                    'location' => $massTime->location,
-                    'language' => $massTime->language,
-                    'notes' => $massTime->notes,
-                    'status' => $massTime->status,
-                ],
+                'mass_time' => MassTimeResource::make($massTime)->resolve($request),
             ]);
         }
 

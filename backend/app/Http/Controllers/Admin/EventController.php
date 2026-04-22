@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;          // Base controller class
+use App\Http\Resources\EventResource;
 use App\Models\Event;                         // Our Event model (database table)
 use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
@@ -20,7 +20,7 @@ class EventController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'events' => $events,
+                'events' => EventResource::collection($events)->resolve($request),
             ]);
         }
 
@@ -68,7 +68,7 @@ class EventController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Event created successfully.',
-                'event' => $event,
+                'event' => EventResource::make($event)->resolve($request),
             ], 201);
         }
 
@@ -95,7 +95,7 @@ class EventController extends Controller
     {
         if ($request->expectsJson()) {
             return response()->json([
-                'event' => $event,
+                'event' => EventResource::make($event)->resolve($request),
             ]);
         }
 
@@ -134,7 +134,7 @@ class EventController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Event updated successfully.',
-                'event' => $event->fresh(),
+                'event' => EventResource::make($event->fresh())->resolve($request),
             ]);
         }
 
@@ -185,5 +185,4 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-
 

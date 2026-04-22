@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\ParishRegistration;
+use App\Http\Requests\StoreParishRegistrationRequest;
 use App\Models\ParishChild;
 use App\Models\ParishInterest;
+use App\Models\ParishRegistration;
 use App\Mail\ParishRegistrationWelcome;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\JsonResponse;
 
@@ -20,44 +20,9 @@ class ParishRegistrationApiController extends Controller
      * Store a new parish registration submitted from the website.
      */
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreParishRegistrationRequest $request): JsonResponse
     {
-        /**
-         * ----------------------------------------------------------
-         * Validate registration form
-         * ----------------------------------------------------------
-         */
-
-        $validated = $request->validate([
-            'registration_type' => 'required|string',
-
-            'full_name' => 'required|string|max:255',
-            'date_of_birth' => 'required|date',
-            'gender' => 'required|string',
-
-            'nationality' => 'nullable|string',
-            'occupation' => 'nullable|string',
-
-            'address_line1' => 'required|string',
-            'address_line2' => 'nullable|string',
-            'city' => 'required|string',
-            'postcode' => 'required|string',
-
-            'phone' => 'required|string',
-            'email' => 'required|email',
-
-            'partner_name' => 'nullable|string',
-
-            'contact_by_phone' => 'boolean',
-            'contact_by_email' => 'boolean',
-
-            'consent_confirmed' => 'required|boolean',
-            'signature' => 'required|string',
-            'signed_date' => 'required|date',
-
-            'children' => 'array',
-            'interests' => 'array'
-        ]);
+        $validated = $request->validated();
 
         /**
          * ----------------------------------------------------------
@@ -101,16 +66,16 @@ class ParishRegistrationApiController extends Controller
          * ----------------------------------------------------------
          */
 
-        if ($request->has('children')) {
-
-            foreach ($request->children as $child) {
-
-                ParishChild::create([
-                    'registration_id' => $registration->id,
-                    'child_name' => $child['child_name'],
-                    'age' => $child['age'] ?? null
-                ]);
+        foreach ($validated['children'] ?? [] as $child) {
+            if (empty($child['child_name'])) {
+                continue;
             }
+
+            ParishChild::create([
+                'registration_id' => $registration->id,
+                'child_name' => $child['child_name'],
+                'age' => $child['age'] ?? null,
+            ]);
         }
 
         /**
@@ -119,14 +84,14 @@ class ParishRegistrationApiController extends Controller
          * ----------------------------------------------------------
          */
 
-        if ($request->has('interests')) {
+        if (isset($validated['interests'])) {
 
             ParishInterest::create([
                 'registration_id' => $registration->id,
-                'volunteering' => $request->interests['volunteering'] ?? false,
-                'parish_groups' => $request->interests['parish_groups'] ?? false,
-                'sacramental_preparation' => $request->interests['sacramental_preparation'] ?? false,
-                'weekly_newsletter' => $request->interests['weekly_newsletter'] ?? false
+                'volunteering' => $validated['interests']['volunteering'] ?? false,
+                'parish_groups' => $validated['interests']['parish_groups'] ?? false,
+                'sacramental_preparation' => $validated['interests']['sacramental_preparation'] ?? false,
+                'weekly_newsletter' => $validated['interests']['weekly_newsletter'] ?? false,
             ]);
         }
 

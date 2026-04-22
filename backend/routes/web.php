@@ -1,18 +1,12 @@
 <?php
 
-use App\Models\User;
 use App\Http\Controllers\ProfileController;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
 use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Auth\ApiAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -73,75 +67,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 });
 
 Route::prefix('auth-api')->group(function () {
-    Route::get('csrf-token', function (Request $request) {
-        $request->session()->regenerateToken();
-
-        return response()->json([
-            'csrf_token' => csrf_token(),
-        ]);
-    });
-
-    Route::post('signup', function (RegisterUserRequest $request) {
-        if (Auth::check()) {
-            return response()->json([
-                'message' => 'You are already signed in.',
-                'user' => $request->user(),
-            ], 200);
-        }
-
-        $validated = $request->validated();
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
-
-        event(new Registered($user));
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return response()->json([
-            'message' => 'Account created successfully.',
-            'user' => $request->user(),
-        ], 201);
-    });
-
-    Route::post('login', function (LoginRequest $request) {
-        if (Auth::check()) {
-            return response()->json([
-                'message' => 'You are already signed in.',
-                'user' => $request->user(),
-            ], 200);
-        }
-
-        $request->authenticate();
-
-        $request->session()->regenerate();
-
-        return response()->json([
-            'message' => 'Logged in successfully.',
-            'user' => $request->user(),
-        ]);
-    });
+    Route::get('csrf-token', [ApiAuthController::class, 'csrfToken']);
+    Route::post('signup', [ApiAuthController::class, 'signup']);
+    Route::post('login', [ApiAuthController::class, 'login']);
 
     Route::middleware('auth')->group(function () {
-        Route::get('me', function (Request $request) {
-            return response()->json([
-                'user' => $request->user(),
-            ]);
-        });
-
-        Route::post('logout', function (Request $request) {
-            Auth::guard('web')->logout();
-
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return response()->json([
-                'message' => 'Logged out successfully.',
-            ]);
-        });
+        Route::get('me', [ApiAuthController::class, 'me']);
+        Route::post('logout', [ApiAuthController::class, 'logout']);
     });
 });
 

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MassTimeResource;
 use App\Models\MassTime;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class MassTimeApiController extends Controller
 {
@@ -16,7 +18,7 @@ class MassTimeApiController extends Controller
      * Used by the public website to display weekly Mass schedule.
      */
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         // Fetch published mass times
         // Order by day and start time for proper weekly display
@@ -42,7 +44,7 @@ class MassTimeApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $massTimes
+            'data' => MassTimeResource::collection($massTimes)->resolve($request),
         ]);
     }
 }

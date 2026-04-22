@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EventApiController extends Controller
 {
@@ -16,7 +18,7 @@ class EventApiController extends Controller
      * Used by the public website (React frontend).
      */
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         // Fetch published events ordered by upcoming date and time
 
@@ -26,27 +28,9 @@ class EventApiController extends Controller
             ->orderBy('start_time', 'asc')
             ->get();
 
-        // Transform events into clean public JSON structure
-
-        $data = $events->map(function ($event) {
-            return [
-                'id'          => $event->id,
-                'title'       => $event->title,
-                'description' => $event->description,
-                'start_date'  => $event->start_date,
-                'start_time'  => $event->start_time,
-                'end_date'    => $event->end_date,
-                'end_time'    => $event->end_time,
-                'location'    => $event->location,
-                'category'    => $event->category,
-            ];
-        });
-
-        // Return JSON response
-
         return response()->json([
             'success' => true,
-            'data' => $data
+            'data' => EventResource::collection($events)->resolve($request),
         ]);
     }
 
@@ -58,7 +42,7 @@ class EventApiController extends Controller
      * Returns a single published event.
      */
 
-    public function show(int $id): JsonResponse
+    public function show(Request $request, int $id): JsonResponse
     {
         // Find the event only if it is published
 
@@ -80,17 +64,7 @@ class EventApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id'          => $event->id,
-                'title'       => $event->title,
-                'description' => $event->description,
-                'start_date'  => $event->start_date,
-                'start_time'  => $event->start_time,
-                'end_date'    => $event->end_date,
-                'end_time'    => $event->end_time,
-                'location'    => $event->location,
-                'category'    => $event->category,
-            ]
+            'data' => EventResource::make($event)->resolve($request),
         ]);
     }
 }

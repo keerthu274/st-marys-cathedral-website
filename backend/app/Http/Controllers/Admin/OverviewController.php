@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ContactMessageResource;
+use App\Http\Resources\EventResource;
+use App\Http\Resources\MassTimeResource;
+use App\Http\Resources\ParishRegistrationResource;
 use App\Models\ContactMessage;
 use App\Models\Event;
 use App\Models\MassTime;
 use App\Models\ParishRegistration;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OverviewController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $events = Event::orderBy('start_date', 'desc')
             ->orderBy('start_time', 'desc')
@@ -22,18 +26,7 @@ class OverviewController extends Controller
         $massTimes = MassTime::orderByRaw($this->dayOrderSql())
             ->orderBy('start_time')
             ->limit(4)
-            ->get()
-            ->map(fn (MassTime $massTime) => [
-                'id' => $massTime->id,
-                'day' => $massTime->day,
-                'start_time' => Carbon::parse($massTime->start_time)->format('H:i'),
-                'end_time' => $massTime->end_time ? Carbon::parse($massTime->end_time)->format('H:i') : null,
-                'location' => $massTime->location,
-                'language' => $massTime->language,
-                'notes' => $massTime->notes,
-                'status' => $massTime->status,
-            ])
-            ->values();
+            ->get();
 
         $registrations = ParishRegistration::latest()
             ->limit(4)
@@ -61,10 +54,10 @@ class OverviewController extends Controller
                 ],
             ],
             'recent' => [
-                'events' => $events,
-                'mass_times' => $massTimes,
-                'registrations' => $registrations,
-                'contact_messages' => $contactMessages,
+                'events' => EventResource::collection($events)->resolve($request),
+                'mass_times' => MassTimeResource::collection($massTimes)->resolve($request),
+                'registrations' => ParishRegistrationResource::collection($registrations)->resolve($request),
+                'contact_messages' => ContactMessageResource::collection($contactMessages)->resolve($request),
             ],
         ]);
     }

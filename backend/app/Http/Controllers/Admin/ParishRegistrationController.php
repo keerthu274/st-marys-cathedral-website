@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateParishRegistrationRequest;
+use App\Http\Resources\ParishRegistrationResource;
 use App\Models\ParishRegistration;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ParishRegistrationController extends Controller
@@ -16,7 +17,7 @@ class ParishRegistrationController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'registrations' => $registrations->items(),
+                'registrations' => ParishRegistrationResource::collection(collect($registrations->items()))->resolve($request),
                 'meta' => [
                     'current_page' => $registrations->currentPage(),
                     'last_page' => $registrations->lastPage(),
@@ -36,7 +37,7 @@ class ParishRegistrationController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'registration' => $parishRegistration,
+                'registration' => ParishRegistrationResource::make($parishRegistration)->resolve($request),
             ]);
         }
 
@@ -75,7 +76,7 @@ class ParishRegistrationController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'registration' => $parishRegistration,
+                'registration' => ParishRegistrationResource::make($parishRegistration)->resolve($request),
             ]);
         }
 
@@ -83,44 +84,47 @@ class ParishRegistrationController extends Controller
     }
 
     // added: update registration
-    public function update(Request $request, ParishRegistration $parishRegistration)
+    public function update(UpdateParishRegistrationRequest $request, ParishRegistration $parishRegistration)
     {
+        $validated = $request->validated();
+
         // update main details
         $parishRegistration->update([
-            'full_name' => $request->full_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'partner_name' => $request->partner_name,
+            'full_name' => $validated['full_name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'partner_name' => $validated['partner_name'] ?? null,
         ]);
 
         // update children (simple: delete + re-add)
         $parishRegistration->children()->delete();
 
-        if ($request->children) {
-            foreach ($request->children as $child) {
+        if (!empty($validated['children'])) {
+            foreach ($validated['children'] as $child) {
                 if (!empty($child['child_name'])) {
                     $parishRegistration->children()->create([
                         'child_name' => $child['child_name'],
-                        'age' => $child['age']
+                        'age' => $child['age'] ?? null,
                     ]);
                 }
             }
         }
 
         // update interests
-        if ($parishRegistration->interest) {
-            $parishRegistration->interest()->update([
-                'volunteering' => $request->volunteering ? true : false,
-                'parish_groups' => $request->parish_groups ? true : false,
-                'sacramental_preparation' => $request->sacramental_preparation ? true : false,
-                'weekly_newsletter' => $request->weekly_newsletter ? true : false,
-            ]);
-        }
+        $parishRegistration->interest()->updateOrCreate(
+            ['registration_id' => $parishRegistration->id],
+            [
+                'volunteering' => (bool) ($validated['volunteering'] ?? false),
+                'parish_groups' => (bool) ($validated['parish_groups'] ?? false),
+                'sacramental_preparation' => (bool) ($validated['sacramental_preparation'] ?? false),
+                'weekly_newsletter' => (bool) ($validated['weekly_newsletter'] ?? false),
+            ],
+        );
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Registration updated successfully.',
-                'registration' => $parishRegistration->fresh()->load('children', 'interest'),
+                'registration' => ParishRegistrationResource::make($parishRegistration->fresh()->load('children', 'interest'))->resolve($request),
             ]);
         }
 

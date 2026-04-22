@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ContactMessageRequest;
 use App\Models\ContactMessage;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class ContactApiController extends Controller
@@ -16,23 +16,9 @@ class ContactApiController extends Controller
      * Store a contact message submitted from the public website.
      */
 
-    public function store(Request $request): JsonResponse
+    public function store(ContactMessageRequest $request): JsonResponse
     {
-        // Validate form input
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:50',
-            'subject' => 'required|string|max:255',
-            'message' => 'required|string'
-        ]);
-
-        // Create contact message record
-
-        ContactMessage::create($validated);
-
-        // Return response
+        ContactMessage::create($request->validated());
 
         return response()->json([
             'success' => true,
