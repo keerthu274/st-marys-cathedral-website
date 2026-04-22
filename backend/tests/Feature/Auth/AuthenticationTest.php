@@ -14,7 +14,7 @@ class AuthenticationTest extends TestCase
     {
         $response = $this->get('/login');
 
-        $response->assertStatus(200);
+        $response->assertRedirect(config('app.frontend_url').'/login');
     }
 
     public function test_users_can_authenticate_using_the_login_screen(): void
@@ -39,6 +39,30 @@ class AuthenticationTest extends TestCase
             'password' => 'wrong-password',
         ]);
 
+        $this->assertGuest();
+    }
+
+    public function test_login_requires_a_valid_email_address(): void
+    {
+        $response = $this->from('/login')->post('/login', [
+            'email' => 'not-an-email',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_api_login_uses_the_same_email_validation(): void
+    {
+        $response = $this->postJson('/auth-api/login', [
+            'email' => 'not-an-email',
+            'password' => 'password',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('email');
         $this->assertGuest();
     }
 

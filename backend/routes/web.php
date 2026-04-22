@@ -2,6 +2,8 @@
 
 use App\Models\User;
 use App\Http\Controllers\ProfileController;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
 use App\Http\Controllers\Admin\OverviewController;
@@ -12,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Validation\Rules;
 
 Route::get('/', function () {
     return view('welcome');
@@ -80,7 +81,7 @@ Route::prefix('auth-api')->group(function () {
         ]);
     });
 
-    Route::post('signup', function (Request $request) {
+    Route::post('signup', function (RegisterUserRequest $request) {
         if (Auth::check()) {
             return response()->json([
                 'message' => 'You are already signed in.',
@@ -88,11 +89,7 @@ Route::prefix('auth-api')->group(function () {
             ], 200);
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
             'name' => $validated['name'],
@@ -110,7 +107,7 @@ Route::prefix('auth-api')->group(function () {
         ], 201);
     });
 
-    Route::post('login', function (Request $request) {
+    Route::post('login', function (LoginRequest $request) {
         if (Auth::check()) {
             return response()->json([
                 'message' => 'You are already signed in.',
@@ -118,19 +115,7 @@ Route::prefix('auth-api')->group(function () {
             ], 200);
         }
 
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required', 'string'],
-        ]);
-
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return response()->json([
-                'message' => 'These credentials do not match our records.',
-                'errors' => [
-                    'email' => ['These credentials do not match our records.'],
-                ],
-            ], 422);
-        }
+        $request->authenticate();
 
         $request->session()->regenerate();
 
