@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | The React frontend runs separately during local development. Backend
+    | browser routes can use this URL to send users to the designed app.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://127.0.0.1:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
