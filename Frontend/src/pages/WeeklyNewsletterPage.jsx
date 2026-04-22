@@ -56,7 +56,7 @@ export default function WeeklyNewsletterPage() {
     }, [])
 
     const latestNewsletter = newsletters[0]
-    const recentNewsletters = newsletters.slice(1, 4)
+    const archiveNewsletters = newsletters.slice(1)
 
     return (
         <div className="news-events-page">
@@ -94,26 +94,66 @@ export default function WeeklyNewsletterPage() {
                                 </p>
                             </div>
 
-                            {recentNewsletters.length ? (
+                            <div className="newsletter-inner-section">
+                                <div className="newsletter-viewer-header">
+                                    <div>
+                                        <h4 style={{ marginBottom: '6px' }}>Latest issue open on this page</h4>
+                                        <p className="text-mid" style={{ margin: 0 }}>
+                                            The newest newsletter is shown below and can be read without leaving this page.
+                                        </p>
+                                    </div>
+                                    <span className="newsletter-date-pill">
+                                        {formatDate(latestNewsletter.publication_date)}
+                                    </span>
+                                </div>
+
+                                <div className="newsletter-pdf-frame">
+                                    <iframe
+                                        key={latestNewsletter.id}
+                                        title={latestNewsletter.title}
+                                        src={getBackendUrl(latestNewsletter.view_url)}
+                                    />
+                                </div>
+                            </div>
+
+                            {archiveNewsletters.length ? (
                                 <div className="newsletter-inner-section">
-                                    <h4>Recent Editions</h4>
-                                    <div style={{ display: 'grid', gap: '12px' }}>
-                                        {recentNewsletters.map(item => (
-                                            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'center' }}>
+                                    <h4>Previous Editions</h4>
+                                    <div className="newsletter-edition-list">
+                                        {archiveNewsletters.map(item => (
+                                            <div key={item.id} className="newsletter-edition-item">
                                                 <div>
                                                     <strong className="text-navy">{item.title}</strong>
-                                                    <p className="text-mid" style={{ margin: 0 }}>{formatDate(item.publication_date)}</p>
+                                                    <p className="text-mid" style={{ margin: '4px 0 0' }}>{formatDate(item.publication_date)}</p>
+                                                    {item.description ? <p className="text-mid" style={{ margin: '8px 0 0' }}>{item.description}</p> : null}
                                                 </div>
-                                                <a className="btn-gold-outline" href={getBackendUrl(item.download_url)} style={{ padding: '8px 16px', fontSize: '0.85rem' }}>Download</a>
+                                                <div className="newsletter-edition-actions">
+                                                    <a
+                                                        className="btn-navy"
+                                                        href={getBackendUrl(item.view_url)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                                                    >
+                                                        Open in New Tab
+                                                    </a>
+                                                    <a
+                                                        className="btn-gold-outline"
+                                                        href={getBackendUrl(item.download_url)}
+                                                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                                                    >
+                                                        Download
+                                                    </a>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                             ) : null}
 
-                            <div style={{ marginTop: '30px', textAlign: 'center', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                                <a className="btn-navy" href={getBackendUrl(latestNewsletter.view_url)} target="_blank" rel="noreferrer">Open Latest PDF</a>
-                                <a className="btn-gold" href={getBackendUrl(latestNewsletter.download_url)}>Download Latest PDF</a>
+                            <div className="newsletter-primary-actions">
+                                <a className="btn-navy" href={getBackendUrl(latestNewsletter.view_url)} target="_blank" rel="noreferrer">Open in New Tab</a>
+                                <a className="btn-gold" href={getBackendUrl(latestNewsletter.download_url)}>Download PDF</a>
                             </div>
                         </>
                     ) : null}

@@ -46,7 +46,7 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // If event is marked as all day, set full-day time range
-        if ($request->has('all_day')) {
+        if ($request->boolean('all_day')) {
             $validated['start_time'] = '00:00';
             $validated['end_time'] = '23:59';
         }
@@ -112,7 +112,7 @@ class EventController extends Controller
         $validated = $request->validated();
 
         // If event is marked as all day, set full-day time range
-        if ($request->has('all_day')) {
+        if ($request->boolean('all_day')) {
             $validated['start_time'] = '00:00';
             $validated['end_time'] = '23:59';
         }
@@ -185,4 +185,3 @@ class EventController extends Controller
             ->with('success', 'Event deleted successfully.');
     }
 }
-

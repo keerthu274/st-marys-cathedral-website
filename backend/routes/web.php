@@ -30,6 +30,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('overview', [OverviewController::class, 'index'])
         ->name('overview');
 
+    Route::patch('overview/items/visibility', [OverviewController::class, 'updateItemVisibility'])
+        ->name('overview.items.visibility');
+
     Route::get('events/by-date', [EventController::class, 'byDate'])
         ->name('events.by-date');
 

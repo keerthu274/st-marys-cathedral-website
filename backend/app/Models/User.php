@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'hidden_overview_items',
     ];
 
     /**
@@ -42,6 +43,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'hidden_overview_items' => 'array',
             'password' => 'hashed',
         ];
     }

@@ -94,6 +94,16 @@ export function getOverview() {
   return adminRequest('/admin/overview')
 }
 
+export function updateOverviewItemVisibility(itemKey, visibility) {
+  return adminRequest('/admin/overview/items/visibility', {
+    method: 'PATCH',
+    body: {
+      item_key: itemKey,
+      visibility,
+    },
+  })
+}
+
 export function getEvent(id) {
   return adminRequest(`/admin/events/${id}/edit`)
 }

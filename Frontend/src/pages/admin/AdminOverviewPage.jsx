@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getOverview } from '../../lib/admin'
+import { getOverview, updateOverviewItemVisibility } from '../../lib/admin'
 
 function formatDate(value) {
   if (!value) {
@@ -30,6 +30,59 @@ function formatDateTime(date, time) {
   return `${formatDate(date)}${time ? ` at ${formatTime(time)}` : ''}`
 }
 
+function buildSections({ events, massTimes, registrations, contactMessages }) {
+  return [
+    {
+      id: 'events',
+      title: 'Recent Events',
+      description: 'Only new or pinned items stay here.',
+      actionLabel: 'Open Events',
+      actionTo: '/dashboard/events',
+      emptyMessage: 'No new event tasks need your attention.',
+      items: events,
+      getLink: item => `/dashboard/events?edit=${item.id}`,
+      getTitle: item => item.title,
+      getSubtitle: item => formatDateTime(item.start_date, item.start_time),
+    },
+    {
+      id: 'mass-times',
+      title: 'Mass Schedule',
+      description: 'New timetable records appear here until you clear them.',
+      actionLabel: 'Open Mass Times',
+      actionTo: '/dashboard/mass-times',
+      emptyMessage: 'No new Mass time tasks need your attention.',
+      items: massTimes,
+      getLink: item => `/dashboard/mass-times?edit=${item.id}`,
+      getTitle: item => item.day,
+      getSubtitle: item => `${formatTime(item.start_time)}${item.location ? ` • ${item.location}` : ''}`,
+    },
+    {
+      id: 'registrations',
+      title: 'Latest Registrations',
+      description: 'Review new parish records here first if needed.',
+      actionLabel: 'Open Records',
+      actionTo: '/dashboard/registrations',
+      emptyMessage: 'No new registration tasks need your attention.',
+      items: registrations,
+      getLink: item => `/dashboard/registrations?selected=${item.id}`,
+      getTitle: item => item.full_name,
+      getSubtitle: item => `${item.member_id} • ${formatDate(item.signed_date)}`,
+    },
+    {
+      id: 'contact-messages',
+      title: 'Recent Enquiries',
+      description: 'New contact messages appear here until you clear them.',
+      actionLabel: 'Open Contact',
+      actionTo: '/dashboard/contact-messages',
+      emptyMessage: 'No new contact messages need your attention.',
+      items: contactMessages,
+      getLink: item => `/dashboard/contact-messages?message=${item.id}`,
+      getTitle: item => item.subject,
+      getSubtitle: item => `${item.name} • ${item.email}`,
+    },
+  ]
+}
+
 export default function AdminOverviewPage() {
   const [events, setEvents] = useState([])
   const [eventMeta, setEventMeta] = useState({ total: 0, published: 0 })
@@ -39,25 +92,39 @@ export default function AdminOverviewPage() {
   const [registrationMeta, setRegistrationMeta] = useState({ total: 0 })
   const [contactMessages, setContactMessages] = useState([])
   const [contactMeta, setContactMeta] = useState({ total: 0 })
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [busyItemKey, setBusyItemKey] = useState('')
 
   useEffect(() => {
     let ignore = false
 
     async function loadData() {
-      const payload = await getOverview()
+      try {
+        setErrorMessage('')
+        const payload = await getOverview()
 
-      if (ignore) {
-        return
+        if (ignore) {
+          return
+        }
+
+        setEvents(payload.recent?.events || [])
+        setEventMeta(payload.stats?.events || { total: 0, published: 0 })
+        setMassTimes(payload.recent?.mass_times || [])
+        setMassTimeMeta(payload.stats?.mass_times || { total: 0, published: 0 })
+        setRegistrations(payload.recent?.registrations || [])
+        setRegistrationMeta(payload.stats?.registrations || { total: 0 })
+        setContactMessages(payload.recent?.contact_messages || [])
+        setContactMeta(payload.stats?.contact_messages || { total: 0 })
+      } catch (error) {
+        if (!ignore) {
+          setErrorMessage(error.message || 'The overview could not be loaded.')
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false)
+        }
       }
-
-      setEvents(payload.recent?.events || [])
-      setEventMeta(payload.stats?.events || { total: 0, published: 0 })
-      setMassTimes(payload.recent?.mass_times || [])
-      setMassTimeMeta(payload.stats?.mass_times || { total: 0, published: 0 })
-      setRegistrations(payload.recent?.registrations || [])
-      setRegistrationMeta(payload.stats?.registrations || { total: 0 })
-      setContactMessages(payload.recent?.contact_messages || [])
-      setContactMeta(payload.stats?.contact_messages || { total: 0 })
     }
 
     loadData()
@@ -67,11 +134,53 @@ export default function AdminOverviewPage() {
     }
   }, [])
 
+  async function handleVisibilityChange(itemKey, visibility) {
+    const groups = [
+      { items: events, setItems: setEvents },
+      { items: massTimes, setItems: setMassTimes },
+      { items: registrations, setItems: setRegistrations },
+      { items: contactMessages, setItems: setContactMessages },
+    ]
+
+    setBusyItemKey(itemKey)
+    setErrorMessage('')
+
+    const snapshots = groups.map(group => group.items)
+
+    groups.forEach(group => {
+      group.setItems(group.items.flatMap(item => {
+        if (item.overview_item_key !== itemKey) {
+          return [item]
+        }
+
+        if (visibility === 'dismissed') {
+          return []
+        }
+
+        return [{ ...item, is_pinned: true }]
+      }))
+    })
+
+    try {
+      await updateOverviewItemVisibility(itemKey, visibility)
+    } catch (error) {
+      groups.forEach((group, index) => {
+        group.setItems(snapshots[index])
+      })
+      setErrorMessage(error.message || 'The dashboard task could not be updated.')
+    } finally {
+      setBusyItemKey('')
+    }
+  }
+
   const publishedEvents = eventMeta.published || 0
   const publishedMassTimes = massTimeMeta.published || 0
+  const sections = buildSections({ events, massTimes, registrations, contactMessages })
 
   return (
     <div className="admin-page-grid">
+      {errorMessage ? <div className="admin-notice error"><span>{errorMessage}</span></div> : null}
+
       <div className="admin-overview-grid">
         <article className="admin-surface admin-stat-card">
           <span>Events</span>
@@ -95,83 +204,62 @@ export default function AdminOverviewPage() {
         </article>
       </div>
 
-      <div className="admin-overview-grid">
-        <article className="admin-surface">
-          <div className="admin-section-head">
-            <div>
-              <h2>Recent Events</h2>
-              <p>Quick access to the latest scheduled items.</p>
-            </div>
-            <Link className="btn-outline" to="/dashboard/events">Open Events</Link>
-          </div>
-          <div className="admin-list">
-            {events.slice(0, 4).map(item => (
-              <Link key={item.id} className="admin-list-row" to={`/dashboard/events?edit=${item.id}`}>
-                <strong>{item.title}</strong>
-                <span>{formatDateTime(item.start_date, item.start_time)}</span>
-              </Link>
-            ))}
-            {!events.length ? <p className="admin-empty">No events have been created yet.</p> : null}
-          </div>
-        </article>
+      {isLoading ? <div className="admin-surface admin-loading">Loading new dashboard tasks...</div> : null}
 
-        <article className="admin-surface">
-          <div className="admin-section-head">
-            <div>
-              <h2>Mass Schedule</h2>
-              <p>See the most recent timetable entries.</p>
-            </div>
-            <Link className="btn-outline" to="/dashboard/mass-times">Open Mass Times</Link>
-          </div>
-          <div className="admin-list">
-            {massTimes.slice(0, 4).map(item => (
-              <Link key={item.id} className="admin-list-row" to={`/dashboard/mass-times?edit=${item.id}`}>
-                <strong>{item.day}</strong>
-                <span>{formatTime(item.start_time)}{item.location ? ` • ${item.location}` : ''}</span>
-              </Link>
-            ))}
-            {!massTimes.length ? <p className="admin-empty">No Mass times available yet.</p> : null}
-          </div>
-        </article>
+      {!isLoading ? (
+        <div className="admin-overview-grid">
+          {sections.map(section => (
+            <article key={section.id} className="admin-surface">
+              <div className="admin-section-head">
+                <div>
+                  <h2>{section.title}</h2>
+                  <p>{section.description}</p>
+                </div>
+                <Link className="btn-outline" to={section.actionTo}>{section.actionLabel}</Link>
+              </div>
 
-        <article className="admin-surface">
-          <div className="admin-section-head">
-            <div>
-              <h2>Latest Registrations</h2>
-              <p>Move straight into member record review.</p>
-            </div>
-            <Link className="btn-outline" to="/dashboard/registrations">Open Records</Link>
-          </div>
-          <div className="admin-list">
-            {registrations.slice(0, 4).map(item => (
-              <Link key={item.id} className="admin-list-row" to={`/dashboard/registrations?selected=${item.id}`}>
-                <strong>{item.full_name}</strong>
-                <span>{item.member_id} • {formatDate(item.signed_date)}</span>
-              </Link>
-            ))}
-            {!registrations.length ? <p className="admin-empty">No registrations available yet.</p> : null}
-          </div>
-        </article>
+              <div className="admin-list">
+                {section.items.map(item => (
+                  <div key={item.overview_item_key} className="admin-overview-item">
+                    <Link className={`admin-list-row admin-list-row-link${item.is_pinned ? ' is-flagged-red' : ''}`} to={section.getLink(item)}>
+                      <strong className="admin-overview-title">
+                        {item.is_pinned ? <span className="admin-flagged-dot" aria-hidden="true" /> : null}
+                        <span>{section.getTitle(item)}</span>
+                      </strong>
+                      <span>{section.getSubtitle(item)}</span>
+                    </Link>
 
-        <article className="admin-surface">
-          <div className="admin-section-head">
-            <div>
-              <h2>Recent Enquiries</h2>
-              <p>Open recent messages from the Contact Us page.</p>
-            </div>
-            <Link className="btn-outline" to="/dashboard/contact-messages">Open Contact</Link>
-          </div>
-          <div className="admin-list">
-            {contactMessages.slice(0, 4).map(item => (
-              <Link key={item.id} className="admin-list-row" to={`/dashboard/contact-messages?message=${item.id}`}>
-                <strong>{item.subject}</strong>
-                <span>{item.name} • {item.email}</span>
-              </Link>
-            ))}
-            {!contactMessages.length ? <p className="admin-empty">No contact messages available yet.</p> : null}
-          </div>
-        </article>
-      </div>
+                    <div className="admin-overview-flags">
+                      <button
+                        className="admin-flag-toggle is-keep"
+                        type="button"
+                        onClick={() => handleVisibilityChange(item.overview_item_key, 'pinned')}
+                        disabled={busyItemKey === item.overview_item_key}
+                        title="Keep this item on the overview"
+                        aria-label="Keep this item on the overview"
+                      >
+                        <span aria-hidden="true">⚑</span>
+                      </button>
+                      <button
+                        className="admin-flag-toggle is-clear"
+                        type="button"
+                        onClick={() => handleVisibilityChange(item.overview_item_key, 'dismissed')}
+                        disabled={busyItemKey === item.overview_item_key}
+                        title="Clear this item from the overview"
+                        aria-label="Clear this item from the overview"
+                      >
+                        <span aria-hidden="true">⚑</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {!section.items.length ? <p className="admin-empty">{section.emptyMessage}</p> : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
