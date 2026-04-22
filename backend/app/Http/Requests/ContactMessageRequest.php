@@ -28,11 +28,20 @@ class ContactMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
-            'subject' => ['required', 'string', 'max:255'],
-            'message' => ['required', 'string', 'max:5000'],
+            'phone' => ['nullable', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
+            'subject' => ['required', 'string', 'min:3', 'max:255'],
+            'message' => ['required', 'string', 'min:10', 'max:5000'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.regex' => 'Name may only contain letters, spaces, apostrophes, hyphens, and full stops.',
+            'phone.regex' => 'Phone number may only contain numbers, spaces, and common phone symbols.',
+            'message.min' => 'Message must be at least 10 characters.',
         ];
     }
 }

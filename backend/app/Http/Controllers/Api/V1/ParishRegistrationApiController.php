@@ -8,6 +8,8 @@ use App\Models\ParishChild;
 use App\Models\ParishInterest;
 use App\Models\ParishRegistration;
 use App\Mail\ParishRegistrationWelcome;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\JsonResponse;
 
@@ -23,6 +25,9 @@ class ParishRegistrationApiController extends Controller
     public function store(StoreParishRegistrationRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $children = $validated['children'] ?? [];
+        $interests = $validated['interests'] ?? [];
+        $registrationData = Arr::except($validated, ['children', 'interests']);
 
         /**
          * ----------------------------------------------------------
@@ -50,7 +55,7 @@ class ParishRegistrationApiController extends Controller
          * ----------------------------------------------------------
          */
 
-        $validated['member_id'] = $memberId;
+        $registrationData['member_id'] = $memberId;
 
         /**
          * ----------------------------------------------------------
@@ -58,42 +63,46 @@ class ParishRegistrationApiController extends Controller
          * ----------------------------------------------------------
          */
 
-        $registration = ParishRegistration::create($validated);
+        $registration = DB::transaction(function () use ($registrationData, $children, $interests) {
+            $registration = ParishRegistration::create($registrationData);
 
-        /**
-         * ----------------------------------------------------------
-         * Save Children (for family registration)
-         * ----------------------------------------------------------
-         */
+            /**
+             * ----------------------------------------------------------
+             * Save Children (for family registration)
+             * ----------------------------------------------------------
+             */
 
-        foreach ($validated['children'] ?? [] as $child) {
-            if (empty($child['child_name'])) {
-                continue;
+            foreach ($children as $child) {
+                if (empty($child['child_name'])) {
+                    continue;
+                }
+
+                ParishChild::create([
+                    'registration_id' => $registration->id,
+                    'child_name' => $child['child_name'],
+                    'age' => $child['age'] ?? null,
+                ]);
             }
 
-            ParishChild::create([
-                'registration_id' => $registration->id,
-                'child_name' => $child['child_name'],
-                'age' => $child['age'] ?? null,
-            ]);
-        }
+            /**
+             * ----------------------------------------------------------
+             * Save Parish Interests
+             * ----------------------------------------------------------
+             */
 
-        /**
-         * ----------------------------------------------------------
-         * Save Parish Interests
-         * ----------------------------------------------------------
-         */
+            if (!empty($interests)) {
 
-        if (isset($validated['interests'])) {
+                ParishInterest::create([
+                    'registration_id' => $registration->id,
+                    'volunteering' => $interests['volunteering'] ?? false,
+                    'parish_groups' => $interests['parish_groups'] ?? false,
+                    'sacramental_preparation' => $interests['sacramental_preparation'] ?? false,
+                    'weekly_newsletter' => $interests['weekly_newsletter'] ?? false,
+                ]);
+            }
 
-            ParishInterest::create([
-                'registration_id' => $registration->id,
-                'volunteering' => $validated['interests']['volunteering'] ?? false,
-                'parish_groups' => $validated['interests']['parish_groups'] ?? false,
-                'sacramental_preparation' => $validated['interests']['sacramental_preparation'] ?? false,
-                'weekly_newsletter' => $validated['interests']['weekly_newsletter'] ?? false,
-            ]);
-        }
+            return $registration;
+        });
 
         /**
          * ----------------------------------------------------------

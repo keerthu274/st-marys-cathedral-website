@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Validator;
 
 class UpdateParishRegistrationRequest extends FormRequest
 {
@@ -28,17 +29,39 @@ class UpdateParishRegistrationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'full_name' => ['required', 'string', 'max:255'],
+            'full_name' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'phone' => ['required', 'string', 'max:50'],
-            'partner_name' => ['nullable', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
+            'partner_name' => ['nullable', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'children' => ['sometimes', 'array'],
-            'children.*.child_name' => ['required_with:children.*.age', 'nullable', 'string', 'max:255'],
+            'children.*.child_name' => ['required_with:children.*.age', 'nullable', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'children.*.age' => ['required_with:children.*.child_name', 'nullable', 'integer', 'between:0,18'],
             'volunteering' => ['sometimes', 'boolean'],
             'parish_groups' => ['sometimes', 'boolean'],
             'sacramental_preparation' => ['sometimes', 'boolean'],
             'weekly_newsletter' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                $registration = $this->route('parishRegistration');
+
+                if ($registration?->registration_type === 'individual' && !empty($this->children)) {
+                    $validator->errors()->add('children', 'Children can only be added for family registrations.');
+                }
+            },
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            '*.regex' => 'This field contains characters that are not allowed.',
+            'phone.regex' => 'Phone number may only contain numbers, spaces, and common phone symbols.',
+            'children.*.age.between' => 'Child age must be between 0 and 18.',
         ];
     }
 }
