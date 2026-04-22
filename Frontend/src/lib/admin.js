@@ -86,6 +86,10 @@ export function listEvents() {
   return adminRequest('/admin/events')
 }
 
+export function getOverview() {
+  return adminRequest('/admin/overview')
+}
+
 export function getEvent(id) {
   return adminRequest(`/admin/events/${id}/edit`)
 }

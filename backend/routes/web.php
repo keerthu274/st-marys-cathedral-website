@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
+use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use Illuminate\Auth\Events\Registered;
@@ -28,6 +29,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('overview', [OverviewController::class, 'index'])
+        ->name('overview');
 
     Route::get('events/by-date', [EventController::class, 'byDate'])
         ->name('events.by-date');

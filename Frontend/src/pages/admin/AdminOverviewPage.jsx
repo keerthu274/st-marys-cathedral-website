@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listContactMessages, listEvents, listMassTimes, listRegistrations } from '../../lib/admin'
+import { getOverview } from '../../lib/admin'
 
 function formatDate(value) {
   if (!value) {
@@ -32,6 +32,7 @@ function formatDateTime(date, time) {
 
 export default function AdminOverviewPage() {
   const [events, setEvents] = useState([])
+  const [eventMeta, setEventMeta] = useState({ total: 0, published: 0 })
   const [massTimes, setMassTimes] = useState([])
   const [massTimeMeta, setMassTimeMeta] = useState({ total: 0 })
   const [registrations, setRegistrations] = useState([])
@@ -43,24 +44,20 @@ export default function AdminOverviewPage() {
     let ignore = false
 
     async function loadData() {
-      const [eventPayload, massPayload, registrationPayload, contactPayload] = await Promise.all([
-        listEvents(),
-        listMassTimes(1),
-        listRegistrations(1),
-        listContactMessages(1),
-      ])
+      const payload = await getOverview()
 
       if (ignore) {
         return
       }
 
-      setEvents(eventPayload.events || [])
-      setMassTimes(massPayload.mass_times || [])
-      setMassTimeMeta(massPayload.meta || { total: 0 })
-      setRegistrations(registrationPayload.registrations || [])
-      setRegistrationMeta(registrationPayload.meta || { total: 0 })
-      setContactMessages(contactPayload.messages || [])
-      setContactMeta(contactPayload.meta || { total: 0 })
+      setEvents(payload.recent?.events || [])
+      setEventMeta(payload.stats?.events || { total: 0, published: 0 })
+      setMassTimes(payload.recent?.mass_times || [])
+      setMassTimeMeta(payload.stats?.mass_times || { total: 0, published: 0 })
+      setRegistrations(payload.recent?.registrations || [])
+      setRegistrationMeta(payload.stats?.registrations || { total: 0 })
+      setContactMessages(payload.recent?.contact_messages || [])
+      setContactMeta(payload.stats?.contact_messages || { total: 0 })
     }
 
     loadData()
@@ -70,15 +67,15 @@ export default function AdminOverviewPage() {
     }
   }, [])
 
-  const publishedEvents = events.filter(item => item.status === 'published').length
-  const publishedMassTimes = massTimes.filter(item => item.status === 'published').length
+  const publishedEvents = eventMeta.published || 0
+  const publishedMassTimes = massTimeMeta.published || 0
 
   return (
     <div className="admin-page-grid">
       <div className="admin-overview-grid">
         <article className="admin-surface admin-stat-card">
           <span>Events</span>
-          <strong>{events.length}</strong>
+          <strong>{eventMeta.total || 0}</strong>
           <small>{publishedEvents} published right now</small>
         </article>
         <article className="admin-surface admin-stat-card">
