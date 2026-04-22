@@ -2,19 +2,24 @@
 
 namespace App\Mail;
 
+use App\Models\ParishRegistration;
+use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
 class ParishRegistrationWelcome extends Mailable
 {
-    public $name;
+    use Queueable;
+    use SerializesModels;
+
+    public ParishRegistration $registration;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($name)
+    public function __construct(ParishRegistration $registration)
     {
-        // Name of the registered member
-        $this->name = $name;
+        $this->registration = $registration;
     }
 
     /**
@@ -22,7 +27,7 @@ class ParishRegistrationWelcome extends Mailable
      */
     public function build()
     {
-        return $this->subject('Welcome to St Mary\'s Cathedral Parish')
+        return $this->subject('Welcome to St Mary\'s Cathedral Parish - '.$this->registration->member_id)
             ->view('emails.parish-registration-welcome');
     }
 }

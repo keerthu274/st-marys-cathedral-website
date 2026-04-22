@@ -31,34 +31,6 @@ class ParishRegistrationApiController extends Controller
 
         /**
          * ----------------------------------------------------------
-         * Generate Member ID
-         * ----------------------------------------------------------
-         */
-
-        $lastMember = ParishRegistration::orderBy('id', 'desc')->first();
-
-        if ($lastMember && $lastMember->member_id) {
-
-            $lastNumber = intval(substr($lastMember->member_id, 3));
-            $newNumber = $lastNumber + 1;
-
-        } else {
-
-            $newNumber = 1;
-        }
-
-        $memberId = 'SMC' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
-
-        /**
-         * ----------------------------------------------------------
-         * Add member_id to validated data
-         * ----------------------------------------------------------
-         */
-
-        $registrationData['member_id'] = $memberId;
-
-        /**
-         * ----------------------------------------------------------
          * Create Registration
          * ----------------------------------------------------------
          */
@@ -110,8 +82,10 @@ class ParishRegistrationApiController extends Controller
          * ----------------------------------------------------------
          */
 
+        $registration->load(['children', 'interest']);
+
         Mail::to($registration->email)
-            ->send(new ParishRegistrationWelcome($registration->full_name));
+            ->send(new ParishRegistrationWelcome($registration));
 
         /**
          * ----------------------------------------------------------

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ParishRegistrationWelcome;
 use App\Models\ContactMessage;
 use App\Models\Event;
 use App\Models\MassTime;
@@ -207,5 +208,13 @@ class PublicApiTest extends TestCase
             'postcode' => 'LL11 1AA',
             'registration_type' => 'family',
         ]);
+
+        Mail::assertSent(ParishRegistrationWelcome::class, function (ParishRegistrationWelcome $mail) {
+            return $mail->hasTo('jane@example.com')
+                && $mail->registration->member_id === 'SMC0001'
+                && $mail->registration->full_name === 'Jane Smith'
+                && $mail->registration->children->first()?->child_name === 'Child One'
+                && (bool) $mail->registration->interest?->weekly_newsletter === true;
+        });
     }
 }
