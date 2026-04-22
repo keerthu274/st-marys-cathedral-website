@@ -43,6 +43,29 @@ class ProfileTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_profile_information_can_be_updated_with_json_response(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patchJson('/profile', [
+                'name' => 'Admin User',
+                'email' => 'ADMIN@example.com',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'Profile updated successfully.')
+            ->assertJsonPath('user.name', 'Admin User')
+            ->assertJsonPath('user.email', 'admin@example.com');
+
+        $user->refresh();
+
+        $this->assertSame('Admin User', $user->name);
+        $this->assertSame('admin@example.com', $user->email);
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
         $user = User::factory()->create();
@@ -74,6 +97,24 @@ class ProfileTest extends TestCase
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect('/');
+
+        $this->assertGuest();
+        $this->assertNull($user->fresh());
+    }
+
+    public function test_user_can_delete_their_account_with_json_response(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->deleteJson('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('message', 'Account deleted successfully.');
 
         $this->assertGuest();
         $this->assertNull($user->fresh());

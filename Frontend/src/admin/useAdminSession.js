@@ -8,6 +8,18 @@ export function useAdminSession() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  async function refreshUser() {
+    const currentUser = await getCurrentUser()
+
+    if (!currentUser) {
+      navigate('/login', { replace: true })
+      return null
+    }
+
+    setUser(currentUser)
+    return currentUser
+  }
+
   useEffect(() => {
     let isMounted = true
 
@@ -57,6 +69,7 @@ export function useAdminSession() {
     user,
     isLoading,
     isLoggingOut,
+    refreshUser,
     handleLogout,
   }
 }

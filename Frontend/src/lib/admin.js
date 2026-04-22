@@ -51,6 +51,7 @@ function normalizeError(payload, fallbackMessage) {
 
 async function adminRequest(path, { method = 'GET', body } = {}) {
   const upperMethod = method.toUpperCase()
+  const isFormData = body instanceof FormData
   const headers = {
     Accept: 'application/json',
     'X-Requested-With': 'XMLHttpRequest',
@@ -59,14 +60,17 @@ async function adminRequest(path, { method = 'GET', body } = {}) {
   if (!['GET', 'HEAD'].includes(upperMethod)) {
     const token = await ensureCsrfToken()
     headers['X-CSRF-TOKEN'] = token
-    headers['Content-Type'] = 'application/json'
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json'
+    }
   }
 
   const response = await fetch(getBackendUrl(path), {
     method: upperMethod,
     credentials: 'include',
     headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
   })
 
   const payload = await parseJsonResponse(response)
@@ -146,6 +150,27 @@ export function listMassTimesByDay(day, location = '') {
   return adminRequest(`/admin/mass-times/by-day?${params.toString()}`)
 }
 
+export function listNewsletters(page = 1) {
+  const params = new URLSearchParams({ page: String(page) })
+  return adminRequest(`/admin/newsletters?${params.toString()}`)
+}
+
+export function getNewsletter(id) {
+  return adminRequest(`/admin/newsletters/${id}/edit`)
+}
+
+export function createNewsletter(data) {
+  return adminRequest('/admin/newsletters', { method: 'POST', body: data })
+}
+
+export function updateNewsletter(id, data) {
+  return adminRequest(`/admin/newsletters/${id}`, { method: 'POST', body: data })
+}
+
+export function deleteNewsletter(id) {
+  return adminRequest(`/admin/newsletters/${id}`, { method: 'DELETE' })
+}
+
 export function listRegistrations(page = 1) {
   const params = new URLSearchParams({ page: String(page) })
   return adminRequest(`/admin/parish-registrations?${params.toString()}`)
@@ -170,4 +195,16 @@ export function listContactMessages(page = 1) {
 
 export function getContactMessage(id) {
   return adminRequest(`/admin/contact-messages/${id}`)
+}
+
+export function updateProfile(data) {
+  return adminRequest('/profile', { method: 'PATCH', body: data })
+}
+
+export function updatePassword(data) {
+  return adminRequest('/password', { method: 'PUT', body: data })
+}
+
+export function deleteProfile(data) {
+  return adminRequest('/profile', { method: 'DELETE', body: data })
 }

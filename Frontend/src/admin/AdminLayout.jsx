@@ -6,12 +6,13 @@ const navItems = [
   { to: '/dashboard', end: true, label: 'Overview', meta: 'Summary and quick access' },
   { to: '/dashboard/events', label: 'Events', meta: 'Schedule and publish events' },
   { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times' },
+  { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs' },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records' },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
 ]
 
 export default function AdminLayout() {
-  const { user, isLoading, isLoggingOut, handleLogout } = useAdminSession()
+  const { user, isLoading, isLoggingOut, refreshUser, handleLogout } = useAdminSession()
 
   if (isLoading) {
     return (
@@ -49,6 +50,9 @@ export default function AdminLayout() {
                 <span>{user?.name}</span>
                 <small>{user?.email}</small>
               </div>
+              <NavLink className={({ isActive }) => `btn-outline admin-profile-link ${isActive ? 'active' : ''}`} to="/dashboard/profile">
+                Profile
+              </NavLink>
               <button className="btn-outline admin-logout-inline" type="button" onClick={handleLogout} disabled={isLoggingOut}>
                 {isLoggingOut ? 'Signing Out...' : 'Logout'}
               </button>
@@ -57,7 +61,7 @@ export default function AdminLayout() {
         </header>
 
         <main className="admin-main">
-          <Outlet context={{ user }} />
+          <Outlet context={{ user, refreshUser }} />
         </main>
       </div>
     </section>

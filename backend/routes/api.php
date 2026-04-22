@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\EventApiController;
 use App\Http\Controllers\Api\V1\MassTimeApiController;
 use App\Http\Controllers\Api\V1\ContactApiController;
 use App\Http\Controllers\Api\V1\ParishRegistrationApiController;
+use App\Http\Controllers\Api\V1\NewsletterApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,5 +57,13 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::post('parish-registrations', [ParishRegistrationApiController::class, 'store']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Newsletter API
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('newsletters', [NewsletterApiController::class, 'index']);
     
 });
