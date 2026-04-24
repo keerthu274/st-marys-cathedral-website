@@ -31,39 +31,52 @@ class OverviewController extends Controller
             $this->saveOverviewPreferences($user, $overviewPreferences);
         }
 
-        $events = Event::orderBy('start_date', 'desc')
+        $hasGroupScope = $user->is_main_admin || (bool) $user->group_id;
+
+        $events = $hasGroupScope ? Event::with(['group', 'creator'])
+            ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+            ->orderBy('start_date', 'desc')
             ->orderBy('start_time', 'desc')
             ->limit(4)
-            ->get();
+            ->get() : collect();
 
-        $massTimes = MassTime::orderByRaw($this->dayOrderSql())
+        $massTimes = $user->is_main_admin ? MassTime::orderByRaw($this->dayOrderSql())
             ->orderBy('start_time')
             ->limit(4)
-            ->get();
+            ->get() : collect();
 
-        $registrations = ParishRegistration::latest()
+        $registrations = $user->is_main_admin ? ParishRegistration::latest()
             ->limit(4)
-            ->get();
+            ->get() : collect();
 
-        $contactMessages = ContactMessage::latest()
+        $contactMessages = $hasGroupScope ? ContactMessage::with('group')
+            ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+            ->latest()
             ->limit(4)
-            ->get();
+            ->get() : collect();
 
         return response()->json([
+            'scope' => [
+                'is_main_admin' => (bool) $user->is_main_admin,
+                'group' => $user->group ? [
+                    'id' => $user->group->id,
+                    'name' => $user->group->name,
+                ] : null,
+            ],
             'stats' => [
                 'events' => [
-                    'total' => Event::count(),
-                    'published' => Event::where('status', 'published')->count(),
+                    'total' => $hasGroupScope ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                    'published' => $hasGroupScope ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->where('status', 'published')->count() : 0,
                 ],
                 'mass_times' => [
-                    'total' => MassTime::count(),
-                    'published' => MassTime::where('status', 'published')->count(),
+                    'total' => $user->is_main_admin ? MassTime::count() : 0,
+                    'published' => $user->is_main_admin ? MassTime::where('status', 'published')->count() : 0,
                 ],
                 'registrations' => [
-                    'total' => ParishRegistration::count(),
+                    'total' => $user->is_main_admin ? ParishRegistration::count() : 0,
                 ],
                 'contact_messages' => [
-                    'total' => ContactMessage::count(),
+                    'total' => $hasGroupScope ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
                 ],
             ],
             'recent' => [

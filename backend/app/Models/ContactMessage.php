@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 
 class ContactMessage extends Model
@@ -27,6 +28,13 @@ class ContactMessage extends Model
         'email',
         'phone',
         'subject',
+        'category',
+        'group_id',
         'message'
     ];
-}
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
+    }
+} 

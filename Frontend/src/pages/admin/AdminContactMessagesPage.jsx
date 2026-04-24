@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import { getContactMessage, listContactMessages } from '../../lib/admin'
 
 function formatDateTime(value) {
@@ -25,6 +26,7 @@ function truncate(text, length = 110) {
 }
 
 export default function AdminContactMessagesPage() {
+  const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const [messages, setMessages] = useState([])
   const [messageMeta, setMessageMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
@@ -163,7 +165,7 @@ export default function AdminContactMessagesPage() {
         <div className="admin-section-head">
           <div>
             <h2>Contact Messages</h2>
-            <p>Review enquiries submitted through the public Contact Us form.</p>
+            <p>{user?.is_main_admin ? 'Review enquiries submitted through the public Contact Us form.' : 'Review enquiries routed to your group from the public Contact Us form.'}</p>
           </div>
           <div className="admin-user-meta">
             <span>{messageMeta.total || 0}</span>
@@ -198,11 +200,11 @@ export default function AdminContactMessagesPage() {
               >
                 <div>
                   <strong>{item.subject}</strong>
-                  <span>{item.name} • {item.email}</span>
+                  <span>{item.name} • {item.email}{item.group_name ? ` • ${item.group_name}` : ''}</span>
                 </div>
                 <div>
                   <small>{formatDateTime(item.created_at)}</small>
-                  <span>{truncate(item.message)}</span>
+                  <span>{item.category ? `${item.category} • ` : ''}{truncate(item.message)}</span>
                 </div>
               </button>
             ))}
@@ -263,6 +265,16 @@ export default function AdminContactMessagesPage() {
             <article className="admin-detail-block admin-detail-block-full">
               <h3>Subject</h3>
               <p>{messageDetail.subject}</p>
+            </article>
+
+            <article className="admin-detail-block">
+              <h3>Category</h3>
+              <p>{messageDetail.category || 'General'}</p>
+            </article>
+
+            <article className="admin-detail-block">
+              <h3>Routed Group</h3>
+              <p>{messageDetail.group_name || 'Main parish inbox only'}</p>
             </article>
 
             <article className="admin-detail-block admin-detail-block-full">

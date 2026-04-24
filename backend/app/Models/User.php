@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'is_main_admin',
+        'group_id',
         'password',
         'hidden_overview_items',
     ];
@@ -45,8 +47,14 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'is_main_admin' => 'boolean',
+            'group_id' => 'integer',
             'hidden_overview_items' => 'array',
             'password' => 'hashed',
         ];
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
 import { hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder } from '../../lib/validation'
@@ -54,6 +55,7 @@ function FieldError({ errors, name }) {
 }
 
 export default function AdminEventsPage() {
+  const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const [events, setEvents] = useState([])
   const [eventPreview, setEventPreview] = useState([])
@@ -358,7 +360,7 @@ export default function AdminEventsPage() {
               <div key={item.id} className="admin-row">
                 <div>
                   <strong>{item.title}</strong>
-                  <span>{formatDateTime(item.start_date, item.start_time)}</span>
+                  <span>{formatDateTime(item.start_date, item.start_time)}{item.group_name ? ` • ${item.group_name}` : ''}</span>
                 </div>
                 <div>
                   <small>{item.location || 'Location not set'}</small>
@@ -376,12 +378,12 @@ export default function AdminEventsPage() {
       </div>
 
       <article className="admin-surface">
-        <div className="admin-section-head">
-          <div>
-            <h2>{selectedEventId ? 'Edit Event' : 'Create Event'}</h2>
-            <p>{isLoadingEventEditor ? 'Loading event...' : 'Changes save directly to the backend.'}</p>
+          <div className="admin-section-head">
+            <div>
+              <h2>{selectedEventId ? 'Edit Event' : 'Create Event'}</h2>
+            <p>{isLoadingEventEditor ? 'Loading event...' : user?.is_main_admin ? 'Changes save directly to the backend.' : 'Group admins can create and update draft events for their own group.'}</p>
+            </div>
           </div>
-        </div>
 
         <form className="admin-form" onSubmit={submitEvent} noValidate>
           <label>
@@ -456,8 +458,8 @@ export default function AdminEventsPage() {
 
           <label>
             <span>Status</span>
-            <select name="status" value={eventForm.status} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.status)}>
-              <option value="published">Published</option>
+            <select name="status" value={eventForm.status} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.status)} disabled={!user?.is_main_admin}>
+              {user?.is_main_admin ? <option value="published">Published</option> : null}
               <option value="draft">Draft</option>
             </select>
             <FieldError errors={eventErrors} name="status" />

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ContactApiController;
 use App\Http\Controllers\Api\V1\ParishRegistrationApiController;
 use App\Http\Controllers\Api\V1\NewsletterApiController;
 use App\Http\Controllers\Api\V1\ParishCouncilMemberApiController;
+use App\Http\Controllers\Api\V1\GroupApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,5 +76,6 @@ Route::prefix('v1')->group(function () {
 
     Route::get('parish-council-members', [ParishCouncilMemberApiController::class, 'index']);
     Route::get('parish-council-members/{parishCouncilMember}/photo', [ParishCouncilMemberApiController::class, 'photo']);
+    Route::get('groups', [GroupApiController::class, 'index']);
     
 });

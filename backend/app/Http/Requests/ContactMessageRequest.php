@@ -18,6 +18,7 @@ class ContactMessageRequest extends FormRequest
             'email' => is_string($this->email) ? strtolower(trim($this->email)) : $this->email,
             'phone' => is_string($this->phone) ? trim($this->phone) : $this->phone,
             'subject' => is_string($this->subject) ? trim($this->subject) : $this->subject,
+            'category' => is_string($this->category) ? trim($this->category) : $this->category,
             'message' => is_string($this->message) ? trim($this->message) : $this->message,
         ]);
     }
@@ -32,6 +33,8 @@ class ContactMessageRequest extends FormRequest
             'email' => ['required', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
             'subject' => ['required', 'string', 'min:3', 'max:255'],
+            'category' => ['required', 'string', 'max:100'],
+            'group_id' => ['nullable', 'integer', 'exists:groups,id'],
             'message' => ['required', 'string', 'min:10', 'max:5000'],
         ];
     }

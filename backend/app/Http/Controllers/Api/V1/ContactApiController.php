@@ -18,7 +18,17 @@ class ContactApiController extends Controller
 
     public function store(ContactMessageRequest $request): JsonResponse
     {
-        ContactMessage::create($request->validated());
+        $validated = $request->validated();
+
+        ContactMessage::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'subject' => $validated['subject'],
+            'category' => $validated['category'],
+            'group_id' => $validated['group_id'] ?? null,
+            'message' => $validated['message'],
+        ]);
 
         return response()->json([
             'success' => true,

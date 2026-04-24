@@ -5,10 +5,11 @@ import './admin.css'
 const navItems = [
   { to: '/dashboard', end: true, label: 'Overview', meta: 'Summary and quick access' },
   { to: '/dashboard/events', label: 'Events', meta: 'Schedule and publish events' },
-  { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times' },
-  { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs' },
-  { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records' },
+  { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times', mainAdminOnly: true },
+  { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs', mainAdminOnly: true },
+  { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records', mainAdminOnly: true },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
+  { to: '/dashboard/groups', label: 'Groups', meta: 'Manage groups and admins' },
   { to: '/dashboard/parish-council', label: 'Parish Council', meta: 'Manage council members', mainAdminOnly: true },
 ]
 

@@ -35,6 +35,24 @@ async function ensureCsrfToken() {
   return csrfToken
 }
 
+function buildAdminHeaders(method, body, token) {
+  const isFormData = body instanceof FormData
+  const headers = {
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+  }
+
+  if (!['GET', 'HEAD'].includes(method)) {
+    headers['X-CSRF-TOKEN'] = token
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json'
+    }
+  }
+
+  return headers
+}
+
 function normalizeError(payload, fallbackMessage) {
   if (payload?.errors && typeof payload.errors === 'object') {
     return {
@@ -52,28 +70,35 @@ function normalizeError(payload, fallbackMessage) {
 async function adminRequest(path, { method = 'GET', body } = {}) {
   const upperMethod = method.toUpperCase()
   const isFormData = body instanceof FormData
-  const headers = {
-    Accept: 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-  }
 
-  if (!['GET', 'HEAD'].includes(upperMethod)) {
-    const token = await ensureCsrfToken()
-    headers['X-CSRF-TOKEN'] = token
+  async function sendRequest(forceRefreshToken = false) {
+    let token = csrfToken
 
-    if (!isFormData) {
-      headers['Content-Type'] = 'application/json'
+    if (!['GET', 'HEAD'].includes(upperMethod)) {
+      if (forceRefreshToken) {
+        csrfToken = null
+      }
+
+      token = await ensureCsrfToken()
     }
+
+    const response = await fetch(getBackendUrl(path), {
+      method: upperMethod,
+      credentials: 'include',
+      headers: buildAdminHeaders(upperMethod, body, token),
+      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+    })
+
+    const payload = await parseJsonResponse(response)
+
+    return { response, payload }
   }
 
-  const response = await fetch(getBackendUrl(path), {
-    method: upperMethod,
-    credentials: 'include',
-    headers,
-    body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
-  })
+  let { response, payload } = await sendRequest()
 
-  const payload = await parseJsonResponse(response)
+  if (!response.ok && response.status === 419 && !['GET', 'HEAD'].includes(upperMethod)) {
+    ;({ response, payload } = await sendRequest(true))
+  }
 
   if (!response.ok) {
     if (response.status === 419) {
@@ -225,6 +250,26 @@ export function updateParishCouncilMember(id, data) {
 
 export function deleteParishCouncilMember(id) {
   return adminRequest(`/admin/parish-council-members/${id}`, { method: 'DELETE' })
+}
+
+export function listGroups() {
+  return adminRequest('/admin/groups')
+}
+
+export function getGroup(id) {
+  return adminRequest(`/admin/groups/${id}/edit`)
+}
+
+export function createGroup(data) {
+  return adminRequest('/admin/groups', { method: 'POST', body: data })
+}
+
+export function updateGroup(id, data) {
+  return adminRequest(`/admin/groups/${id}`, { method: 'POST', body: data })
+}
+
+export function deleteGroup(id) {
+  return adminRequest(`/admin/groups/${id}`, { method: 'DELETE' })
 }
 
 export function updateProfile(data) {

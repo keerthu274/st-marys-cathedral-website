@@ -11,7 +11,13 @@ class ContactMessageController extends Controller
 {
     public function index(Request $request)
     {
-        $messages = ContactMessage::latest()->paginate(10);
+        $user = $request->user();
+        $messages = (! $user->is_main_admin && ! $user->group_id)
+            ? ContactMessage::whereRaw('1 = 0')->paginate(10)
+            : ContactMessage::with('group')
+                ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                ->latest()
+                ->paginate(10);
 
         return response()->json([
             'messages' => ContactMessageResource::collection(collect($messages->items()))->resolve($request),
@@ -26,8 +32,14 @@ class ContactMessageController extends Controller
 
     public function show(Request $request, ContactMessage $contactMessage)
     {
+        $user = $request->user();
+
+        if (! $user->is_main_admin && (! $user->group_id || $contactMessage->group_id !== $user->group_id)) {
+            abort(403, 'You do not have access to this contact message.');
+        }
+
         return response()->json([
-            'message' => ContactMessageResource::make($contactMessage)->resolve($request),
+            'message' => ContactMessageResource::make($contactMessage->loadMissing('group'))->resolve($request),
         ]);
     }
 }

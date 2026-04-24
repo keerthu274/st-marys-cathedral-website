@@ -13,10 +13,13 @@ export default function ContactPage() {
         name: '',
         email: '',
         phone: '',
+        category: 'general',
+        group_id: '',
         subject: '',
         isMember: 'yes',
         message: ''
     })
+    const [groups, setGroups] = useState([])
     const [loading, setLoading] = useState(false)
     const [successDialogOpen, setSuccessDialogOpen] = useState(false)
     const [error, setError] = useState('')
@@ -29,6 +32,29 @@ export default function ContactPage() {
             setContactForm(prev => ({ ...prev, subject: subj }))
         }
     }, [searchParams])
+
+    useEffect(() => {
+        let ignore = false
+
+        async function loadGroups() {
+            try {
+                const response = await fetch(getBackendUrl('/api/v1/groups'))
+                const payload = await response.json()
+
+                if (!ignore && response.ok && Array.isArray(payload.data)) {
+                    setGroups(payload.data)
+                }
+            } catch (error) {
+                console.log('Error loading groups for contact form:', error)
+            }
+        }
+
+        loadGroups()
+
+        return () => {
+            ignore = true
+        }
+    }, [])
 
     const handleContactChange = e => {
         const { name, value } = e.target
@@ -44,11 +70,19 @@ export default function ContactPage() {
         } else if (name === 'subject') {
             requireField(nextErrors, 'subject', value, 'Subject')
             validateMaxLength(nextErrors, 'subject', value, 255, 'Subject')
+        } else if (name === 'category') {
+            requireField(nextErrors, 'category', value, 'Category')
         } else if (name === 'message') {
             requireField(nextErrors, 'message', value, 'Message')
         }
 
-        setContactForm({ ...contactForm, [name]: value })
+        const nextForm = { ...contactForm, [name]: value }
+
+        if (name === 'category' && value !== 'group_join') {
+            nextForm.group_id = ''
+        }
+
+        setContactForm(nextForm)
         setContactErrors(current => ({ ...current, [name]: nextErrors[name] }))
     }
 
@@ -59,9 +93,14 @@ export default function ContactPage() {
         validateMaxLength(nextErrors, 'name', contactForm.name, 255, 'Name')
         validateEmail(nextErrors, 'email', contactForm.email)
         validatePhone(nextErrors, 'phone', contactForm.phone)
+        requireField(nextErrors, 'category', contactForm.category, 'Category')
         requireField(nextErrors, 'subject', contactForm.subject, 'Subject')
         validateMaxLength(nextErrors, 'subject', contactForm.subject, 255, 'Subject')
         requireField(nextErrors, 'message', contactForm.message, 'Message')
+
+        if (contactForm.category === 'group_join' && !contactForm.group_id) {
+            nextErrors.group_id = ['Please choose which group you want to join.']
+        }
 
         return nextErrors
     }
@@ -95,7 +134,7 @@ export default function ContactPage() {
                 throw new Error(data.message || 'Something went wrong')
             }
 
-            setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+            setContactForm({ name: '', email: '', phone: '', category: 'general', group_id: '', subject: '', isMember: 'yes', message: '' })
             setContactErrors({})
             setSuccessDialogOpen(true)
         } catch (err) {
@@ -216,10 +255,35 @@ export default function ContactPage() {
 
                                 <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
                                     <div className="form-group">
+                                        <label>Category</label>
+                                        <select name="category" value={contactForm.category} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.category)}>
+                                            <option value="general">General Enquiry</option>
+                                            <option value="liturgy">Liturgy / Mass</option>
+                                            <option value="sacraments">Sacraments</option>
+                                            <option value="pastoral-care">Pastoral Care</option>
+                                            <option value="group_join">Join a Group</option>
+                                        </select>
+                                        {contactErrors.category ? <span className="field-error">{contactErrors.category[0]}</span> : null}
+                                    </div>
+                                    <div className="form-group">
                                         <label>Phone Number</label>
                                         <input name="phone" value={contactForm.phone} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.phone)} />
                                         {contactErrors.phone ? <span className="field-error">{contactErrors.phone[0]}</span> : null}
                                     </div>
+                                </div>
+
+                                {contactForm.category === 'group_join' ? (
+                                    <div className="form-group" style={{ marginTop: '15px' }}>
+                                        <label>Which group would you like to join?</label>
+                                        <select name="group_id" value={contactForm.group_id} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.group_id)}>
+                                            <option value="">Select a group</option>
+                                            {groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
+                                        </select>
+                                        {contactErrors.group_id ? <span className="field-error">{contactErrors.group_id[0]}</span> : null}
+                                    </div>
+                                ) : null}
+
+                                <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
                                     <div className="form-group">
                                         <label>Subject</label>
                                         <input name="subject" value={contactForm.subject} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.subject)} />
@@ -246,7 +310,7 @@ export default function ContactPage() {
 
                                 <div className="form-actions-row">
                                     <button type="button" className="btn-minimal-dark" style={{ background: '#777' }} onClick={() => {
-                                        setContactForm({ name: '', email: '', phone: '', subject: '', isMember: 'yes', message: '' })
+                                        setContactForm({ name: '', email: '', phone: '', category: 'general', group_id: '', subject: '', isMember: 'yes', message: '' })
                                         setContactErrors({})
                                         setError('')
                                     }}>Clear</button>

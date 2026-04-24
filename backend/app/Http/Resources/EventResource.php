@@ -24,6 +24,10 @@ class EventResource extends JsonResource
             'status' => $this->status,
             'category' => $this->category,
             'image_path' => $this->image_path,
+            'group_id' => $this->group_id,
+            'group_name' => $this->whenLoaded('group', fn () => $this->group?->name),
+            'created_by_user_id' => $this->created_by_user_id,
+            'created_by_user_name' => $this->whenLoaded('creator', fn () => $this->creator?->name),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -15,8 +15,15 @@ class EventController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+
         // Get events from database, newest first (latest created at top)
-        $events = Event::orderBy('start_date', 'desc')->get();
+        $events = (! $user->is_main_admin && ! $user->group_id)
+            ? collect()
+            : Event::with(['group', 'creator'])
+                ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                ->orderBy('start_date', 'desc')
+                ->get();
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -42,6 +49,7 @@ class EventController extends Controller
      */
     public function store(EventRequest $request)
     {
+        $user = $request->user();
         // Validate input coming from the create form (security + correctness)
         $validated = $request->validated();
 
@@ -61,6 +69,17 @@ class EventController extends Controller
         if (!empty($validated['category'])) {
             $validated['category'] = ucfirst(strtolower($validated['category']));
         }
+
+        if ($user->is_main_admin) {
+            $validated['status'] = $validated['status'] ?? 'published';
+            $validated['group_id'] = $validated['group_id'] ?? null;
+        } else {
+            abort_if(! $user->group_id, 403, 'Your account has not been assigned to a group yet.');
+            $validated['status'] = 'draft';
+            $validated['group_id'] = $user->group_id;
+        }
+
+        $validated['created_by_user_id'] = $user->id;
 
         // Create the event in the database using validated data
         $event = Event::create($validated);
@@ -93,9 +112,11 @@ class EventController extends Controller
      */
     public function edit(Request $request, Event $event)
     {
+        $this->authorizeEventAccess($request, $event);
+
         if ($request->expectsJson()) {
             return response()->json([
-                'event' => EventResource::make($event)->resolve($request),
+                'event' => EventResource::make($event->loadMissing(['group', 'creator']))->resolve($request),
             ]);
         }
 
@@ -108,6 +129,9 @@ class EventController extends Controller
      */
     public function update(EventRequest $request, Event $event)
     {
+        $user = $request->user();
+        $this->authorizeEventAccess($request, $event);
+
         // Validate input coming from the edit form
         $validated = $request->validated();
 
@@ -126,6 +150,14 @@ class EventController extends Controller
 
         if (!empty($validated['category'])) {
             $validated['category'] = ucfirst(strtolower($validated['category']));
+        }
+
+        if ($user->is_main_admin) {
+            $validated['status'] = $validated['status'] ?? $event->status;
+        } else {
+            $validated['status'] = 'draft';
+            $validated['group_id'] = $user->group_id;
+            $validated['created_by_user_id'] = $event->created_by_user_id ?: $user->id;
         }
 
         // Update the event using validated data
@@ -170,6 +202,8 @@ class EventController extends Controller
      */
     public function destroy(Request $request, Event $event)
     {
+        $this->authorizeEventAccess($request, $event);
+
         // Delete the selected event from database
         $event->delete();
 
@@ -183,5 +217,14 @@ class EventController extends Controller
         return redirect()
             ->route('admin.events.index')
             ->with('success', 'Event deleted successfully.');
+    }
+
+    private function authorizeEventAccess(Request $request, Event $event): void
+    {
+        $user = $request->user();
+
+        if (! $user->is_main_admin && $event->group_id !== $user->group_id) {
+            abort(403, 'You do not have access to this event.');
+        }
     }
 }

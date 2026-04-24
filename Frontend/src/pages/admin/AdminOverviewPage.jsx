@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOverview, updateOverviewItemVisibility } from '../../lib/admin'
+import { useOutletContext } from 'react-router-dom'
 
 function formatDate(value) {
   if (!value) {
@@ -42,7 +43,15 @@ function buildSections({ events, massTimes, registrations, contactMessages }) {
       items: events,
       getLink: item => `/dashboard/events?edit=${item.id}`,
       getTitle: item => item.title,
-      getSubtitle: item => formatDateTime(item.start_date, item.start_time),
+      getSubtitle: item => {
+        const base = formatDateTime(item.start_date, item.start_time)
+
+        if (item.group_name) {
+          return `${base} • ${item.group_name} • ${item.status}`
+        }
+
+        return base
+      },
     },
     {
       id: 'mass-times',
@@ -84,6 +93,7 @@ function buildSections({ events, massTimes, registrations, contactMessages }) {
 }
 
 export default function AdminOverviewPage() {
+  const { user } = useOutletContext()
   const [events, setEvents] = useState([])
   const [eventMeta, setEventMeta] = useState({ total: 0, published: 0 })
   const [massTimes, setMassTimes] = useState([])
@@ -175,7 +185,9 @@ export default function AdminOverviewPage() {
 
   const publishedEvents = eventMeta.published || 0
   const publishedMassTimes = massTimeMeta.published || 0
-  const sections = buildSections({ events, massTimes, registrations, contactMessages })
+  const sections = buildSections({ events, massTimes, registrations, contactMessages }).filter(section => (
+    user?.is_main_admin || ['events', 'contact-messages'].includes(section.id)
+  ))
 
   return (
     <div className="admin-page-grid">
@@ -187,20 +199,20 @@ export default function AdminOverviewPage() {
           <strong>{eventMeta.total || 0}</strong>
           <small>{publishedEvents} published right now</small>
         </article>
-        <article className="admin-surface admin-stat-card">
+        {user?.is_main_admin ? <article className="admin-surface admin-stat-card">
           <span>Mass Times</span>
           <strong>{massTimeMeta.total || 0}</strong>
           <small>{publishedMassTimes} published on the current page</small>
-        </article>
-        <article className="admin-surface admin-stat-card">
+        </article> : null}
+        {user?.is_main_admin ? <article className="admin-surface admin-stat-card">
           <span>Registrations</span>
           <strong>{registrationMeta.total || 0}</strong>
           <small>Parish records available for review</small>
-        </article>
+        </article> : null}
         <article className="admin-surface admin-stat-card">
           <span>Contact</span>
           <strong>{contactMeta.total || 0}</strong>
-          <small>Messages received through the website</small>
+          <small>{user?.is_main_admin ? 'Messages received through the website' : 'Messages routed to your group'}</small>
         </article>
       </div>
 

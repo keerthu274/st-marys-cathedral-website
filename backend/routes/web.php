@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ParishCouncilMemberController;
+use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\NewsletterFileController;
 use Illuminate\Support\Facades\Route;
@@ -39,38 +40,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::resource('events', EventController::class);
 
-    Route::resource('mass-times', MassTimeController::class)
-        ->except(['show']);
-
-    Route::get('mass-times/by-day', [MassTimeController::class, 'byDay'])
-        ->name('mass-times.by-day');
-
-    Route::post('newsletters/{newsletter}', [NewsletterController::class, 'update'])
-        ->name('newsletters.update-post');
-
-    Route::resource('newsletters', NewsletterController::class)
-        ->except(['create', 'show', 'update']);
-
-    Route::get('parish-registrations', [ParishRegistrationController::class, 'index'])
-        ->name('parish-registrations.index');
-
-    Route::get('parish-registrations/{parishRegistration}', [ParishRegistrationController::class, 'show'])
-        ->name('parish-registrations.show');
-
-        // added: delete registration
-    Route::delete('/parish-registrations/{parishRegistration}', [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'destroy'])
-       ->name('parish-registrations.destroy');
-
-       // added: edit form
-    Route::get('/parish-registrations/{parishRegistration}/edit',
-        [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'edit'])
-        ->name('parish-registrations.edit');
-
-      // added: update
-    Route::put('/parish-registrations/{parishRegistration}',
-        [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'update'])
-        ->name('parish-registrations.update');
-
     Route::get('contact-messages', [ContactMessageController::class, 'index'])
         ->name('contact-messages.index');
 
@@ -78,6 +47,41 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         ->name('contact-messages.show');
 
     Route::middleware('main_admin')->group(function () {
+        Route::resource('mass-times', MassTimeController::class)
+            ->except(['show']);
+
+        Route::get('mass-times/by-day', [MassTimeController::class, 'byDay'])
+            ->name('mass-times.by-day');
+
+        Route::post('newsletters/{newsletter}', [NewsletterController::class, 'update'])
+            ->name('newsletters.update-post');
+
+        Route::resource('newsletters', NewsletterController::class)
+            ->except(['create', 'show', 'update']);
+
+        Route::get('parish-registrations', [ParishRegistrationController::class, 'index'])
+            ->name('parish-registrations.index');
+
+        Route::get('parish-registrations/{parishRegistration}', [ParishRegistrationController::class, 'show'])
+            ->name('parish-registrations.show');
+
+        Route::delete('/parish-registrations/{parishRegistration}', [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'destroy'])
+            ->name('parish-registrations.destroy');
+
+        Route::get('/parish-registrations/{parishRegistration}/edit',
+            [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'edit'])
+            ->name('parish-registrations.edit');
+
+        Route::put('/parish-registrations/{parishRegistration}',
+            [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'update'])
+            ->name('parish-registrations.update');
+
+        Route::resource('groups', GroupController::class)
+            ->except(['create', 'show', 'update']);
+
+        Route::post('groups/{group}', [GroupController::class, 'update'])
+            ->name('groups.update-post');
+
         Route::resource('parish-council-members', ParishCouncilMemberController::class)
             ->except(['create', 'show', 'update']);
 

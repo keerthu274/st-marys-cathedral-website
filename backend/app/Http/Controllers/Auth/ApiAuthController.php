@@ -71,8 +71,21 @@ class ApiAuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        $user = $request->user()?->loadMissing('group');
+
         return response()->json([
-            'user' => $request->user(),
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'is_main_admin' => (bool) $user->is_main_admin,
+                'group_id' => $user->group_id,
+                'group' => $user->group ? [
+                    'id' => $user->group->id,
+                    'name' => $user->group->name,
+                    'slug' => $user->group->slug,
+                ] : null,
+            ] : null,
         ]);
     }
 

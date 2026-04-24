@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ContactMessageResource extends JsonResource
+class GroupResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -15,13 +15,9 @@ class ContactMessageResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'subject' => $this->subject,
-            'category' => $this->category,
-            'group_id' => $this->group_id,
-            'group_name' => $this->whenLoaded('group', fn () => $this->group?->name),
-            'message' => $this->message,
+            'slug' => $this->slug,
+            'description' => $this->description,
+            'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
