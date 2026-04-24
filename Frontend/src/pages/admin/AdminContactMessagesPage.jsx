@@ -33,6 +33,7 @@ export default function AdminContactMessagesPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [messageSearch, setMessageSearch] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -146,6 +147,16 @@ export default function AdminContactMessagesPage() {
     }
   }
 
+  const filteredMessages = messages.filter(item => {
+    const query = messageSearch.trim().toLowerCase()
+
+    if (!query) {
+      return true
+    }
+
+    return `${item.subject} ${item.name} ${item.email} ${item.message || ''}`.toLowerCase().includes(query)
+  })
+
   return (
     <div className="admin-page-grid two-col">
       <article className="admin-surface">
@@ -160,12 +171,22 @@ export default function AdminContactMessagesPage() {
           </div>
         </div>
 
+        <div className="admin-filter-bar">
+          <input
+            type="search"
+            className="admin-filter-input"
+            placeholder="Search messages..."
+            value={messageSearch}
+            onChange={event => setMessageSearch(event.target.value)}
+          />
+        </div>
+
         {errorMessage ? <p className="admin-field-error">{errorMessage}</p> : null}
         {isLoadingMessages ? <p className="admin-loading">Loading messages...</p> : null}
 
         {!isLoadingMessages ? (
           <div className="admin-data-table">
-            {messages.map(item => (
+            {filteredMessages.map(item => (
               <button
                 key={item.id}
                 type="button"
@@ -185,7 +206,7 @@ export default function AdminContactMessagesPage() {
                 </div>
               </button>
             ))}
-            {!messages.length ? <p className="admin-empty">No contact messages have been submitted yet.</p> : null}
+            {!filteredMessages.length ? <p className="admin-empty">{messages.length ? 'No messages match the current search.' : 'No contact messages have been submitted yet.'}</p> : null}
           </div>
         ) : null}
 

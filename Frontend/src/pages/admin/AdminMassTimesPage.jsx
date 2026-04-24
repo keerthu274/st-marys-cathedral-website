@@ -48,6 +48,9 @@ export default function AdminMassTimesPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [isSavingMassTime, setIsSavingMassTime] = useState(false)
   const [isLoadingMassTimeEditor, setIsLoadingMassTimeEditor] = useState(false)
+  const [massSearch, setMassSearch] = useState('')
+  const [massDayFilter, setMassDayFilter] = useState('')
+  const [massStatusFilter, setMassStatusFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -239,6 +242,17 @@ export default function AdminMassTimesPage() {
     }
   }
 
+  const filteredMassTimes = massTimes.filter(item => {
+    const query = massSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.day} ${item.location || ''} ${item.language || ''} ${item.notes || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesDay = massDayFilter ? item.day === massDayFilter : true
+    const matchesStatus = massStatusFilter ? item.status === massStatusFilter : true
+
+    return matchesQuery && matchesDay && matchesStatus
+  })
+
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
@@ -251,8 +265,27 @@ export default function AdminMassTimesPage() {
             <button className="btn-primary" type="button" onClick={startNewMassTime}>New Mass Time</button>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search Mass times..."
+              value={massSearch}
+              onChange={event => setMassSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={massDayFilter} onChange={event => setMassDayFilter(event.target.value)}>
+              <option value="">All days</option>
+              {DAYS.map(day => <option key={day} value={day}>{day}</option>)}
+            </select>
+            <select className="admin-filter-select" value={massStatusFilter} onChange={event => setMassStatusFilter(event.target.value)}>
+              <option value="">All statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+
           <div className="admin-data-table">
-            {massTimes.map(item => (
+            {filteredMassTimes.map(item => (
               <div key={item.id} className="admin-row">
                 <div>
                   <strong>{item.day}</strong>
@@ -268,7 +301,7 @@ export default function AdminMassTimesPage() {
                 </div>
               </div>
             ))}
-            {!massTimes.length ? <p className="admin-empty">No Mass times found for this page.</p> : null}
+            {!filteredMassTimes.length ? <p className="admin-empty">{massTimes.length ? 'No Mass times match the current search or filters.' : 'No Mass times found for this page.'}</p> : null}
           </div>
 
           <div className="admin-pagination">

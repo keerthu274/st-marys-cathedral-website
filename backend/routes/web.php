@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\NewsletterController;
 use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
+use App\Http\Controllers\Admin\ParishCouncilMemberController;
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\NewsletterFileController;
 use Illuminate\Support\Facades\Route;
@@ -75,6 +76,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::get('contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])
         ->name('contact-messages.show');
+
+    Route::middleware('main_admin')->group(function () {
+        Route::resource('parish-council-members', ParishCouncilMemberController::class)
+            ->except(['create', 'show', 'update']);
+
+        Route::post('parish-council-members/{parishCouncilMember}', [ParishCouncilMemberController::class, 'update'])
+            ->name('parish-council-members.update-post');
+    });
 });
 
 Route::get('newsletters/{newsletter}/view', [NewsletterFileController::class, 'view'])

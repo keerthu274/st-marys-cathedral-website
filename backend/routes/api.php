@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\MassTimeApiController;
 use App\Http\Controllers\Api\V1\ContactApiController;
 use App\Http\Controllers\Api\V1\ParishRegistrationApiController;
 use App\Http\Controllers\Api\V1\NewsletterApiController;
+use App\Http\Controllers\Api\V1\ParishCouncilMemberApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,5 +66,14 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::get('newsletters', [NewsletterApiController::class, 'index']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Parish Council API
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('parish-council-members', [ParishCouncilMemberApiController::class, 'index']);
+    Route::get('parish-council-members/{parishCouncilMember}/photo', [ParishCouncilMemberApiController::class, 'photo']);
     
 });

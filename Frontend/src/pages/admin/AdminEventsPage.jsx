@@ -69,6 +69,9 @@ export default function AdminEventsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [isSavingEvent, setIsSavingEvent] = useState(false)
   const [isLoadingEventEditor, setIsLoadingEventEditor] = useState(false)
+  const [eventSearch, setEventSearch] = useState('')
+  const [eventStatusFilter, setEventStatusFilter] = useState('')
+  const [eventCategoryFilter, setEventCategoryFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -307,6 +310,18 @@ export default function AdminEventsPage() {
     }
   }
 
+  const eventCategories = Array.from(new Set(events.map(item => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const filteredEvents = events.filter(item => {
+    const query = eventSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.title} ${item.description || ''} ${item.location || ''} ${item.category || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesStatus = eventStatusFilter ? item.status === eventStatusFilter : true
+    const matchesCategory = eventCategoryFilter ? item.category === eventCategoryFilter : true
+
+    return matchesQuery && matchesStatus && matchesCategory
+  })
+
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
@@ -319,8 +334,27 @@ export default function AdminEventsPage() {
             <button className="btn-primary" type="button" onClick={startNewEvent}>New Event</button>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search events..."
+              value={eventSearch}
+              onChange={event => setEventSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={eventStatusFilter} onChange={event => setEventStatusFilter(event.target.value)}>
+              <option value="">All statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+            <select className="admin-filter-select" value={eventCategoryFilter} onChange={event => setEventCategoryFilter(event.target.value)}>
+              <option value="">All categories</option>
+              {eventCategories.map(category => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </div>
+
           <div className="admin-data-table">
-            {events.map(item => (
+            {filteredEvents.map(item => (
               <div key={item.id} className="admin-row">
                 <div>
                   <strong>{item.title}</strong>
@@ -336,7 +370,7 @@ export default function AdminEventsPage() {
                 </div>
               </div>
             ))}
-            {!events.length ? <p className="admin-empty">No events have been added yet.</p> : null}
+            {!filteredEvents.length ? <p className="admin-empty">{events.length ? 'No events match the current search or filters.' : 'No events have been added yet.'}</p> : null}
           </div>
         </article>
       </div>

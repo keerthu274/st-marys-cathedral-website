@@ -45,6 +45,7 @@ import AdminNewslettersPage from './pages/admin/AdminNewslettersPage'
 import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage'
 import AdminContactMessagesPage from './pages/admin/AdminContactMessagesPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
+import AdminParishCouncilPage from './pages/admin/AdminParishCouncilPage'
 
 function AppContent() {
   const location = useLocation()
@@ -79,6 +80,7 @@ function AppContent() {
             <Route path="newsletters" element={<AdminNewslettersPage />} />
             <Route path="registrations" element={<AdminRegistrationsPage />} />
             <Route path="contact-messages" element={<AdminContactMessagesPage />} />
+            <Route path="parish-council" element={<AdminParishCouncilPage />} />
             <Route path="profile" element={<AdminProfilePage />} />
           </Route>
           <Route path="/donate" element={<DonatePage />} />

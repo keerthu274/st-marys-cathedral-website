@@ -61,6 +61,8 @@ export default function AdminRegistrationsPage() {
     message: '',
   })
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [registrationSearch, setRegistrationSearch] = useState('')
+  const [registrationTypeFilter, setRegistrationTypeFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -334,6 +336,17 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  const registrationTypes = Array.from(new Set(registrations.map(item => item.registration_type).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const filteredRegistrations = registrations.filter(item => {
+    const query = registrationSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.full_name} ${item.member_id || ''} ${item.email || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesType = registrationTypeFilter ? item.registration_type === registrationTypeFilter : true
+
+    return matchesQuery && matchesType
+  })
+
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
@@ -345,8 +358,22 @@ export default function AdminRegistrationsPage() {
             </div>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search registrations..."
+              value={registrationSearch}
+              onChange={event => setRegistrationSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={registrationTypeFilter} onChange={event => setRegistrationTypeFilter(event.target.value)}>
+              <option value="">All types</option>
+              {registrationTypes.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+          </div>
+
           <div className="admin-data-table">
-            {registrations.map(item => (
+            {filteredRegistrations.map(item => (
               <button
                 key={item.id}
                 type="button"
@@ -366,7 +393,7 @@ export default function AdminRegistrationsPage() {
                 </div>
               </button>
             ))}
-            {!registrations.length ? <p className="admin-empty">No registrations are available.</p> : null}
+            {!filteredRegistrations.length ? <p className="admin-empty">{registrations.length ? 'No registrations match the current search or filters.' : 'No registrations are available.'}</p> : null}
           </div>
 
           <div className="admin-pagination">

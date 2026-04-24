@@ -61,6 +61,8 @@ export default function AdminNewslettersPage() {
   const [isSavingNewsletter, setIsSavingNewsletter] = useState(false)
   const [isLoadingNewsletterEditor, setIsLoadingNewsletterEditor] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [newsletterSearch, setNewsletterSearch] = useState('')
+  const [newsletterStatusFilter, setNewsletterStatusFilter] = useState('')
   const [dialogState, setDialogState] = useState({
     open: false,
     tone: 'neutral',
@@ -347,6 +349,16 @@ export default function AdminNewslettersPage() {
     }
   }
 
+  const filteredNewsletters = newsletters.filter(item => {
+    const query = newsletterSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.title} ${item.description || ''} ${item.original_filename || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesStatus = newsletterStatusFilter ? item.status === newsletterStatusFilter : true
+
+    return matchesQuery && matchesStatus
+  })
+
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
@@ -359,8 +371,23 @@ export default function AdminNewslettersPage() {
             <button className="btn-primary" type="button" onClick={startNewNewsletter}>New Newsletter</button>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search newsletters..."
+              value={newsletterSearch}
+              onChange={event => setNewsletterSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={newsletterStatusFilter} onChange={event => setNewsletterStatusFilter(event.target.value)}>
+              <option value="">All statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+
           <div className="admin-data-table">
-            {newsletters.map(item => (
+            {filteredNewsletters.map(item => (
               <div key={item.id} className="admin-row">
                 <div>
                   <strong>{item.title}</strong>
@@ -378,7 +405,7 @@ export default function AdminNewslettersPage() {
                 </div>
               </div>
             ))}
-            {!newsletters.length ? <p className="admin-empty">No newsletters have been uploaded yet.</p> : null}
+            {!filteredNewsletters.length ? <p className="admin-empty">{newsletters.length ? 'No newsletters match the current search or filters.' : 'No newsletters have been uploaded yet.'}</p> : null}
           </div>
 
           <div className="admin-pagination">

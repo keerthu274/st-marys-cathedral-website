@@ -207,6 +207,26 @@ export function getContactMessage(id) {
   return adminRequest(`/admin/contact-messages/${id}`)
 }
 
+export function listParishCouncilMembers() {
+  return adminRequest('/admin/parish-council-members')
+}
+
+export function getParishCouncilMember(id) {
+  return adminRequest(`/admin/parish-council-members/${id}/edit`)
+}
+
+export function createParishCouncilMember(data) {
+  return adminRequest('/admin/parish-council-members', { method: 'POST', body: data })
+}
+
+export function updateParishCouncilMember(id, data) {
+  return adminRequest(`/admin/parish-council-members/${id}`, { method: 'POST', body: data })
+}
+
+export function deleteParishCouncilMember(id) {
+  return adminRequest(`/admin/parish-council-members/${id}`, { method: 'DELETE' })
+}
+
 export function updateProfile(data) {
   return adminRequest('/profile', { method: 'PATCH', body: data })
 }

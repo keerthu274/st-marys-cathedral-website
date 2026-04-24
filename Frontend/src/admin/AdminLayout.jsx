@@ -9,6 +9,7 @@ const navItems = [
   { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs' },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records' },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
+  { to: '/dashboard/parish-council', label: 'Parish Council', meta: 'Manage council members', mainAdminOnly: true },
 ]
 
 export default function AdminLayout() {
@@ -34,6 +35,7 @@ export default function AdminLayout() {
           <div className="admin-topbar-right">
             <nav className="admin-topnav">
               {navItems.map(item => (
+                item.mainAdminOnly && !user?.is_main_admin ? null : (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -42,6 +44,7 @@ export default function AdminLayout() {
                 >
                   {item.label}
                 </NavLink>
+                )
               ))}
             </nav>
 

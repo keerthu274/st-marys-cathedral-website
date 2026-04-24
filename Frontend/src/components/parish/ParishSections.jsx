@@ -56,21 +56,24 @@ export function ParishInfoCards({ cards, columns = 3 }) {
     )
 }
 
-export function ParishMembers({ members }) {
+export function ParishMembers({ members, isLoading = false }) {
     return (
         <section className="section">
             <div className="container">
                 <h2 className="section-title">Council Members</h2>
                 <div className="members-grid">
+                    {isLoading ? <p className="text-mid">Loading council members...</p> : null}
                     {members.map((member, index) => (
                         <div key={index} className="member-card">
                             <div className="member-photo-placeholder">
-                                {member.photo || '👤'}
+                                {member.photo ? <img src={member.photo} alt={member.name} className="member-photo-image" /> : '👤'}
                             </div>
                             <h3>{member.name}</h3>
                             <div className="member-role">{member.role}</div>
+                            {member.bio ? <p className="member-bio">{member.bio}</p> : null}
                         </div>
                     ))}
+                    {!isLoading && !members.length ? <p className="text-mid">Parish council members will be listed here soon.</p> : null}
                 </div>
             </div>
         </section>

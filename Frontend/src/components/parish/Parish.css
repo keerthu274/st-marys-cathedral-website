@@ -159,6 +159,14 @@
     color: var(--text-light);
     border: 3px solid var(--white);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.member-photo-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .member-card h3 {
@@ -174,6 +182,13 @@
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+}
+
+.member-bio {
+    margin-top: 14px;
+    color: var(--text-mid);
+    line-height: 1.6;
+    font-size: 0.92rem;
 }
 
 /* Timeline */

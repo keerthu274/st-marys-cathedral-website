@@ -1,23 +1,6 @@
+import { useEffect, useState } from 'react'
 import { ParishHero, ParishIntro, ParishMembers, ParishCTA, RelatedParishLinks } from '../components/parish/ParishSections'
-
-const councilMembers = [
-    { name: 'Fr Nicolas Enzama', role: 'Parish Priest', photo: '✝' },
-    { name: 'Kay Ryan', role: 'Chair', photo: '👤' },
-    { name: 'Sarah Cox', role: 'Council Member', photo: '👤' },
-    { name: 'Arlene Elano', role: 'Council Member', photo: '👤' },
-    { name: 'Carol Bayliss', role: 'Council Member', photo: '👤' },
-    { name: 'Steve Davies', role: 'Council Member', photo: '👤' },
-    { name: 'Michael Schoonjans', role: 'Council Member', photo: '👤' },
-    { name: 'Wanjiku Mbugua-Ngotha', role: 'Council Member', photo: '👤' },
-    { name: 'Ben Sneade', role: 'Council Member', photo: '👤' },
-    { name: 'Declan Greaney', role: 'Council Member', photo: '👤' },
-    { name: 'Annette Cochrane', role: 'Council Member', photo: '👤' },
-    { name: 'Noel Gomez', role: 'Council Member', photo: '👤' },
-    { name: 'Sr Maria Crowley', role: 'Council Member', photo: '👤' },
-    { name: 'Vincent Ryan', role: 'Council Member', photo: '👤' },
-    { name: 'Linda Jones', role: 'Council Member', photo: '👤' },
-    { name: 'Phillip Thomas', role: 'Council Member', photo: '👤' },
-]
+import { getBackendUrl } from '../lib/auth'
 
 const responsibilities = [
     { title: 'Pastoral Parish Council', content: 'The PPC supports the spiritual and practical life of the parish in consultation with the Parish Priest and wider community.' },
@@ -26,11 +9,44 @@ const responsibilities = [
 ]
 
 export default function ParishCouncilPage() {
+    const [councilMembers, setCouncilMembers] = useState([])
+    const [isLoadingMembers, setIsLoadingMembers] = useState(true)
+
+    useEffect(() => {
+        let ignore = false
+
+        async function loadMembers() {
+            try {
+                const response = await fetch(getBackendUrl('/api/v1/parish-council-members'))
+                const payload = await response.json()
+
+                if (!ignore && response.ok && Array.isArray(payload.data)) {
+                    setCouncilMembers(payload.data)
+                }
+            } catch (error) {
+                console.log('Error loading parish council members:', error)
+            } finally {
+                if (!ignore) {
+                    setIsLoadingMembers(false)
+                }
+            }
+        }
+
+        loadMembers()
+
+        return () => {
+            ignore = true
+        }
+    }, [])
+
     return (
         <div className="parish-page">
             <ParishHero title="Parish Council" subtitle="Supporting the pastoral and community life of the cathedral" image="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1600" breadcrumb="Parish Council" />
             <ParishIntro title="Leadership Through Service" text="The Parish Pastoral Council supports the life and mission of St Mary's Cathedral through prayerful consultation, practical leadership, and service. It helps the parish respond to pastoral needs, community life, formation, communications, safeguarding, and future planning." />
-            <ParishMembers members={councilMembers} />
+            <ParishMembers members={councilMembers.map(member => ({
+                ...member,
+                photo: member.photo_url ? getBackendUrl(member.photo_url) : null,
+            }))} isLoading={isLoadingMembers} />
 
             <section className="section" style={{ background: '#fcfaf6' }}>
                 <div className="container">

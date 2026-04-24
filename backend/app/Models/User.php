@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'is_main_admin',
         'password',
         'hidden_overview_items',
     ];
@@ -43,6 +44,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_main_admin' => 'boolean',
             'hidden_overview_items' => 'array',
             'password' => 'hashed',
         ];
