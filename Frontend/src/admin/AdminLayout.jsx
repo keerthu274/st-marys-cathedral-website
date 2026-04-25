@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAdminSession } from './useAdminSession'
 import './admin.css'
 
@@ -14,7 +15,13 @@ const navItems = [
 ]
 
 export default function AdminLayout() {
+  const location = useLocation()
   const { user, isLoading, isLoggingOut, refreshUser, handleLogout } = useAdminSession()
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname])
 
   if (isLoading) {
     return (
@@ -33,7 +40,22 @@ export default function AdminLayout() {
             <h1>Website Management</h1>
           </div>
 
-          <div className="admin-topbar-right">
+          <button
+            className="admin-menu-toggle"
+            type="button"
+            aria-expanded={isMenuOpen}
+            aria-controls="admin-mobile-menu"
+            onClick={() => setIsMenuOpen(current => !current)}
+          >
+            <span className="admin-menu-toggle-bars" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span>{isMenuOpen ? 'Close' : 'Menu'}</span>
+          </button>
+
+          <div id="admin-mobile-menu" className={`admin-topbar-right ${isMenuOpen ? 'is-open' : ''}`}>
             <nav className="admin-topnav">
               {navItems.map(item => (
                 item.mainAdminOnly && !user?.is_main_admin ? null : (

@@ -81,6 +81,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('parish-registrations/{parishRegistration}', [ParishRegistrationController::class, 'show'])
             ->name('parish-registrations.show');
 
+        Route::delete('contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])
+            ->name('contact-messages.destroy');
+
         Route::delete('/parish-registrations/{parishRegistration}', [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'destroy'])
             ->name('parish-registrations.destroy');
 

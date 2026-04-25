@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
-import { getContactMessage, listContactMessages } from '../../lib/admin'
+import FeedbackDialog from '../../components/FeedbackDialog'
+import { deleteContactMessage, getContactMessage, listContactMessages } from '../../lib/admin'
 
 function formatDateTime(value) {
   if (!value) {
@@ -36,6 +37,7 @@ export default function AdminContactMessagesPage() {
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [messageSearch, setMessageSearch] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -149,6 +151,30 @@ export default function AdminContactMessagesPage() {
     }
   }
 
+  async function removeMessage(id) {
+    try {
+      await deleteContactMessage(id)
+      const payload = await listContactMessages(messageMeta.current_page)
+      const items = payload.messages || []
+      const nextSelectedId = items.find(item => item.id !== id)?.id || items[0]?.id || null
+
+      setMessages(items)
+      setMessageMeta(payload.meta || { current_page: 1, last_page: 1, total: 0 })
+      setSelectedMessageId(nextSelectedId)
+      setMessageDetail(nextSelectedId ? null : null)
+
+      if (nextSelectedId) {
+        setSearchParams({ message: String(nextSelectedId) })
+      } else {
+        setSearchParams({})
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to delete the selected message.')
+    } finally {
+      setConfirmDeleteId(null)
+    }
+  }
+
   const filteredMessages = messages.filter(item => {
     const query = messageSearch.trim().toLowerCase()
 
@@ -239,6 +265,11 @@ export default function AdminContactMessagesPage() {
             <h2>Message Detail</h2>
             <p>{isLoadingDetail ? 'Loading message...' : 'Open a message to read the full enquiry.'}</p>
           </div>
+          {user?.is_main_admin && messageDetail ? (
+            <button className="btn-outline admin-danger-button" type="button" onClick={() => setConfirmDeleteId(messageDetail.id)}>
+              Delete Message
+            </button>
+          ) : null}
         </div>
 
         {!messageDetail && !isLoadingDetail ? <p className="admin-empty">Select a contact message to view it here.</p> : null}
@@ -284,6 +315,18 @@ export default function AdminContactMessagesPage() {
           </div>
         ) : null}
       </article>
+
+      <FeedbackDialog
+        open={confirmDeleteId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this message?"
+        message="This will permanently remove the selected contact message."
+        confirmLabel="Delete Message"
+        cancelLabel="Keep Message"
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => removeMessage(confirmDeleteId)}
+      />
     </div>
   )
 }

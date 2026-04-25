@@ -232,6 +232,10 @@ export function getContactMessage(id) {
   return adminRequest(`/admin/contact-messages/${id}`)
 }
 
+export function deleteContactMessage(id) {
+  return adminRequest(`/admin/contact-messages/${id}`, { method: 'DELETE' })
+}
+
 export function listParishCouncilMembers() {
   return adminRequest('/admin/parish-council-members')
 }

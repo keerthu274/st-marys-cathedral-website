@@ -42,4 +42,13 @@ class ContactMessageController extends Controller
             'message' => ContactMessageResource::make($contactMessage->loadMissing('group'))->resolve($request),
         ]);
     }
+
+    public function destroy(ContactMessage $contactMessage)
+    {
+        $contactMessage->delete();
+
+        return response()->json([
+            'message' => 'Contact message deleted successfully.',
+        ]);
+    }
 }

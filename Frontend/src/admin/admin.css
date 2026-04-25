@@ -17,6 +17,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 18px;
+  flex-wrap: wrap;
   padding: 18px 20px;
   border-radius: 24px;
   border: 1px solid rgba(24, 52, 84, 0.08);
@@ -52,6 +53,34 @@
   min-width: 0;
   flex: 1;
   justify-content: flex-end;
+}
+
+.admin-menu-toggle {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 61, 95, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 252, 0.98));
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-left: auto;
+}
+
+.admin-menu-toggle-bars {
+  display: inline-grid;
+  gap: 4px;
+}
+
+.admin-menu-toggle-bars span {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .admin-topnav {
@@ -746,15 +775,22 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .admin-topbar {
-    flex-direction: column;
-    align-items: stretch;
+  .admin-menu-toggle {
+    display: inline-flex;
   }
 
   .admin-topbar-right {
+    display: none;
+    width: 100%;
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(29, 53, 83, 0.08);
+  }
+
+  .admin-topbar-right.is-open {
+    display: flex;
   }
 
   .admin-topnav {
@@ -764,19 +800,15 @@
     scrollbar-width: thin;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 4px;
+    flex: none;
   }
 
   .admin-user-inline {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-  }
-
-  .admin-user-inline {
     padding-left: 0;
     border-left: 0;
-    padding-top: 8px;
-    border-top: 1px solid rgba(29, 53, 83, 0.08);
   }
 
   .admin-user-meta {
@@ -802,6 +834,20 @@
 
   .admin-filter-bar {
     grid-template-columns: 1fr;
+  }
+
+  .admin-user-inline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .admin-user-meta {
+    text-align: left;
+  }
+
+  .admin-user-meta small {
+    max-width: none;
   }
 
   .admin-overview-stats.is-main-admin,
