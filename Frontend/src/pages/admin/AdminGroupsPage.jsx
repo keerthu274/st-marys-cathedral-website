@@ -1,14 +1,37 @@
 import { useEffect, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
-import { createGroup, deleteGroup, getGroup, listGroups, updateGroup } from '../../lib/admin'
-import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
+import {
+  createGroup,
+  createGroupMember,
+  deleteGroup,
+  deleteGroupMember,
+  listGroups,
+  updateGroup,
+  updateGroupMember,
+} from '../../lib/admin'
+import {
+  hasErrors,
+  requireField,
+  validateEmail,
+  validateMaxLength,
+  validateNameText,
+  validatePhone,
+} from '../../lib/validation'
 
 const emptyGroupForm = {
   name: '',
   description: '',
   is_active: true,
   admin_user_id: '',
+}
+
+const emptyMemberForm = {
+  name: '',
+  email: '',
+  phone: '',
+  role: '',
+  notes: '',
 }
 
 function FieldError({ errors, name }) {
@@ -19,17 +42,64 @@ function FieldError({ errors, name }) {
   return <p className="admin-field-error">{errors[name][0]}</p>
 }
 
+function formatDateTime(value) {
+  if (!value) {
+    return 'Unknown time'
+  }
+
+  return new Date(value).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function toGroupForm(group) {
+  if (!group) {
+    return emptyGroupForm
+  }
+
+  return {
+    name: group.name || '',
+    description: group.description || '',
+    is_active: Boolean(group.is_active),
+    admin_user_id: group.admin_user_id ? String(group.admin_user_id) : '',
+  }
+}
+
+function toMemberForm(member) {
+  if (!member) {
+    return emptyMemberForm
+  }
+
+  return {
+    name: member.name || '',
+    email: member.email || '',
+    phone: member.phone || '',
+    role: member.role || '',
+    notes: member.notes || '',
+  }
+}
+
 export default function AdminGroupsPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const [groups, setGroups] = useState([])
   const [availableAdmins, setAvailableAdmins] = useState([])
   const [selectedGroupId, setSelectedGroupId] = useState(null)
+  const [selectedMemberId, setSelectedMemberId] = useState(null)
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
   const [groupForm, setGroupForm] = useState(emptyGroupForm)
+  const [memberForm, setMemberForm] = useState(emptyMemberForm)
   const [groupErrors, setGroupErrors] = useState({})
+  const [memberErrors, setMemberErrors] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
   const [isSavingGroup, setIsSavingGroup] = useState(false)
-  const [isLoadingGroupEditor, setIsLoadingGroupEditor] = useState(false)
+  const [isSavingMember, setIsSavingMember] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmDeleteMemberId, setConfirmDeleteMemberId] = useState(null)
   const [dialogState, setDialogState] = useState({
     open: false,
     tone: 'neutral',
@@ -37,24 +107,42 @@ export default function AdminGroupsPage() {
     message: '',
   })
 
+  const selectedGroup = groups.find(item => item.id === selectedGroupId) || null
+  const selectedMember = selectedGroup?.members?.find(item => item.id === selectedMemberId) || null
+
   useEffect(() => {
     let ignore = false
 
     async function loadGroups() {
-      if (!user?.is_main_admin) {
-        return
-      }
+      setIsLoading(true)
 
       try {
         const payload = await listGroups()
 
-        if (!ignore) {
-          setGroups(payload.groups || [])
-          setAvailableAdmins(payload.available_admins || [])
+        if (ignore) {
+          return
         }
+
+        const nextGroups = payload.groups || []
+        const requestedGroupId = Number(searchParams.get('group') || searchParams.get('edit') || 0) || null
+        const requestedMemberId = Number(searchParams.get('member') || 0) || null
+        const nextGroup = nextGroups.find(item => item.id === requestedGroupId) || nextGroups[0] || null
+        const nextMember = nextGroup?.members?.find(item => item.id === requestedMemberId) || null
+
+        setGroups(nextGroups)
+        setAvailableAdmins(payload.available_admins || [])
+        setSelectedGroupId(nextGroup?.id || null)
+        setSelectedMemberId(nextMember?.id || null)
+        setIsCreatingGroup(false)
+        setGroupForm(user?.is_main_admin ? toGroupForm(nextGroup) : emptyGroupForm)
+        setMemberForm(toMemberForm(nextMember))
       } catch (error) {
         if (!ignore) {
-          openDialog('error', 'Unable to load groups', error.message || 'The group list could not be loaded.')
+          openDialog('error', 'Unable to load groups', error.message || 'The group workspace could not be loaded.')
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false)
         }
       }
     }
@@ -67,14 +155,33 @@ export default function AdminGroupsPage() {
   }, [user?.is_main_admin])
 
   useEffect(() => {
-    const editId = searchParams.get('edit')
-
-    if (!editId || !user?.is_main_admin) {
+    if (isCreatingGroup) {
       return
     }
 
-    editGroup(Number(editId))
-  }, [searchParams, user?.is_main_admin])
+    if (!groups.length) {
+      return
+    }
+
+    const requestedGroupId = Number(searchParams.get('group') || searchParams.get('edit') || 0) || null
+    const requestedMemberId = Number(searchParams.get('member') || 0) || null
+    const nextGroup = groups.find(item => item.id === requestedGroupId) || groups.find(item => item.id === selectedGroupId) || groups[0]
+    const nextMember = nextGroup?.members?.find(item => item.id === requestedMemberId)
+      || nextGroup?.members?.find(item => item.id === selectedMemberId)
+      || null
+
+    if ((nextGroup?.id || null) !== selectedGroupId) {
+      setSelectedGroupId(nextGroup?.id || null)
+      if (user?.is_main_admin) {
+        setGroupForm(toGroupForm(nextGroup))
+      }
+    }
+
+    if ((nextMember?.id || null) !== selectedMemberId) {
+      setSelectedMemberId(nextMember?.id || null)
+      setMemberForm(toMemberForm(nextMember))
+    }
+  }, [groups, isCreatingGroup, searchParams, selectedGroupId, selectedMemberId, user?.is_main_admin])
 
   function closeDialog() {
     setDialogState(current => ({ ...current, open: false }))
@@ -84,40 +191,76 @@ export default function AdminGroupsPage() {
     setDialogState({ open: true, tone, title, message })
   }
 
-  async function refreshGroups() {
+  function updateSearch(nextGroupId, nextMemberId = null) {
+    const nextParams = new URLSearchParams()
+
+    if (nextGroupId) {
+      nextParams.set('group', String(nextGroupId))
+    }
+
+    if (nextMemberId) {
+      nextParams.set('member', String(nextMemberId))
+    }
+
+    setSearchParams(nextParams)
+  }
+
+  async function refreshGroups(nextGroupId = selectedGroupId, nextMemberId = selectedMemberId) {
     const payload = await listGroups()
-    setGroups(payload.groups || [])
+    const nextGroups = payload.groups || []
+    const nextGroup = nextGroups.find(item => item.id === nextGroupId) || nextGroups[0] || null
+    const nextMember = nextGroup?.members?.find(item => item.id === nextMemberId) || null
+
+    setGroups(nextGroups)
     setAvailableAdmins(payload.available_admins || [])
+    setSelectedGroupId(nextGroup?.id || null)
+    setSelectedMemberId(nextMember?.id || null)
+    setIsCreatingGroup(false)
+    setGroupForm(user?.is_main_admin ? toGroupForm(nextGroup) : emptyGroupForm)
+    setMemberForm(toMemberForm(nextMember))
+    updateSearch(nextGroup?.id || null, nextMember?.id || null)
+  }
+
+  function selectGroup(groupId) {
+    const nextGroup = groups.find(item => item.id === groupId) || null
+    setIsCreatingGroup(false)
+    setSelectedGroupId(nextGroup?.id || null)
+    setSelectedMemberId(null)
+    setMemberForm(emptyMemberForm)
+    setMemberErrors({})
+
+    if (user?.is_main_admin) {
+      setGroupForm(toGroupForm(nextGroup))
+      setGroupErrors({})
+    }
+
+    updateSearch(nextGroup?.id || null, null)
   }
 
   function startNewGroup() {
+    setIsCreatingGroup(true)
     setSelectedGroupId(null)
+    setSelectedMemberId(null)
     setGroupForm(emptyGroupForm)
     setGroupErrors({})
+    setMemberForm(emptyMemberForm)
+    setMemberErrors({})
     setSearchParams({})
   }
 
-  async function editGroup(id) {
-    setIsLoadingGroupEditor(true)
+  function startNewMember() {
+    setSelectedMemberId(null)
+    setMemberForm(emptyMemberForm)
+    setMemberErrors({})
+    updateSearch(selectedGroupId, null)
+  }
 
-    try {
-      const payload = await getGroup(id)
-      const item = payload.group
-
-      setSelectedGroupId(id)
-      setGroupForm({
-        name: item.name || '',
-        description: item.description || '',
-        is_active: Boolean(item.is_active),
-        admin_user_id: item.admin_user_id ? String(item.admin_user_id) : '',
-      })
-      setGroupErrors({})
-      setSearchParams({ edit: String(id) })
-    } catch (error) {
-      openDialog('error', 'Unable to load group', error.message || 'The selected group could not be opened.')
-    } finally {
-      setIsLoadingGroupEditor(false)
-    }
+  function editMember(memberId) {
+    const nextMember = selectedGroup?.members?.find(item => item.id === memberId) || null
+    setSelectedMemberId(nextMember?.id || null)
+    setMemberForm(toMemberForm(nextMember))
+    setMemberErrors({})
+    updateSearch(selectedGroupId, nextMember?.id || null)
   }
 
   function handleGroupChange(event) {
@@ -130,7 +273,21 @@ export default function AdminGroupsPage() {
     setGroupForm(nextForm)
     setGroupErrors(current => ({
       ...current,
-      ...validateGroupLiveFields(nextForm, name),
+      [name]: validateGroupField(nextForm, name),
+    }))
+  }
+
+  function handleMemberChange(event) {
+    const { name, value } = event.target
+    const nextForm = {
+      ...memberForm,
+      [name]: value,
+    }
+
+    setMemberForm(nextForm)
+    setMemberErrors(current => ({
+      ...current,
+      [name]: validateMemberField(nextForm, name),
     }))
   }
 
@@ -142,21 +299,55 @@ export default function AdminGroupsPage() {
     return nextErrors
   }
 
-  function validateGroupLiveFields(form, changedName) {
+  function validateGroupField(form, fieldName) {
     const nextErrors = {}
 
-    if (changedName === 'name') {
+    if (fieldName === 'name') {
       requireField(nextErrors, 'name', form.name, 'Group name')
       validateMaxLength(nextErrors, 'name', form.name, 255, 'Group name')
     }
 
-    if (changedName === 'description') {
+    if (fieldName === 'description') {
       validateMaxLength(nextErrors, 'description', form.description, 2000, 'Description')
     }
 
-    return {
-      [changedName]: nextErrors[changedName],
+    return nextErrors[fieldName]
+  }
+
+  function validateMemberForm() {
+    const nextErrors = {}
+    validateNameText(nextErrors, 'name', memberForm.name, 'Member name', true)
+    validateEmail(nextErrors, 'email', memberForm.email, 'Email address', false)
+    validatePhone(nextErrors, 'phone', memberForm.phone, 'Phone number', false)
+    validateMaxLength(nextErrors, 'role', memberForm.role, 255, 'Role')
+    validateMaxLength(nextErrors, 'notes', memberForm.notes, 2000, 'Notes')
+    return nextErrors
+  }
+
+  function validateMemberField(form, fieldName) {
+    const nextErrors = {}
+
+    if (fieldName === 'name') {
+      validateNameText(nextErrors, 'name', form.name, 'Member name', true)
     }
+
+    if (fieldName === 'email') {
+      validateEmail(nextErrors, 'email', form.email, 'Email address', false)
+    }
+
+    if (fieldName === 'phone') {
+      validatePhone(nextErrors, 'phone', form.phone, 'Phone number', false)
+    }
+
+    if (fieldName === 'role') {
+      validateMaxLength(nextErrors, 'role', form.role, 255, 'Role')
+    }
+
+    if (fieldName === 'notes') {
+      validateMaxLength(nextErrors, 'notes', form.notes, 2000, 'Notes')
+    }
+
+    return nextErrors[fieldName]
   }
 
   async function submitGroup(event) {
@@ -183,8 +374,7 @@ export default function AdminGroupsPage() {
         ? await updateGroup(selectedGroupId, payload)
         : await createGroup(payload)
 
-      await refreshGroups()
-      startNewGroup()
+      await refreshGroups(response.group?.id || selectedGroupId)
       openDialog('success', 'Group saved successfully', response.message || 'The group has been saved.')
     } catch (error) {
       setGroupErrors(error.errors || {})
@@ -194,15 +384,43 @@ export default function AdminGroupsPage() {
     }
   }
 
+  async function submitMember(event) {
+    event.preventDefault()
+
+    if (!selectedGroup) {
+      openDialog('error', 'Select a group first', 'Choose a group before adding or editing members.')
+      return
+    }
+
+    const validationErrors = validateMemberForm()
+    setMemberErrors(validationErrors)
+
+    if (hasErrors(validationErrors)) {
+      openDialog('error', 'Please check the member form', 'Fix the highlighted member details before saving.')
+      return
+    }
+
+    setIsSavingMember(true)
+
+    try {
+      const response = selectedMemberId
+        ? await updateGroupMember(selectedGroup.id, selectedMemberId, memberForm)
+        : await createGroupMember(selectedGroup.id, memberForm)
+
+      await refreshGroups(selectedGroup.id, response.member?.id || selectedMemberId)
+      openDialog('success', 'Member saved successfully', response.message || 'The member record has been saved.')
+    } catch (error) {
+      setMemberErrors(error.errors || {})
+      openDialog('error', 'Unable to save member', error.message || 'Please review the member details and try again.')
+    } finally {
+      setIsSavingMember(false)
+    }
+  }
+
   async function removeGroup(id) {
     try {
       const payload = await deleteGroup(id)
       await refreshGroups()
-
-      if (selectedGroupId === id) {
-        startNewGroup()
-      }
-
       openDialog('success', 'Group deleted successfully', payload.message || 'The group has been removed.')
     } catch (error) {
       openDialog('error', 'Unable to delete group', error.message || 'The group could not be deleted at this time.')
@@ -211,24 +429,24 @@ export default function AdminGroupsPage() {
     }
   }
 
-  if (!user?.is_main_admin) {
-    return (
-      <div className="admin-page-grid">
-        <article className="admin-surface">
-          <div className="admin-section-head">
-            <div>
-              <h2>My Group</h2>
-              <p>Your account is currently assigned to {user?.group?.name || 'no group yet'}.</p>
-            </div>
-          </div>
-          <div className="admin-detail-block">
-            <h3>Group Access</h3>
-            <p>Group admins can manage only their own draft events and their own group contact enquiries.</p>
-            <p>Published events, parish registrations, Mass times, and parish council management remain with the main admin.</p>
-          </div>
-        </article>
-      </div>
-    )
+  async function removeMember(memberId) {
+    if (!selectedGroup) {
+      return
+    }
+
+    try {
+      const payload = await deleteGroupMember(selectedGroup.id, memberId)
+      await refreshGroups(selectedGroup.id, selectedMemberId === memberId ? null : selectedMemberId)
+      openDialog('success', 'Member deleted successfully', payload.message || 'The member has been removed.')
+    } catch (error) {
+      openDialog('error', 'Unable to delete member', error.message || 'The member could not be deleted at this time.')
+    } finally {
+      setConfirmDeleteMemberId(null)
+    }
+  }
+
+  if (isLoading) {
+    return <div className="admin-surface admin-loading">Loading group workspace...</div>
   }
 
   return (
@@ -237,88 +455,220 @@ export default function AdminGroupsPage() {
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
-              <h2>Groups</h2>
-              <p>Create groups and assign signed-up users as their group admins.</p>
+              <h2>{user?.is_main_admin ? 'Groups' : 'My Group'}</h2>
+              <p>{user?.is_main_admin ? 'Click any group to manage its admin and members.' : selectedGroup ? `Manage members for ${selectedGroup.name}.` : 'Your account is not assigned to a group yet.'}</p>
             </div>
-            <button className="btn-primary" type="button" onClick={startNewGroup}>New Group</button>
+            {user?.is_main_admin ? <button className="btn-primary" type="button" onClick={startNewGroup}>New Group</button> : null}
           </div>
 
-          <div className="admin-data-table">
-            {groups.map(item => {
-              const assignedAdmin = availableAdmins.find(admin => admin.group_id === item.id)
-
-              return (
-                <div key={item.id} className="admin-row">
-                  <div>
+          {groups.length ? (
+            <div className="admin-data-table">
+              {groups.map(item => (
+                <div
+                  key={item.id}
+                  className={`admin-row admin-row-stack admin-row-clickable ${selectedGroupId === item.id ? 'active' : ''}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => selectGroup(item.id)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      selectGroup(item.id)
+                    }
+                  }}
+                >
+                  <div className="admin-row-main">
                     <strong>{item.name}</strong>
-                    <span>{item.description || 'No description yet.'}</span>
+                    <span>{item.admin_user ? `${item.admin_user.name} • ${item.admin_user.email}` : 'No group admin assigned'}</span>
+                  </div>
+                  <div className="admin-row-meta">
+                    <small>{item.members_count || 0} member{item.members_count === 1 ? '' : 's'}</small>
+                    <span>{item.description || 'No description set yet.'}</span>
+                  </div>
+                  {user?.is_main_admin ? (
+                    <div className="admin-row-actions">
+                      <button
+                        type="button"
+                        onClick={event => {
+                          event.stopPropagation()
+                          selectGroup(item.id)
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="danger"
+                        onClick={event => {
+                          event.stopPropagation()
+                          setConfirmDeleteId(item.id)
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="admin-row-actions">
+                      <button
+                        type="button"
+                        onClick={event => {
+                          event.stopPropagation()
+                          selectGroup(item.id)
+                        }}
+                      >
+                        Open
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="admin-empty">{user?.is_main_admin ? 'No groups have been created yet.' : 'No group is assigned to your account yet.'}</p>
+          )}
+        </article>
+
+        {selectedGroup ? (
+          <article className="admin-surface">
+            <div className="admin-section-head">
+              <div>
+                <h2>Group Members</h2>
+                <p>{user?.is_main_admin ? `Main admin view for ${selectedGroup.name}.` : 'Members registered from your dashboard appear here.'}</p>
+              </div>
+              <button className="btn-outline" type="button" onClick={startNewMember}>New Member</button>
+            </div>
+
+            <div className="admin-data-table">
+              {selectedGroup.members?.map(member => (
+                <div key={member.id} className={`admin-row ${selectedMemberId === member.id ? 'active' : ''}`}>
+                  <div>
+                    <strong>{member.name}</strong>
+                    <span>{member.role || member.email || 'No role or email added yet.'}</span>
                   </div>
                   <div>
-                    <small>{assignedAdmin ? `${assignedAdmin.name} • ${assignedAdmin.email}` : 'No group admin assigned'}</small>
-                    <span className="admin-badge">{item.is_active ? 'active' : 'hidden'}</span>
+                    <small>{member.phone || 'No phone added'}</small>
+                    <span>{formatDateTime(member.created_at)}</span>
                   </div>
                   <div className="admin-row-actions">
-                    <button type="button" onClick={() => editGroup(item.id)}>Edit</button>
-                    <button type="button" className="danger" onClick={() => setConfirmDeleteId(item.id)}>Delete</button>
+                    <button type="button" onClick={() => editMember(member.id)}>Edit</button>
+                    <button type="button" className="danger" onClick={() => setConfirmDeleteMemberId(member.id)}>Delete</button>
                   </div>
                 </div>
-              )
-            })}
-            {!groups.length ? <p className="admin-empty">No groups have been created yet.</p> : null}
-          </div>
-        </article>
+              ))}
+              {!selectedGroup.members?.length ? <p className="admin-empty">No members have been registered for this group yet.</p> : null}
+            </div>
+          </article>
+        ) : null}
       </div>
 
-      <article className="admin-surface">
-        <div className="admin-section-head">
-          <div>
-            <h2>{selectedGroupId ? 'Edit Group' : 'Create Group'}</h2>
-            <p>{isLoadingGroupEditor ? 'Loading group...' : 'Assign a signed-up user as the group admin if needed.'}</p>
+      <div className="admin-page-grid">
+        {user?.is_main_admin ? (
+          <article className="admin-surface">
+            <div className="admin-section-head">
+              <div>
+                <h2>{selectedGroupId ? 'Edit Group' : 'Create Group'}</h2>
+                <p>Assign the role-based admin account, then use the member panel for registrations.</p>
+              </div>
+            </div>
+
+            <form className="admin-form" onSubmit={submitGroup} noValidate>
+              <label>
+                <span>Group name</span>
+                <input name="name" value={groupForm.name} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.name)} />
+                <FieldError errors={groupErrors} name="name" />
+              </label>
+
+              <label>
+                <span>Description</span>
+                <textarea name="description" rows="4" value={groupForm.description} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.description)} />
+                <FieldError errors={groupErrors} name="description" />
+              </label>
+
+              <label>
+                <span>Assigned group admin</span>
+                <select name="admin_user_id" value={groupForm.admin_user_id} onChange={handleGroupChange}>
+                  <option value="">No group admin assigned</option>
+                  {availableAdmins.map(admin => (
+                    <option
+                      key={admin.id}
+                      value={admin.id}
+                      disabled={admin.group_id !== null && String(admin.group_id) !== String(selectedGroupId || '')}
+                    >
+                      {admin.name} ({admin.email}){admin.group_id ? ' - already assigned' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="admin-checkbox">
+                <input type="checkbox" name="is_active" checked={groupForm.is_active} onChange={handleGroupChange} />
+                <span>Show this group as active</span>
+              </label>
+
+              <div className="admin-actions">
+                <button className="btn-primary" type="submit" disabled={isSavingGroup}>
+                  {isSavingGroup ? 'Saving...' : selectedGroupId ? 'Update Group' : 'Create Group'}
+                </button>
+                <button className="btn-outline" type="button" onClick={startNewGroup}>Reset</button>
+              </div>
+            </form>
+          </article>
+        ) : null}
+
+        <article className="admin-surface">
+          <div className="admin-section-head">
+            <div>
+              <h2>{selectedMemberId ? 'Edit Member' : 'Register Member'}</h2>
+              <p>{selectedGroup ? `Save members into ${selectedGroup.name}.` : 'Select a group to begin.'}</p>
+            </div>
           </div>
-        </div>
 
-        <form className="admin-form" onSubmit={submitGroup} noValidate>
-          <label>
-            <span>Group name</span>
-            <input name="name" value={groupForm.name} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.name)} />
-            <FieldError errors={groupErrors} name="name" />
-          </label>
+          {selectedGroup ? (
+            <form className="admin-form" onSubmit={submitMember} noValidate>
+              <label>
+                <span>Member name</span>
+                <input name="name" value={memberForm.name} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.name)} />
+                <FieldError errors={memberErrors} name="name" />
+              </label>
 
-          <label>
-            <span>Description</span>
-            <textarea name="description" rows="4" value={groupForm.description} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.description)} />
-            <FieldError errors={groupErrors} name="description" />
-          </label>
+              <div className="admin-form-grid">
+                <label>
+                  <span>Email</span>
+                  <input name="email" value={memberForm.email} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.email)} />
+                  <FieldError errors={memberErrors} name="email" />
+                </label>
 
-          <label>
-            <span>Assigned group admin</span>
-            <select name="admin_user_id" value={groupForm.admin_user_id} onChange={handleGroupChange}>
-              <option value="">No group admin assigned</option>
-              {availableAdmins.map(admin => (
-                <option
-                  key={admin.id}
-                  value={admin.id}
-                  disabled={admin.group_id !== null && String(admin.group_id) !== String(selectedGroupId || '')}
-                >
-                  {admin.name} ({admin.email}){admin.group_id ? ' - already assigned' : ''}
-                </option>
-              ))}
-            </select>
-          </label>
+                <label>
+                  <span>Phone</span>
+                  <input name="phone" value={memberForm.phone} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.phone)} />
+                  <FieldError errors={memberErrors} name="phone" />
+                </label>
+              </div>
 
-          <label className="admin-checkbox">
-            <input type="checkbox" name="is_active" checked={groupForm.is_active} onChange={handleGroupChange} />
-            <span>Show this group as active</span>
-          </label>
+              <label>
+                <span>Role in group</span>
+                <input name="role" value={memberForm.role} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.role)} />
+                <FieldError errors={memberErrors} name="role" />
+              </label>
 
-          <div className="admin-actions">
-            <button className="btn-primary" type="submit" disabled={isSavingGroup}>
-              {isSavingGroup ? 'Saving...' : selectedGroupId ? 'Update Group' : 'Create Group'}
-            </button>
-            <button className="btn-outline" type="button" onClick={startNewGroup}>Reset</button>
-          </div>
-        </form>
-      </article>
+              <label>
+                <span>Notes</span>
+                <textarea name="notes" rows="4" value={memberForm.notes} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.notes)} />
+                <FieldError errors={memberErrors} name="notes" />
+              </label>
+
+              <div className="admin-actions">
+                <button className="btn-primary" type="submit" disabled={isSavingMember}>
+                  {isSavingMember ? 'Saving...' : selectedMemberId ? 'Update Member' : 'Add Member'}
+                </button>
+                <button className="btn-outline" type="button" onClick={startNewMember}>Reset</button>
+              </div>
+            </form>
+          ) : (
+            <p className="admin-empty">No group is available yet for member registration.</p>
+          )}
+        </article>
+      </div>
 
       <FeedbackDialog
         open={dialogState.open}
@@ -333,11 +683,22 @@ export default function AdminGroupsPage() {
         tone="neutral"
         variant="confirm"
         title="Delete this group?"
-        message="This will remove the group and unassign its current group admin."
+        message="This will remove the group, its registered members, and unassign its current group admin."
         confirmLabel="Delete Group"
         cancelLabel="Keep Group"
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={() => removeGroup(confirmDeleteId)}
+      />
+      <FeedbackDialog
+        open={confirmDeleteMemberId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this member?"
+        message="This will remove the member from the selected group."
+        confirmLabel="Delete Member"
+        cancelLabel="Keep Member"
+        onClose={() => setConfirmDeleteMemberId(null)}
+        onConfirm={() => removeMember(confirmDeleteMemberId)}
       />
     </div>
   )

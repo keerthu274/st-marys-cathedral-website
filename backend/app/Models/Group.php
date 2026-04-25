@@ -28,4 +28,9 @@ class Group extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function groupMembers(): HasMany
+    {
+        return $this->hasMany(GroupMember::class);
+    }
 }

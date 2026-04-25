@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GroupRequest;
+use App\Http\Resources\GroupMemberResource;
 use App\Http\Resources\GroupResource;
 use App\Models\Group;
 use App\Models\User;
@@ -14,21 +15,35 @@ class GroupController extends Controller
 {
     public function index(Request $request)
     {
-        $groups = Group::with(['users' => function ($query) {
-            $query->select('id', 'name', 'email', 'group_id');
-        }])->orderBy('name')->get();
-
-        $availableAdmins = User::where('is_main_admin', false)
+        $user = $request->user();
+        $groups = Group::with([
+            'users' => function ($query) {
+                $query->select('id', 'name', 'email', 'group_id', 'is_main_admin')
+                    ->where('is_main_admin', false)
+                    ->orderBy('name');
+            },
+            'groupMembers' => function ($query) {
+                $query->orderBy('name');
+            },
+        ])
+            ->withCount('groupMembers')
+            ->when(! $user->is_main_admin, fn ($query) => $query->whereKey($user->group_id))
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'group_id']);
+            ->get();
+
+        $availableAdmins = $user->is_main_admin
+            ? User::where('is_main_admin', false)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'group_id'])
+            : collect();
 
         return response()->json([
-            'groups' => GroupResource::collection($groups)->resolve($request),
-            'available_admins' => $availableAdmins->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'group_id' => $user->group_id,
+            'groups' => $groups->map(fn (Group $group) => $this->serializeGroup($group, $request))->values()->all(),
+            'available_admins' => $availableAdmins->map(fn (User $admin) => [
+                'id' => $admin->id,
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'group_id' => $admin->group_id,
             ])->values()->all(),
         ]);
     }
@@ -48,26 +63,27 @@ class GroupController extends Controller
 
         return response()->json([
             'message' => 'Group saved successfully.',
-            'group' => GroupResource::make($group->fresh())->resolve($request),
+            'group' => $this->serializeGroup($group->fresh(['users', 'groupMembers'])->loadCount('groupMembers'), $request),
         ], 201);
     }
 
     public function edit(Request $request, Group $group)
     {
-        $adminUser = User::where('group_id', $group->id)
-            ->where('is_main_admin', false)
-            ->first(['id', 'name', 'email']);
+        $user = $request->user();
+
+        if (! $user->is_main_admin && (int) $user->group_id !== (int) $group->id) {
+            abort(403, 'You do not have access to this group.');
+        }
+
+        $group->loadMissing([
+            'users' => fn ($query) => $query->select('id', 'name', 'email', 'group_id', 'is_main_admin')
+                ->where('is_main_admin', false)
+                ->orderBy('name'),
+            'groupMembers' => fn ($query) => $query->orderBy('name'),
+        ])->loadCount('groupMembers');
 
         return response()->json([
-            'group' => [
-                ...GroupResource::make($group)->resolve($request),
-                'admin_user_id' => $adminUser?->id,
-                'admin_user' => $adminUser ? [
-                    'id' => $adminUser->id,
-                    'name' => $adminUser->name,
-                    'email' => $adminUser->email,
-                ] : null,
-            ],
+            'group' => $this->serializeGroup($group, $request),
         ]);
     }
 
@@ -82,12 +98,15 @@ class GroupController extends Controller
             'is_active' => (bool) ($validated['is_active'] ?? true),
         ]);
 
-        User::where('group_id', $group->id)->where('is_main_admin', false)->update(['group_id' => null]);
+        User::where('group_id', $group->id)
+            ->where('is_main_admin', false)
+            ->update(['group_id' => null]);
+
         $this->assignAdminUser($validated['admin_user_id'] ?? null, $group);
 
         return response()->json([
             'message' => 'Group updated successfully.',
-            'group' => GroupResource::make($group->fresh())->resolve($request),
+            'group' => $this->serializeGroup($group->fresh(['users', 'groupMembers'])->loadCount('groupMembers'), $request),
         ]);
     }
 
@@ -110,5 +129,22 @@ class GroupController extends Controller
         User::where('id', $userId)
             ->where('is_main_admin', false)
             ->update(['group_id' => $group->id]);
+    }
+
+    private function serializeGroup(Group $group, Request $request): array
+    {
+        $adminUser = $group->users->first();
+
+        return [
+            ...GroupResource::make($group)->resolve($request),
+            'admin_user_id' => $adminUser?->id,
+            'admin_user' => $adminUser ? [
+                'id' => $adminUser->id,
+                'name' => $adminUser->name,
+                'email' => $adminUser->email,
+            ] : null,
+            'members_count' => $group->group_members_count ?? $group->groupMembers->count(),
+            'members' => GroupMemberResource::collection($group->groupMembers)->resolve($request),
+        ];
     }
 }

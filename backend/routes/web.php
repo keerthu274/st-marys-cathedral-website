@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ParishCouncilMemberController;
 use App\Http\Controllers\Admin\GroupController;
+use App\Http\Controllers\Admin\GroupMemberController;
 use App\Http\Controllers\Auth\ApiAuthController;
 use App\Http\Controllers\NewsletterFileController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,21 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])
         ->name('contact-messages.show');
 
+    Route::get('groups', [GroupController::class, 'index'])
+        ->name('groups.index');
+
+    Route::get('groups/{group}/edit', [GroupController::class, 'edit'])
+        ->name('groups.edit');
+
+    Route::post('groups/{group}/members', [GroupMemberController::class, 'store'])
+        ->name('groups.members.store');
+
+    Route::put('groups/{group}/members/{groupMember}', [GroupMemberController::class, 'update'])
+        ->name('groups.members.update');
+
+    Route::delete('groups/{group}/members/{groupMember}', [GroupMemberController::class, 'destroy'])
+        ->name('groups.members.destroy');
+
     Route::middleware('main_admin')->group(function () {
         Route::resource('mass-times', MassTimeController::class)
             ->except(['show']);
@@ -76,11 +92,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             [\App\Http\Controllers\Admin\ParishRegistrationController::class, 'update'])
             ->name('parish-registrations.update');
 
-        Route::resource('groups', GroupController::class)
-            ->except(['create', 'show', 'update']);
-
         Route::post('groups/{group}', [GroupController::class, 'update'])
             ->name('groups.update-post');
+
+        Route::post('groups', [GroupController::class, 'store'])
+            ->name('groups.store');
+
+        Route::delete('groups/{group}', [GroupController::class, 'destroy'])
+            ->name('groups.destroy');
 
         Route::resource('parish-council-members', ParishCouncilMemberController::class)
             ->except(['create', 'show', 'update']);

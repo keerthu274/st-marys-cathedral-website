@@ -26,10 +26,9 @@ class ApiAuthController extends Controller
     public function signup(RegisterUserRequest $request): JsonResponse
     {
         if (Auth::check()) {
-            return response()->json([
-                'message' => 'You are already signed in.',
-                'user' => $request->user(),
-            ]);
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
 
         $validated = $request->validated();
@@ -54,10 +53,9 @@ class ApiAuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         if (Auth::check()) {
-            return response()->json([
-                'message' => 'You are already signed in.',
-                'user' => $request->user(),
-            ]);
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
         }
 
         $request->authenticate();

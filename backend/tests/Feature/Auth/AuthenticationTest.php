@@ -66,6 +66,29 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_api_login_replaces_an_existing_authenticated_session(): void
+    {
+        $mainAdmin = User::factory()->create([
+            'email' => 'main@example.com',
+            'is_main_admin' => true,
+        ]);
+
+        $groupAdmin = User::factory()->create([
+            'email' => 'group@example.com',
+            'is_main_admin' => false,
+        ]);
+
+        $response = $this->actingAs($mainAdmin)->postJson('/auth-api/login', [
+            'email' => $groupAdmin->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('user.email', $groupAdmin->email);
+        $response->assertJsonPath('user.is_main_admin', false);
+        $this->assertAuthenticatedAs($groupAdmin);
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContactMessageResource;
 use App\Http\Resources\EventResource;
+use App\Http\Resources\GroupMemberResource;
 use App\Http\Resources\MassTimeResource;
 use App\Http\Resources\ParishRegistrationResource;
 use App\Models\ContactMessage;
 use App\Models\Event;
+use App\Models\GroupMember;
 use App\Models\MassTime;
 use App\Models\ParishRegistration;
 use Carbon\CarbonImmutable;
@@ -55,6 +57,12 @@ class OverviewController extends Controller
             ->limit(4)
             ->get() : collect();
 
+        $groupMembers = $hasGroupScope ? GroupMember::with('group')
+            ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+            ->latest()
+            ->limit(4)
+            ->get() : collect();
+
         return response()->json([
             'scope' => [
                 'is_main_admin' => (bool) $user->is_main_admin,
@@ -77,6 +85,9 @@ class OverviewController extends Controller
                 ],
                 'contact_messages' => [
                     'total' => $hasGroupScope ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                ],
+                'group_members' => [
+                    'total' => $hasGroupScope ? GroupMember::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
                 ],
             ],
             'recent' => [
@@ -101,6 +112,12 @@ class OverviewController extends Controller
                 'contact_messages' => $this->withOverviewKeys(
                     ContactMessageResource::collection($contactMessages)->resolve($request),
                     'contact_message',
+                    $overviewPreferences,
+                    $baselineAt
+                ),
+                'group_members' => $this->withOverviewKeys(
+                    GroupMemberResource::collection($groupMembers)->resolve($request),
+                    'group_member',
                     $overviewPreferences,
                     $baselineAt
                 ),

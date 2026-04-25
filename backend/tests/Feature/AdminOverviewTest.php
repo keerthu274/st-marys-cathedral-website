@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\ContactMessage;
 use App\Models\Event;
+use App\Models\Group;
+use App\Models\GroupMember;
 use App\Models\MassTime;
 use App\Models\ParishRegistration;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +19,14 @@ class AdminOverviewTest extends TestCase
 
     public function test_admin_overview_returns_summary_totals_and_recent_records(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'is_main_admin' => true,
+            'hidden_overview_items' => [
+                'baseline_at' => CarbonImmutable::now()->subDay()->toIso8601String(),
+                'pinned' => [],
+                'dismissed' => [],
+            ],
+        ]);
 
         Event::create([
             'title' => 'Parish Supper',
@@ -56,6 +66,19 @@ class AdminOverviewTest extends TestCase
             'message' => 'Hello',
         ]);
 
+        $group = Group::create([
+            'name' => 'Choir',
+            'slug' => 'choir',
+            'is_active' => true,
+        ]);
+
+        GroupMember::create([
+            'group_id' => $group->id,
+            'name' => 'Anna Jones',
+            'email' => 'anna@example.com',
+            'role' => 'Choir member',
+        ]);
+
         $response = $this->actingAs($user)->getJson('/admin/overview');
 
         $response->assertOk();
@@ -64,9 +87,11 @@ class AdminOverviewTest extends TestCase
         $response->assertJsonPath('stats.mass_times.total', 1);
         $response->assertJsonPath('stats.registrations.total', 1);
         $response->assertJsonPath('stats.contact_messages.total', 1);
+        $response->assertJsonPath('stats.group_members.total', 1);
         $response->assertJsonPath('recent.events.0.title', 'Parish Supper');
         $response->assertJsonPath('recent.mass_times.0.start_time', '09:00');
         $response->assertJsonPath('recent.registrations.0.full_name', 'Jane Smith');
         $response->assertJsonPath('recent.contact_messages.0.subject', 'Question');
+        $response->assertJsonPath('recent.group_members.0.name', 'Anna Jones');
     }
 }
