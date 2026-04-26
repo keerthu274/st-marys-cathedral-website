@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteRegistration, getRegistration, listRegistrations, updateRegistration } from '../../lib/admin'
+import { titleCaseWords } from '../../lib/textFormat'
 import { asError, hasErrors, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../../lib/validation'
 
 function formatDate(value) {
@@ -14,6 +15,45 @@ function formatDate(value) {
     month: 'short',
     year: 'numeric',
   })
+}
+
+function formatTypeLabel(value) {
+  return titleCaseWords(String(value || 'Not set').replace(/[_-]+/g, ' '))
+}
+
+function formatDisplayText(value, fallback = 'Not set') {
+  return value ? titleCaseWords(value) : fallback
+}
+
+const interestOptions = [
+  { value: 'volunteering', label: 'Volunteering' },
+  { value: 'parish_groups', label: 'Parish Groups' },
+  { value: 'sacramental_preparation', label: 'Sacramental Preparation' },
+  { value: 'weekly_newsletter', label: 'Weekly Newsletter' },
+]
+
+function matchesRecentDate(value, filter) {
+  if (!filter) {
+    return true
+  }
+
+  if (!value) {
+    return false
+  }
+
+  const date = new Date(value)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (filter === 'today') {
+    return date >= startOfToday
+  }
+
+  const days = filter === '7_days' ? 7 : 30
+  const threshold = new Date(startOfToday)
+  threshold.setDate(threshold.getDate() - (days - 1))
+
+  return date >= threshold
 }
 
 function initialRegistrationForm(registration) {
@@ -61,8 +101,12 @@ export default function AdminRegistrationsPage() {
     message: '',
   })
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmRemoveChildIndex, setConfirmRemoveChildIndex] = useState(null)
   const [registrationSearch, setRegistrationSearch] = useState('')
   const [registrationTypeFilter, setRegistrationTypeFilter] = useState('')
+  const [registrationInterestFilter, setRegistrationInterestFilter] = useState('')
+  const [registrationChildrenFilter, setRegistrationChildrenFilter] = useState('')
+  const [registrationDateFilter, setRegistrationDateFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -193,6 +237,13 @@ export default function AdminRegistrationsPage() {
     setRegistrationErrors(current => ({ ...current, [name]: nextErrors[name] }))
   }
 
+  function formatRegistrationField(name) {
+    setRegistrationForm(current => ({
+      ...current,
+      [name]: titleCaseWords(current[name] || ''),
+    }))
+  }
+
   function validateRegistrationChild(child, index) {
     const nextErrors = {}
     const hasName = child.child_name.trim() !== ''
@@ -238,6 +289,15 @@ export default function AdminRegistrationsPage() {
     }))
   }
 
+  function formatChildField(index, field) {
+    setRegistrationForm(current => ({
+      ...current,
+      children: current.children.map((child, childIndex) =>
+        childIndex === index ? { ...child, [field]: titleCaseWords(child[field] || '') } : child,
+      ),
+    }))
+  }
+
   function addChildRow() {
     setRegistrationForm(current => ({
       ...current,
@@ -250,6 +310,7 @@ export default function AdminRegistrationsPage() {
       ...current,
       children: current.children.filter((_, childIndex) => childIndex !== index),
     }))
+    setConfirmRemoveChildIndex(null)
   }
 
   function startAddingChild() {
@@ -360,11 +421,19 @@ export default function AdminRegistrationsPage() {
   const filteredRegistrations = registrations.filter(item => {
     const query = registrationSearch.trim().toLowerCase()
     const matchesQuery = query
-      ? `${item.full_name} ${item.member_id || ''} ${item.email || ''}`.toLowerCase().includes(query)
+      ? `${item.full_name} ${item.member_id || ''} ${item.email || ''} ${item.partner_name || ''}`.toLowerCase().includes(query)
       : true
     const matchesType = registrationTypeFilter ? item.registration_type === registrationTypeFilter : true
+    const matchesInterest = registrationInterestFilter ? Boolean(item.interest?.[registrationInterestFilter]) : true
+    const childCount = Array.isArray(item.children) ? item.children.length : 0
+    const matchesChildren = registrationChildrenFilter === 'with_children'
+      ? childCount > 0
+      : registrationChildrenFilter === 'without_children'
+        ? childCount === 0
+        : true
+    const matchesDate = matchesRecentDate(item.created_at, registrationDateFilter)
 
-    return matchesQuery && matchesType
+    return matchesQuery && matchesType && matchesInterest && matchesChildren && matchesDate
   })
 
   return (
@@ -388,7 +457,22 @@ export default function AdminRegistrationsPage() {
             />
             <select className="admin-filter-select" value={registrationTypeFilter} onChange={event => setRegistrationTypeFilter(event.target.value)}>
               <option value="">All types</option>
-              {registrationTypes.map(type => <option key={type} value={type}>{type}</option>)}
+              {registrationTypes.map(type => <option key={type} value={type}>{formatTypeLabel(type)}</option>)}
+            </select>
+            <select className="admin-filter-select" value={registrationInterestFilter} onChange={event => setRegistrationInterestFilter(event.target.value)}>
+              <option value="">All interests</option>
+              {interestOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+            <select className="admin-filter-select" value={registrationChildrenFilter} onChange={event => setRegistrationChildrenFilter(event.target.value)}>
+              <option value="">Any children</option>
+              <option value="with_children">With children</option>
+              <option value="without_children">Without children</option>
+            </select>
+            <select className="admin-filter-select" value={registrationDateFilter} onChange={event => setRegistrationDateFilter(event.target.value)}>
+              <option value="">Any submitted date</option>
+              <option value="today">Today</option>
+              <option value="7_days">Last 7 days</option>
+              <option value="30_days">Last 30 days</option>
             </select>
           </div>
 
@@ -404,12 +488,12 @@ export default function AdminRegistrationsPage() {
                 }}
               >
                 <div>
-                  <strong>{item.full_name}</strong>
+                  <strong>{formatDisplayText(item.full_name)}</strong>
                   <span>{item.member_id}</span>
                 </div>
                 <div>
                   <small>{item.email}</small>
-                  <span className="admin-badge">{item.registration_type}</span>
+                  <span className="admin-badge">{formatTypeLabel(item.registration_type)}</span>
                 </div>
               </button>
             ))}
@@ -436,11 +520,6 @@ export default function AdminRegistrationsPage() {
           </div>
           {registrationDetail ? (
             <div className="admin-actions">
-              {registrationDetail.registration_type !== 'individual' ? (
-                <button className="btn-outline" type="button" onClick={startAddingChild}>
-                  Add Child
-                </button>
-              ) : null}
               <button className="btn-outline" type="button" onClick={() => setIsEditingRegistration(current => !current)}>
                 {isEditingRegistration ? 'Cancel Edit' : 'Edit'}
               </button>
@@ -461,7 +540,7 @@ export default function AdminRegistrationsPage() {
             </div>
             <div className="admin-detail-card">
               <span>Type</span>
-              <strong>{registrationDetail.registration_type}</strong>
+              <strong>{formatTypeLabel(registrationDetail.registration_type)}</strong>
             </div>
             <div className="admin-detail-card">
               <span>Signed Date</span>
@@ -474,13 +553,13 @@ export default function AdminRegistrationsPage() {
 
             <article className="admin-detail-block">
               <h3>Member Information</h3>
-              <p>{registrationDetail.full_name}</p>
+              <p>{formatDisplayText(registrationDetail.full_name)}</p>
               <p>{registrationDetail.phone}</p>
-              <p>{registrationDetail.partner_name || 'No partner listed'}</p>
+              <p>{formatDisplayText(registrationDetail.partner_name, 'No partner listed')}</p>
               <p>
-                {registrationDetail.address_line1}
-                {registrationDetail.address_line2 ? `, ${registrationDetail.address_line2}` : ''}
-                , {registrationDetail.city}, {registrationDetail.postcode}
+                {formatDisplayText(registrationDetail.address_line1, '')}
+                {registrationDetail.address_line2 ? `, ${formatDisplayText(registrationDetail.address_line2, '')}` : ''}
+                , {formatDisplayText(registrationDetail.city, '')}, {String(registrationDetail.postcode || '').toUpperCase()}
               </p>
             </article>
 
@@ -489,7 +568,7 @@ export default function AdminRegistrationsPage() {
               {registrationDetail.children?.length ? (
                 <ul className="admin-inline-list">
                   {registrationDetail.children.map(child => (
-                    <li key={`${child.id}-${child.child_name}`}>{child.child_name} ({child.date_of_birth ? formatDate(child.date_of_birth) : 'DOB not provided'})</li>
+                    <li key={`${child.id}-${child.child_name}`}>{formatDisplayText(child.child_name)} ({child.date_of_birth ? formatDate(child.date_of_birth) : 'DOB not provided'})</li>
                   ))}
                 </ul>
               ) : <p>No children listed yet.</p>}
@@ -521,7 +600,7 @@ export default function AdminRegistrationsPage() {
             <div className="admin-form-grid">
               <label>
                 <span>Full name</span>
-                <input name="full_name" value={registrationForm.full_name} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.full_name)} />
+                <input name="full_name" value={registrationForm.full_name} onChange={handleRegistrationChange} onBlur={() => formatRegistrationField('full_name')} aria-invalid={Boolean(registrationErrors.full_name)} />
                 <FieldError errors={registrationErrors} name="full_name" />
               </label>
 
@@ -541,7 +620,7 @@ export default function AdminRegistrationsPage() {
 
               <label>
                 <span>Partner name</span>
-                <input name="partner_name" value={registrationForm.partner_name} onChange={handleRegistrationChange} aria-invalid={Boolean(registrationErrors.partner_name)} />
+                <input name="partner_name" value={registrationForm.partner_name} onChange={handleRegistrationChange} onBlur={() => formatRegistrationField('partner_name')} aria-invalid={Boolean(registrationErrors.partner_name)} />
                 <FieldError errors={registrationErrors} name="partner_name" />
               </label>
             </div>
@@ -551,19 +630,21 @@ export default function AdminRegistrationsPage() {
               <p className="admin-panel-copy">Add or remove children here when the family registration needs extra people attached to it.</p>
               <div className="admin-children-list">
                 {registrationForm.children.map((child, index) => (
-                  <div key={`${index}-${child.child_name}`} className="admin-child-row">
-                    <div>
-                      <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
-                      <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
-                    </div>
-                    <div>
-                      <input placeholder="Date of birth" type="date" value={child.date_of_birth} onChange={event => handleChildChange(index, 'date_of_birth', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.date_of_birth`])} />
-                      <FieldError errors={registrationErrors} name={`children.${index}.date_of_birth`} />
-                    </div>
-                    <button type="button" className="admin-link-btn danger" onClick={() => removeChildRow(index)}>
-                      Remove
-                    </button>
-                  </div>
+	                  <div key={`${index}-${child.child_name}`} className="admin-child-row">
+	                    <div>
+                        <span className="admin-child-field-label">Child name</span>
+	                      <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} onBlur={() => formatChildField(index, 'child_name')} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
+	                      <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
+	                    </div>
+	                    <div>
+                        <span className="admin-child-field-label">Date of birth</span>
+	                      <input type="date" value={child.date_of_birth} onChange={event => handleChildChange(index, 'date_of_birth', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.date_of_birth`])} />
+	                      <FieldError errors={registrationErrors} name={`children.${index}.date_of_birth`} />
+	                    </div>
+	                    <button type="button" className="admin-link-btn danger" onClick={() => setConfirmRemoveChildIndex(index)}>
+	                      Remove
+	                    </button>
+	                  </div>
                 ))}
               </div>
               <button type="button" className="admin-link-btn" onClick={addChildRow}>Add child</button>
@@ -615,6 +696,17 @@ export default function AdminRegistrationsPage() {
         cancelLabel="Keep Registration"
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={() => removeRegistration(confirmDeleteId)}
+      />
+      <FeedbackDialog
+        open={confirmRemoveChildIndex !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Remove this child?"
+        message="This child will be removed from the registration when you save the changes."
+        confirmLabel="Remove Child"
+        cancelLabel="Keep Child"
+        onClose={() => setConfirmRemoveChildIndex(null)}
+        onConfirm={() => removeChildRow(confirmRemoveChildIndex)}
       />
     </div>
   )

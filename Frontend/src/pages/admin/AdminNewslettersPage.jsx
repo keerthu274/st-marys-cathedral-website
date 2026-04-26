@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createNewsletter, deleteNewsletter, getNewsletter, listNewsletters, updateNewsletter } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateDateNotFuture, validateMaxLength } from '../../lib/validation'
 
 const emptyNewsletterForm = {
@@ -45,6 +46,21 @@ function fileUrl(path) {
   return getBackendUrl(path || '')
 }
 
+const monthOptions = [
+  { value: '01', label: 'January' },
+  { value: '02', label: 'February' },
+  { value: '03', label: 'March' },
+  { value: '04', label: 'April' },
+  { value: '05', label: 'May' },
+  { value: '06', label: 'June' },
+  { value: '07', label: 'July' },
+  { value: '08', label: 'August' },
+  { value: '09', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
+]
+
 function isPdfFile(file) {
   return file?.type === 'application/pdf' || file?.name?.toLowerCase().endsWith('.pdf')
 }
@@ -63,6 +79,8 @@ export default function AdminNewslettersPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [newsletterSearch, setNewsletterSearch] = useState('')
   const [newsletterStatusFilter, setNewsletterStatusFilter] = useState('')
+  const [newsletterYearFilter, setNewsletterYearFilter] = useState('')
+  const [newsletterMonthFilter, setNewsletterMonthFilter] = useState('')
   const [dialogState, setDialogState] = useState({
     open: false,
     tone: 'neutral',
@@ -209,6 +227,13 @@ export default function AdminNewslettersPage() {
     }))
   }
 
+  function formatNewsletterField(name, formatter) {
+    setNewsletterForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
+    }))
+  }
+
   function handleFileChange(event) {
     const file = event.target.files?.[0] || null
     setSelectedFile(file)
@@ -349,14 +374,17 @@ export default function AdminNewslettersPage() {
     }
   }
 
+  const newsletterYears = Array.from(new Set(newsletters.map(item => item.publication_date?.slice(0, 4)).filter(Boolean))).sort((a, b) => b.localeCompare(a))
   const filteredNewsletters = newsletters.filter(item => {
     const query = newsletterSearch.trim().toLowerCase()
     const matchesQuery = query
       ? `${item.title} ${item.description || ''} ${item.original_filename || ''}`.toLowerCase().includes(query)
       : true
     const matchesStatus = newsletterStatusFilter ? item.status === newsletterStatusFilter : true
+    const matchesYear = newsletterYearFilter ? item.publication_date?.slice(0, 4) === newsletterYearFilter : true
+    const matchesMonth = newsletterMonthFilter ? item.publication_date?.slice(5, 7) === newsletterMonthFilter : true
 
-    return matchesQuery && matchesStatus
+    return matchesQuery && matchesStatus && matchesYear && matchesMonth
   })
 
   return (
@@ -383,6 +411,14 @@ export default function AdminNewslettersPage() {
               <option value="">All statuses</option>
               <option value="published">Published</option>
               <option value="draft">Draft</option>
+            </select>
+            <select className="admin-filter-select" value={newsletterYearFilter} onChange={event => setNewsletterYearFilter(event.target.value)}>
+              <option value="">All years</option>
+              {newsletterYears.map(year => <option key={year} value={year}>{year}</option>)}
+            </select>
+            <select className="admin-filter-select" value={newsletterMonthFilter} onChange={event => setNewsletterMonthFilter(event.target.value)}>
+              <option value="">All months</option>
+              {monthOptions.map(month => <option key={month.value} value={month.value}>{month.label}</option>)}
             </select>
           </div>
 
@@ -431,7 +467,7 @@ export default function AdminNewslettersPage() {
         <form className="admin-form" onSubmit={submitNewsletter} noValidate>
           <label>
             <span>Title</span>
-            <input name="title" value={newsletterForm.title} onChange={handleNewsletterChange} aria-invalid={Boolean(newsletterErrors.title)} />
+            <input name="title" value={newsletterForm.title} onChange={handleNewsletterChange} onBlur={() => formatNewsletterField('title', titleCaseWords)} aria-invalid={Boolean(newsletterErrors.title)} />
             <FieldError errors={newsletterErrors} name="title" />
           </label>
 
@@ -443,7 +479,7 @@ export default function AdminNewslettersPage() {
 
           <label>
             <span>Description</span>
-            <textarea name="description" rows="4" value={newsletterForm.description} onChange={handleNewsletterChange} aria-invalid={Boolean(newsletterErrors.description)} />
+            <textarea name="description" rows="4" value={newsletterForm.description} onChange={handleNewsletterChange} onBlur={() => formatNewsletterField('description', capitalizeFirst)} aria-invalid={Boolean(newsletterErrors.description)} />
             <FieldError errors={newsletterErrors} name="description" />
           </label>
 

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
+import FeedbackDialog from '../components/FeedbackDialog'
+import { titleCaseWords } from '../lib/textFormat'
 import { useAdminSession } from './useAdminSession'
 import './admin.css'
 
@@ -19,6 +21,17 @@ const navItems = [
 export default function AdminLayout() {
   const { user, isLoading, isLoggingOut, refreshUser, handleLogout } = useAdminSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+
+  function requestLogout() {
+    setIsMenuOpen(false)
+    setIsLogoutConfirmOpen(true)
+  }
+
+  function confirmLogout() {
+    setIsLogoutConfirmOpen(false)
+    handleLogout()
+  }
 
   if (isLoading) {
     return (
@@ -32,9 +45,24 @@ export default function AdminLayout() {
     <section className="admin-page">
       <div className="container admin-shell">
         <header className="admin-topbar">
-          <div className="admin-brand">
-            <p className="admin-kicker">Cathedral Admin</p>
-            <h1>Website Management</h1>
+          <div className="admin-topbar-head">
+            <div className="admin-brand">
+              <p className="admin-kicker">Cathedral Admin</p>
+              <h1>Website Management</h1>
+            </div>
+
+            <div className="admin-user-inline">
+              <div className="admin-user-meta">
+                <span>{user?.name ? titleCaseWords(user.name) : 'Admin User'}</span>
+                <small>{user?.email || 'No email available'}</small>
+              </div>
+              <NavLink className={({ isActive }) => `btn-outline admin-profile-link ${isActive ? 'active' : ''}`} to="/dashboard/profile" onClick={() => setIsMenuOpen(false)}>
+                Profile
+              </NavLink>
+              <button className="btn-outline admin-logout-inline" type="button" onClick={requestLogout} disabled={isLoggingOut}>
+                {isLoggingOut ? 'Signing Out...' : 'Logout'}
+              </button>
+            </div>
           </div>
 
           <button
@@ -68,28 +96,24 @@ export default function AdminLayout() {
                 )
               ))}
             </nav>
-
-            <div className="admin-user-inline">
-              <div className="admin-user-meta">
-                <span>{user?.name}</span>
-                <small>{user?.email}</small>
-              </div>
-              <NavLink className={({ isActive }) => `btn-outline admin-profile-link ${isActive ? 'active' : ''}`} to="/dashboard/profile" onClick={() => setIsMenuOpen(false)}>
-                Profile
-              </NavLink>
-              <button className="btn-outline admin-logout-inline" type="button" onClick={() => {
-                setIsMenuOpen(false)
-                handleLogout()
-              }} disabled={isLoggingOut}>
-                {isLoggingOut ? 'Signing Out...' : 'Logout'}
-              </button>
-            </div>
           </div>
         </header>
 
         <main className="admin-main">
-          <Outlet context={{ user, refreshUser }} />
+          <Outlet context={{ user, refreshUser, isLoggingOut, requestLogout }} />
         </main>
+
+        <FeedbackDialog
+          open={isLogoutConfirmOpen}
+          tone="neutral"
+          variant="confirm"
+          title="Logout of admin?"
+          message="You will need to sign in again before making more website changes."
+          confirmLabel={isLoggingOut ? 'Signing Out...' : 'Logout'}
+          cancelLabel="Stay signed in"
+          onClose={() => setIsLogoutConfirmOpen(false)}
+          onConfirm={confirmLogout}
+        />
       </div>
     </section>
   )

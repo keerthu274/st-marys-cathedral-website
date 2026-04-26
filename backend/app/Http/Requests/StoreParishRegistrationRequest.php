@@ -14,19 +14,51 @@ class StoreParishRegistrationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $children = collect($this->input('children', []))
+            ->map(function ($child) {
+                if (! is_array($child)) {
+                    return $child;
+                }
+
+                $child['child_name'] = $this->titleCase($child['child_name'] ?? null);
+
+                return $child;
+            })
+            ->all();
+
         $this->merge([
-            'full_name' => is_string($this->full_name) ? trim($this->full_name) : $this->full_name,
-            'nationality' => is_string($this->nationality) ? trim($this->nationality) : $this->nationality,
-            'occupation' => is_string($this->occupation) ? trim($this->occupation) : $this->occupation,
-            'address_line1' => is_string($this->address_line1) ? trim($this->address_line1) : $this->address_line1,
-            'address_line2' => is_string($this->address_line2) ? trim($this->address_line2) : $this->address_line2,
-            'city' => is_string($this->city) ? trim($this->city) : $this->city,
+            'full_name' => $this->titleCase($this->full_name),
+            'nationality' => $this->titleCase($this->nationality),
+            'occupation' => $this->titleCase($this->occupation),
+            'address_line1' => $this->titleCase($this->address_line1),
+            'address_line2' => $this->titleCase($this->address_line2),
+            'city' => $this->titleCase($this->city),
             'phone' => is_string($this->phone) ? trim($this->phone) : $this->phone,
             'email' => is_string($this->email) ? strtolower(trim($this->email)) : $this->email,
             'postcode' => is_string($this->postcode) ? strtoupper(trim($this->postcode)) : $this->postcode,
-            'partner_name' => is_string($this->partner_name) ? trim($this->partner_name) : $this->partner_name,
-            'signature' => is_string($this->signature) ? trim($this->signature) : $this->signature,
+            'partner_name' => $this->titleCase($this->partner_name),
+            'signature' => $this->titleCase($this->signature),
+            'children' => $children,
         ]);
+    }
+
+    private function titleCase(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            "/\b(\p{Ll})([\p{L}\p{M}\p{N}_'’-]*)/u",
+            fn ($match) => mb_strtoupper($match[1], 'UTF-8') . $match[2],
+            $value
+        );
     }
 
     /**

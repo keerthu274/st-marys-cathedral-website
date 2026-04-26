@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteContactMessage, getContactMessage, listContactMessages, updateContactMessageStatus } from '../../lib/admin'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 
 const statusOptions = [
   { value: 'new', label: 'New' },
@@ -27,12 +28,56 @@ function formatStatusLabel(value) {
   return statusOptions.find(option => option.value === value)?.label || 'New'
 }
 
+function formatCategoryLabel(value) {
+  if (!value) {
+    return 'General'
+  }
+
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map(word => `${word.charAt(0).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(' ')
+}
+
+function matchesRecentDate(value, filter) {
+  if (!filter) {
+    return true
+  }
+
+  if (!value) {
+    return false
+  }
+
+  const date = new Date(value)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (filter === 'today') {
+    return date >= startOfToday
+  }
+
+  const days = filter === '7_days' ? 7 : 30
+  const threshold = new Date(startOfToday)
+  threshold.setDate(threshold.getDate() - (days - 1))
+
+  return date >= threshold
+}
+
 function truncate(text, length = 110) {
   if (!text) {
     return 'No message content.'
   }
 
   return text.length > length ? `${text.slice(0, length).trim()}...` : text
+}
+
+function formatDisplayText(value, fallback = 'Not provided') {
+  return value ? titleCaseWords(value) : fallback
+}
+
+function formatMessageCopy(value) {
+  return value ? capitalizeFirst(value) : 'No message content.'
 }
 
 export default function AdminContactMessagesPage() {
@@ -47,6 +92,10 @@ export default function AdminContactMessagesPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [messageSearch, setMessageSearch] = useState('')
+  const [messageStatusFilter, setMessageStatusFilter] = useState('')
+  const [messageCategoryFilter, setMessageCategoryFilter] = useState('')
+  const [messageGroupFilter, setMessageGroupFilter] = useState('')
+  const [messageDateFilter, setMessageDateFilter] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   useEffect(() => {
@@ -212,14 +261,22 @@ export default function AdminContactMessagesPage() {
     }
   }
 
+  const messageCategories = Array.from(new Set(messages.map(item => item.category).filter(Boolean))).sort((a, b) => formatCategoryLabel(a).localeCompare(formatCategoryLabel(b)))
+  const messageGroups = Array.from(new Set(messages.map(item => item.group_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const filteredMessages = messages.filter(item => {
     const query = messageSearch.trim().toLowerCase()
+    const matchesStatus = messageStatusFilter ? item.status === messageStatusFilter : true
+    const matchesCategory = messageCategoryFilter ? item.category === messageCategoryFilter : true
+    const matchesGroup = messageGroupFilter ? item.group_name === messageGroupFilter : true
+    const matchesDate = matchesRecentDate(item.created_at, messageDateFilter)
 
     if (!query) {
-      return true
+      return matchesStatus && matchesCategory && matchesGroup && matchesDate
     }
 
-    return `${item.subject} ${item.name} ${item.email} ${item.message || ''}`.toLowerCase().includes(query)
+    const matchesSearch = `${item.subject} ${item.name} ${item.email} ${item.message || ''} ${formatCategoryLabel(item.category)}`.toLowerCase().includes(query)
+
+    return matchesSearch && matchesStatus && matchesCategory && matchesGroup && matchesDate
   })
 
   return (
@@ -244,6 +301,30 @@ export default function AdminContactMessagesPage() {
             value={messageSearch}
             onChange={event => setMessageSearch(event.target.value)}
           />
+          <select className="admin-filter-select" value={messageStatusFilter} onChange={event => setMessageStatusFilter(event.target.value)}>
+            <option value="">All statuses</option>
+            {statusOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <select className="admin-filter-select" value={messageCategoryFilter} onChange={event => setMessageCategoryFilter(event.target.value)}>
+            <option value="">All categories</option>
+            {messageCategories.map(category => (
+              <option key={category} value={category}>{formatCategoryLabel(category)}</option>
+            ))}
+          </select>
+          <select className="admin-filter-select" value={messageGroupFilter} onChange={event => setMessageGroupFilter(event.target.value)}>
+            <option value="">All routed groups</option>
+            {messageGroups.map(group => <option key={group} value={group}>{formatDisplayText(group)}</option>)}
+          </select>
+          <select className="admin-filter-select" value={messageDateFilter} onChange={event => setMessageDateFilter(event.target.value)}>
+            <option value="">Any received date</option>
+            <option value="today">Today</option>
+            <option value="7_days">Last 7 days</option>
+            <option value="30_days">Last 30 days</option>
+          </select>
         </div>
 
         {errorMessage ? <p className="admin-field-error">{errorMessage}</p> : null}
@@ -262,16 +343,16 @@ export default function AdminContactMessagesPage() {
                 }}
               >
                 <div>
-                  <strong>{item.subject}</strong>
-                  <span>{item.name} • {item.email}{item.group_name ? ` • ${item.group_name}` : ''}</span>
+                  <strong>{formatDisplayText(item.subject, 'No Subject')}</strong>
+                  <span>{formatDisplayText(item.name)} • {item.email}{item.group_name ? ` • ${formatDisplayText(item.group_name)}` : ''}</span>
                 </div>
                 <div>
                   <small>{formatDateTime(item.created_at)}</small>
-                  <span>{formatStatusLabel(item.status)}{item.category ? ` • ${item.category}` : ''} • {truncate(item.message)}</span>
+                  <span>{formatStatusLabel(item.status)} • {formatCategoryLabel(item.category)} • {truncate(formatMessageCopy(item.message))}</span>
                 </div>
               </button>
             ))}
-            {!filteredMessages.length ? <p className="admin-empty">{messages.length ? 'No messages match the current search.' : 'No contact messages have been submitted yet.'}</p> : null}
+            {!filteredMessages.length ? <p className="admin-empty">{messages.length ? 'No messages match the current search or filters.' : 'No contact messages have been submitted yet.'}</p> : null}
           </div>
         ) : null}
 
@@ -315,7 +396,7 @@ export default function AdminContactMessagesPage() {
           <div className="admin-detail-grid">
             <div className="admin-detail-card">
               <span>From</span>
-              <strong>{messageDetail.name}</strong>
+              <strong>{formatDisplayText(messageDetail.name)}</strong>
             </div>
             <div className="admin-detail-card">
               <span>Received</span>
@@ -336,7 +417,7 @@ export default function AdminContactMessagesPage() {
 
             <article className="admin-detail-block admin-detail-block-full">
               <h3>Subject</h3>
-              <p>{messageDetail.subject}</p>
+              <p>{formatDisplayText(messageDetail.subject, 'No subject')}</p>
             </article>
 
             <article className="admin-detail-block">
@@ -360,17 +441,17 @@ export default function AdminContactMessagesPage() {
 
             <article className="admin-detail-block">
               <h3>Category</h3>
-              <p>{messageDetail.category || 'General'}</p>
+              <p>{formatCategoryLabel(messageDetail.category)}</p>
             </article>
 
             <article className="admin-detail-block">
               <h3>Routed Group</h3>
-              <p>{messageDetail.group_name || 'Main parish inbox only'}</p>
+              <p>{messageDetail.group_name ? formatDisplayText(messageDetail.group_name) : 'Main parish inbox only'}</p>
             </article>
 
             <article className="admin-detail-block admin-detail-block-full">
               <h3>Message</h3>
-              <p className="admin-message-copy">{messageDetail.message}</p>
+              <p className="admin-message-copy">{formatMessageCopy(messageDetail.message)}</p>
             </article>
           </div>
         ) : null}

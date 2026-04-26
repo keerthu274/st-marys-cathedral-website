@@ -57,12 +57,21 @@ class ParishRegistration extends Model
         parent::boot();
 
         static::creating(function ($registration) {
+            if ($registration->member_id) {
+                return;
+            }
 
-            // Get latest registration ID
-            $lastId = self::max('id') + 1;
+            $lastNumber = self::query()
+                ->whereNotNull('member_id')
+                ->pluck('member_id')
+                ->map(function ($memberId) {
+                    preg_match('/^SMC(\d+)$/', (string) $memberId, $matches);
 
-            // Generate member ID like SMC0001
-            $registration->member_id = 'SMC' . str_pad($lastId, 4, '0', STR_PAD_LEFT);
+                    return isset($matches[1]) ? (int) $matches[1] : 0;
+                })
+                ->max() ?? 0;
+
+            $registration->member_id = 'SMC' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         });
     }
 

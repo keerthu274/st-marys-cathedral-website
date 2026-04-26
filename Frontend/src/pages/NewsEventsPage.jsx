@@ -90,7 +90,9 @@ export default function NewsEventsPage() {
                       src={getBackendUrl(event.image_url)}
                       alt={event.title}
                     />
-                  ) : null}
+                  ) : (
+                    <span className="ne-event-thumb ne-event-thumb-placeholder" aria-hidden="true" />
+                  )}
                   <span className="ne-event-date">{formatDateLabel(event.start_date)}</span>
 
                   <div className="ne-event-info">

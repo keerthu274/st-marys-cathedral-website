@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
 import { getBackendUrl } from '../lib/auth'
+import { titleCaseWords } from '../lib/textFormat'
 import {
     asError,
     firstError,
@@ -50,6 +51,34 @@ export default function RegistrationPage() {
 
         setFormData(nextFormData)
         setFormErrors(current => ({ ...current, [name]: validateRegistrationField(name, nextValue, nextFormData) }))
+    }
+
+    const formatFieldValue = (event, formatter) => {
+        const { name, value } = event.target
+        const nextValue = formatter(value.trim())
+        const nextFormData = {
+            ...formData,
+            [name]: nextValue,
+        }
+
+        event.target.value = nextValue
+        setFormData(nextFormData)
+        setFormErrors(current => ({ ...current, [name]: validateRegistrationField(name, nextValue, nextFormData) }))
+    }
+
+    const formatChildName = id => {
+        const nextChildren = children.map(child =>
+            child.id === id ? { ...child, name: titleCaseWords(child.name.trim()) } : child,
+        )
+        const changedChild = nextChildren.find(child => child.id === id)
+        const childErrors = validateChildFields(changedChild)
+
+        setChildren(nextChildren)
+        setFormErrors(current => ({
+            ...current,
+            [`children.${id}.name`]: childErrors.name,
+            [`children.${id}.date_of_birth`]: childErrors.date_of_birth,
+        }))
     }
 
     const handleChildChange = (id, field, value) => {
@@ -341,7 +370,7 @@ export default function RegistrationPage() {
 
                         <div className="form-group">
                             <label>Full Name <span className="required">*</span></label>
-                            <input type="text" className="form-input" placeholder="Enter your full title and name" required name="full_name" onChange={handleChange} aria-invalid={Boolean(formErrors.full_name)} />
+                            <input type="text" className="form-input" placeholder="Enter your full title and name" required name="full_name" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.full_name)} />
                             <FieldError errors={formErrors} name="full_name" />
                         </div>
 
@@ -368,12 +397,12 @@ export default function RegistrationPage() {
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>Nationality</label>
-                                <input type="text" className="form-input" placeholder="e.g. British" name="nationality" onChange={handleChange} aria-invalid={Boolean(formErrors.nationality)} />
+                                <input type="text" className="form-input" placeholder="e.g. British" name="nationality" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.nationality)} />
                                 <FieldError errors={formErrors} name="nationality" />
                             </div>
                             <div className="form-group">
                                 <label>Occupation</label>
-                                <input type="text" className="form-input" placeholder="Your profession" name="occupation" onChange={handleChange} aria-invalid={Boolean(formErrors.occupation)} />
+                                <input type="text" className="form-input" placeholder="Your profession" name="occupation" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.occupation)} />
                                 <FieldError errors={formErrors} name="occupation" />
                             </div>
                         </div>
@@ -384,20 +413,20 @@ export default function RegistrationPage() {
 
                         <div className="form-group">
                             <label>Home Address <span className="required">*</span></label>
-                            <input type="text" className="form-input" placeholder="House number and street name" style={{ marginBottom: '12px' }} required name="address_line1" onChange={handleChange} aria-invalid={Boolean(formErrors.address_line1)} />
+                            <input type="text" className="form-input" placeholder="House number and street name" style={{ marginBottom: '12px' }} required name="address_line1" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.address_line1)} />
                             <FieldError errors={formErrors} name="address_line1" />
-                            <input type="text" className="form-input" placeholder="Address line 2 (optional)" name="address_line2" onChange={handleChange} />
+                            <input type="text" className="form-input" placeholder="Address line 2 (optional)" name="address_line2" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} />
                         </div>
 
                         <div className="form-grid-2">
                             <div className="form-group">
                                 <label>City / Town <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="e.g. Wrexham" required name="city" onChange={handleChange} aria-invalid={Boolean(formErrors.city)} />
+                                <input type="text" className="form-input" placeholder="e.g. Wrexham" required name="city" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.city)} />
                                 <FieldError errors={formErrors} name="city" />
                             </div>
                             <div className="form-group">
                                 <label>Postcode <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="e.g. LL11 1RR" required name="postcode" onChange={handleChange} aria-invalid={Boolean(formErrors.postcode)} />
+                                <input type="text" className="form-input" placeholder="e.g. LL11 1RR" required name="postcode" onChange={handleChange} onBlur={event => formatFieldValue(event, value => value.toUpperCase())} aria-invalid={Boolean(formErrors.postcode)} />
                                 <FieldError errors={formErrors} name="postcode" />
                             </div>
                         </div>
@@ -421,7 +450,7 @@ export default function RegistrationPage() {
                             <h2 className="reg-section-title">Partner Information (Optional)</h2>
                             <div className="form-group">
                                 <label>Spouse / Partner Name</label>
-                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} aria-invalid={Boolean(formErrors.partner_name)} />
+                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.partner_name)} />
                                 <FieldError errors={formErrors} name="partner_name" />
                             </div>
                         </div>
@@ -430,7 +459,7 @@ export default function RegistrationPage() {
                             <h2 className="reg-section-title">Family Information</h2>
                             <div className="form-group">
                                 <label>Spouse / Partner Name</label>
-                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} aria-invalid={Boolean(formErrors.partner_name)} />
+                                <input type="text" className="form-input" placeholder="Enter spouse or partner's full name" name="partner_name" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.partner_name)} />
                                 <FieldError errors={formErrors} name="partner_name" />
                             </div>
 
@@ -452,6 +481,7 @@ export default function RegistrationPage() {
                                             value={child.name}
                                             aria-invalid={Boolean(formErrors[`children.${child.id}.name`])}
                                             onChange={changeEvent => handleChildChange(child.id, 'name', changeEvent.target.value)}
+                                            onBlur={() => formatChildName(child.id)}
                                         />
                                         <FieldError errors={formErrors} name={`children.${child.id}.name`} />
                                     </div>
@@ -537,7 +567,7 @@ export default function RegistrationPage() {
                         <div className="form-grid-2" style={{ marginTop: '32px' }}>
                             <div className="form-group">
                                 <label>Signed (Type your full name) <span className="required">*</span></label>
-                                <input type="text" className="form-input" placeholder="Your signature" required name="signature" onChange={handleChange} aria-invalid={Boolean(formErrors.signature)} />
+                                <input type="text" className="form-input" placeholder="Your signature" required name="signature" onChange={handleChange} onBlur={event => formatFieldValue(event, titleCaseWords)} aria-invalid={Boolean(formErrors.signature)} />
                                 <FieldError errors={formErrors} name="signature" />
                             </div>
                             <div className="form-group">

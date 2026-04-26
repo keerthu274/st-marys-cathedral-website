@@ -17,9 +17,43 @@ class NewsletterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'title' => is_string($this->title) ? trim($this->title) : $this->title,
-            'description' => is_string($this->description) ? trim($this->description) : $this->description,
+            'title' => $this->titleCase($this->title),
+            'description' => $this->capitalizeFirst($this->description),
         ]);
+    }
+
+    private function titleCase(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            "/\b(\p{Ll})([\p{L}\p{M}\p{N}_'’-]*)/u",
+            fn ($match) => mb_strtoupper($match[1], 'UTF-8') . $match[2],
+            $value
+        );
+    }
+
+    private function capitalizeFirst(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return mb_strtoupper(mb_substr($value, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($value, 1, null, 'UTF-8');
     }
 
     /**

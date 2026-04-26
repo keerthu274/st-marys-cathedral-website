@@ -10,6 +10,7 @@ import {
   updateGroup,
   updateGroupMember,
 } from '../../lib/admin'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import {
   hasErrors,
   requireField,
@@ -56,6 +57,14 @@ function formatDateTime(value) {
   })
 }
 
+function formatDisplayText(value, fallback = 'Not set') {
+  return value ? titleCaseWords(value) : fallback
+}
+
+function formatCopy(value, fallback = 'Not set') {
+  return value ? capitalizeFirst(value) : fallback
+}
+
 function toGroupForm(group) {
   if (!group) {
     return emptyGroupForm
@@ -98,6 +107,9 @@ export default function AdminGroupsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingGroup, setIsSavingGroup] = useState(false)
   const [isSavingMember, setIsSavingMember] = useState(false)
+  const [groupSearch, setGroupSearch] = useState('')
+  const [groupStatusFilter, setGroupStatusFilter] = useState('')
+  const [groupAdminFilter, setGroupAdminFilter] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [confirmDeleteMemberId, setConfirmDeleteMemberId] = useState(null)
   const [dialogState, setDialogState] = useState({
@@ -108,6 +120,24 @@ export default function AdminGroupsPage() {
   })
 
   const selectedGroup = groups.find(item => item.id === selectedGroupId) || null
+  const filteredGroups = groups.filter(item => {
+    const query = groupSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.name} ${item.description || ''} ${item.admin_user?.name || ''} ${item.admin_user?.email || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesStatus = groupStatusFilter === 'active'
+      ? item.is_active
+      : groupStatusFilter === 'hidden'
+        ? !item.is_active
+        : true
+    const matchesAdmin = groupAdminFilter === 'assigned'
+      ? Boolean(item.admin_user)
+      : groupAdminFilter === 'unassigned'
+        ? !item.admin_user
+        : true
+
+    return matchesQuery && matchesStatus && matchesAdmin
+  })
   useEffect(() => {
     let ignore = false
 
@@ -275,6 +305,13 @@ export default function AdminGroupsPage() {
     }))
   }
 
+  function formatGroupField(name, formatter) {
+    setGroupForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
+    }))
+  }
+
   function handleMemberChange(event) {
     const { name, value } = event.target
     const nextForm = {
@@ -286,6 +323,13 @@ export default function AdminGroupsPage() {
     setMemberErrors(current => ({
       ...current,
       [name]: validateMemberField(nextForm, name),
+    }))
+  }
+
+  function formatMemberField(name, formatter) {
+    setMemberForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
     }))
   }
 
@@ -454,14 +498,34 @@ export default function AdminGroupsPage() {
           <div className="admin-section-head">
             <div>
               <h2>{user?.is_main_admin ? 'Groups' : 'My Group'}</h2>
-              <p>{user?.is_main_admin ? 'Click any group to manage its admin and members.' : selectedGroup ? `Manage members for ${selectedGroup.name}.` : 'Your account is not assigned to a group yet.'}</p>
+              <p>{user?.is_main_admin ? 'Click any group to manage its admin and members.' : selectedGroup ? `Manage members for ${formatDisplayText(selectedGroup.name)}.` : 'Your account is not assigned to a group yet.'}</p>
             </div>
             {user?.is_main_admin ? <button className="btn-primary" type="button" onClick={startNewGroup}>New Group</button> : null}
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search groups..."
+              value={groupSearch}
+              onChange={event => setGroupSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={groupStatusFilter} onChange={event => setGroupStatusFilter(event.target.value)}>
+              <option value="">All visibility</option>
+              <option value="active">Active</option>
+              <option value="hidden">Hidden</option>
+            </select>
+            <select className="admin-filter-select" value={groupAdminFilter} onChange={event => setGroupAdminFilter(event.target.value)}>
+              <option value="">Any admin assignment</option>
+              <option value="assigned">Has assigned admin</option>
+              <option value="unassigned">No assigned admin</option>
+            </select>
+          </div>
+
           {groups.length ? (
             <div className="admin-data-table">
-              {groups.map(item => (
+              {filteredGroups.map(item => (
                 <div
                   key={item.id}
                   className={`admin-row admin-row-stack admin-row-clickable ${selectedGroupId === item.id ? 'active' : ''}`}
@@ -476,12 +540,12 @@ export default function AdminGroupsPage() {
                   }}
                 >
                   <div className="admin-row-main">
-                    <strong>{item.name}</strong>
-                    <span>{item.admin_user ? `${item.admin_user.name} • ${item.admin_user.email}` : 'No group admin assigned'}</span>
+                    <strong>{formatDisplayText(item.name)}</strong>
+                    <span>{item.admin_user ? `${formatDisplayText(item.admin_user.name)} • ${item.admin_user.email}` : 'No group admin assigned'}</span>
                   </div>
                   <div className="admin-row-meta">
                     <small>{item.members_count || 0} member{item.members_count === 1 ? '' : 's'}</small>
-                    <span>{item.description || 'No description set yet.'}</span>
+                    <span>{formatCopy(item.description, 'No description set yet.')} • {item.is_active ? 'Active' : 'Hidden'}</span>
                   </div>
                   {user?.is_main_admin ? (
                     <div className="admin-row-actions">
@@ -520,6 +584,7 @@ export default function AdminGroupsPage() {
                   )}
                 </div>
               ))}
+              {!filteredGroups.length ? <p className="admin-empty">No groups match the current search or filters.</p> : null}
             </div>
           ) : (
             <p className="admin-empty">{user?.is_main_admin ? 'No groups have been created yet.' : 'No group is assigned to your account yet.'}</p>
@@ -531,7 +596,7 @@ export default function AdminGroupsPage() {
             <div className="admin-section-head">
               <div>
                 <h2>Group Members</h2>
-                <p>{user?.is_main_admin ? `Main admin view for ${selectedGroup.name}.` : 'Members registered from your dashboard appear here.'}</p>
+                <p>{user?.is_main_admin ? `Main admin view for ${formatDisplayText(selectedGroup.name)}.` : 'Members registered from your dashboard appear here.'}</p>
               </div>
               <button className="btn-outline" type="button" onClick={startNewMember}>New Member</button>
             </div>
@@ -540,8 +605,8 @@ export default function AdminGroupsPage() {
               {selectedGroup.members?.map(member => (
                 <div key={member.id} className={`admin-row ${selectedMemberId === member.id ? 'active' : ''}`}>
                   <div>
-                    <strong>{member.name}</strong>
-                    <span>{member.role || member.email || 'No role or email added yet.'}</span>
+                    <strong>{formatDisplayText(member.name)}</strong>
+                    <span>{member.role ? formatDisplayText(member.role) : member.email || 'No role or email added yet.'}</span>
                   </div>
                   <div>
                     <small>{member.phone || 'No phone added'}</small>
@@ -572,13 +637,13 @@ export default function AdminGroupsPage() {
             <form className="admin-form" onSubmit={submitGroup} noValidate>
               <label>
                 <span>Group name</span>
-                <input name="name" value={groupForm.name} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.name)} />
+                <input name="name" value={groupForm.name} onChange={handleGroupChange} onBlur={() => formatGroupField('name', titleCaseWords)} aria-invalid={Boolean(groupErrors.name)} />
                 <FieldError errors={groupErrors} name="name" />
               </label>
 
               <label>
                 <span>Description</span>
-                <textarea name="description" rows="4" value={groupForm.description} onChange={handleGroupChange} aria-invalid={Boolean(groupErrors.description)} />
+                <textarea name="description" rows="4" value={groupForm.description} onChange={handleGroupChange} onBlur={() => formatGroupField('description', capitalizeFirst)} aria-invalid={Boolean(groupErrors.description)} />
                 <FieldError errors={groupErrors} name="description" />
               </label>
 
@@ -592,7 +657,7 @@ export default function AdminGroupsPage() {
                       value={admin.id}
                       disabled={admin.group_id !== null && String(admin.group_id) !== String(selectedGroupId || '')}
                     >
-                      {admin.name} ({admin.email}){admin.group_id ? ' - already assigned' : ''}
+                      {formatDisplayText(admin.name)} ({admin.email}){admin.group_id ? ' - already assigned' : ''}
                     </option>
                   ))}
                 </select>
@@ -617,7 +682,7 @@ export default function AdminGroupsPage() {
           <div className="admin-section-head">
             <div>
               <h2>{selectedMemberId ? 'Edit Member' : 'Register Member'}</h2>
-              <p>{selectedGroup ? `Save members into ${selectedGroup.name}.` : 'Select a group to begin.'}</p>
+              <p>{selectedGroup ? `Save members into ${formatDisplayText(selectedGroup.name)}.` : 'Select a group to begin.'}</p>
             </div>
           </div>
 
@@ -625,7 +690,7 @@ export default function AdminGroupsPage() {
             <form className="admin-form" onSubmit={submitMember} noValidate>
               <label>
                 <span>Member name</span>
-                <input name="name" value={memberForm.name} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.name)} />
+	                <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} aria-invalid={Boolean(memberErrors.name)} />
                 <FieldError errors={memberErrors} name="name" />
               </label>
 
@@ -645,13 +710,13 @@ export default function AdminGroupsPage() {
 
               <label>
                 <span>Role in group</span>
-                <input name="role" value={memberForm.role} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.role)} />
+	                <input name="role" value={memberForm.role} onChange={handleMemberChange} onBlur={() => formatMemberField('role', titleCaseWords)} aria-invalid={Boolean(memberErrors.role)} />
                 <FieldError errors={memberErrors} name="role" />
               </label>
 
               <label>
                 <span>Notes</span>
-                <textarea name="notes" rows="4" value={memberForm.notes} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.notes)} />
+	                <textarea name="notes" rows="4" value={memberForm.notes} onChange={handleMemberChange} onBlur={() => formatMemberField('notes', capitalizeFirst)} aria-invalid={Boolean(memberErrors.notes)} />
                 <FieldError errors={memberErrors} name="notes" />
               </label>
 

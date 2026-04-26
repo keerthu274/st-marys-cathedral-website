@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { getOverview, listGroups } from '../../lib/admin'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 
 function formatDateTime(value) {
   if (!value) {
@@ -14,6 +15,14 @@ function formatDateTime(value) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatDisplayText(value, fallback = 'Not set') {
+  return value ? titleCaseWords(value) : fallback
+}
+
+function formatCopy(value, fallback = 'Not set') {
+  return value ? capitalizeFirst(value) : fallback
 }
 
 export default function AdminMyGroupPage() {
@@ -112,7 +121,7 @@ export default function AdminMyGroupPage() {
       <div className="admin-detail-grid">
         <div className="admin-detail-card">
           <span>Assigned group</span>
-          <strong>{group.name}</strong>
+          <strong>{formatDisplayText(group.name)}</strong>
         </div>
         <div className="admin-detail-card">
           <span>Registered members</span>
@@ -141,7 +150,7 @@ export default function AdminMyGroupPage() {
           <div className="admin-detail-grid">
             <div className="admin-detail-card">
               <span>Group name</span>
-              <strong>{group.name}</strong>
+              <strong>{formatDisplayText(group.name)}</strong>
             </div>
             <div className="admin-detail-card">
               <span>Status</span>
@@ -151,7 +160,7 @@ export default function AdminMyGroupPage() {
 
           <article className="admin-detail-block admin-detail-block-full" style={{ marginTop: '16px' }}>
             <h3>Description</h3>
-            <p>{group.description || 'No group description has been added yet.'}</p>
+            <p>{formatCopy(group.description, 'No group description has been added yet.')}</p>
           </article>
 
           <div className="admin-actions" style={{ marginTop: '16px' }}>
@@ -173,8 +182,8 @@ export default function AdminMyGroupPage() {
             {recentMembers.map(member => (
               <div key={member.id} className="admin-row">
                 <div>
-                  <strong>{member.name}</strong>
-                  <span>{member.role || member.email || 'No role or email recorded yet.'}</span>
+                  <strong>{formatDisplayText(member.name)}</strong>
+                  <span>{member.role ? formatDisplayText(member.role) : member.email || 'No role or email recorded yet.'}</span>
                 </div>
                 <div>
                   <small>Added</small>

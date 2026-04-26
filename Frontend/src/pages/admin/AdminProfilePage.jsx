@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteProfile, updatePassword, updateProfile } from '../../lib/admin'
+import { titleCaseWords } from '../../lib/textFormat'
 import { asError, hasErrors, requireField, validateEmail, validateMaxLength, validateNameText } from '../../lib/validation'
 
 const emptyPasswordForm = {
@@ -43,7 +44,7 @@ function validatePasswordForm(form) {
 
 export default function AdminProfilePage() {
   const navigate = useNavigate()
-  const { user, refreshUser } = useOutletContext()
+  const { user, refreshUser, isLoggingOut, requestLogout } = useOutletContext()
   const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' })
   const [passwordForm, setPasswordForm] = useState(emptyPasswordForm)
   const [deletePassword, setDeletePassword] = useState('')
@@ -91,6 +92,13 @@ export default function AdminProfilePage() {
 
     setProfileForm(nextForm)
     setProfileErrors(current => ({ ...current, [name]: nextErrors[name] }))
+  }
+
+  function formatProfileField(name) {
+    setProfileForm(current => ({
+      ...current,
+      [name]: titleCaseWords(current[name] || ''),
+    }))
   }
 
   function handlePasswordChange(event) {
@@ -194,12 +202,15 @@ export default function AdminProfilePage() {
   return (
     <div className="admin-page-grid two-col">
       <article className="admin-surface">
-        <div className="admin-section-head">
-          <div>
-            <h2>Admin profile</h2>
-            <p>Keep the account name and email address used for admin access up to date.</p>
+          <div className="admin-section-head">
+            <div>
+              <h2>Admin profile</h2>
+              <p>Keep the account name and email address used for admin access up to date.</p>
+            </div>
+            <button className="btn-outline admin-logout-inline" type="button" onClick={requestLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? 'Signing Out...' : 'Logout'}
+            </button>
           </div>
-        </div>
 
         <form className="admin-form" onSubmit={submitProfile} noValidate>
           <div className="admin-form-grid">
@@ -211,6 +222,7 @@ export default function AdminProfilePage() {
                 type="text"
                 value={profileForm.name}
                 onChange={handleProfileChange}
+                onBlur={() => formatProfileField('name')}
                 aria-invalid={Boolean(profileErrors.name)}
                 autoComplete="name"
               />
@@ -235,11 +247,15 @@ export default function AdminProfilePage() {
           <div className="admin-detail-grid">
             <div className="admin-detail-card">
               <span>Current account</span>
-              <strong>{user?.name || 'Admin user'}</strong>
+              <strong>{user?.name ? titleCaseWords(user.name) : 'Admin User'}</strong>
             </div>
             <div className="admin-detail-card">
               <span>Login email</span>
               <strong>{user?.email || 'Not available'}</strong>
+            </div>
+            <div className="admin-detail-card">
+              <span>Username</span>
+              <strong>{user?.email || (user?.name ? titleCaseWords(user.name) : 'Not available')}</strong>
             </div>
           </div>
 

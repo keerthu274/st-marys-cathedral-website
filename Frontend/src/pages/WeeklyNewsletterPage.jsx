@@ -56,7 +56,6 @@ export default function WeeklyNewsletterPage() {
     }, [])
 
     const latestNewsletter = newsletters[0]
-    const archiveNewsletters = newsletters.slice(1)
 
     return (
         <div className="news-events-page">
@@ -115,41 +114,6 @@ export default function WeeklyNewsletterPage() {
                                     />
                                 </div>
                             </div>
-
-                            {archiveNewsletters.length ? (
-                                <div className="newsletter-inner-section">
-                                    <h4>Previous Editions</h4>
-                                    <div className="newsletter-edition-list">
-                                        {archiveNewsletters.map(item => (
-                                            <div key={item.id} className="newsletter-edition-item">
-                                                <div>
-                                                    <strong className="text-navy">{item.title}</strong>
-                                                    <p className="text-mid" style={{ margin: '4px 0 0' }}>{formatDate(item.publication_date)}</p>
-                                                    {item.description ? <p className="text-mid" style={{ margin: '8px 0 0' }}>{item.description}</p> : null}
-                                                </div>
-                                                <div className="newsletter-edition-actions">
-                                                    <a
-                                                        className="btn-navy"
-                                                        href={getBackendUrl(item.view_url)}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                                                    >
-                                                        Open in New Tab
-                                                    </a>
-                                                    <a
-                                                        className="btn-gold-outline"
-                                                        href={getBackendUrl(item.download_url)}
-                                                        style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                                                    >
-                                                        Download
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : null}
 
                             <div className="newsletter-primary-actions">
                                 <a className="btn-navy" href={getBackendUrl(latestNewsletter.view_url)} target="_blank" rel="noreferrer">Open in New Tab</a>

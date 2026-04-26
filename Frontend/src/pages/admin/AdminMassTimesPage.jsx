@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createMassTime, deleteMassTime, getMassTime, listMassTimes, listMassTimesByDay, updateMassTime } from '../../lib/admin'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -51,6 +52,8 @@ export default function AdminMassTimesPage() {
   const [massSearch, setMassSearch] = useState('')
   const [massDayFilter, setMassDayFilter] = useState('')
   const [massStatusFilter, setMassStatusFilter] = useState('')
+  const [massLocationFilter, setMassLocationFilter] = useState('')
+  const [massLanguageFilter, setMassLanguageFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -173,6 +176,13 @@ export default function AdminMassTimesPage() {
     setMassTimeErrors(current => ({ ...current, [name]: nextErrors[name] }))
   }
 
+  function formatMassTimeField(name, formatter) {
+    setMassTimeForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
+    }))
+  }
+
   function startNewMassTime() {
     setSelectedMassTimeId(null)
     setMassTimeForm(emptyMassTimeForm)
@@ -242,6 +252,8 @@ export default function AdminMassTimesPage() {
     }
   }
 
+  const massLocations = Array.from(new Set(massTimes.map(item => item.location).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const massLanguages = Array.from(new Set(massTimes.map(item => item.language).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const filteredMassTimes = massTimes.filter(item => {
     const query = massSearch.trim().toLowerCase()
     const matchesQuery = query
@@ -249,8 +261,10 @@ export default function AdminMassTimesPage() {
       : true
     const matchesDay = massDayFilter ? item.day === massDayFilter : true
     const matchesStatus = massStatusFilter ? item.status === massStatusFilter : true
+    const matchesLocation = massLocationFilter ? item.location === massLocationFilter : true
+    const matchesLanguage = massLanguageFilter ? item.language === massLanguageFilter : true
 
-    return matchesQuery && matchesDay && matchesStatus
+    return matchesQuery && matchesDay && matchesStatus && matchesLocation && matchesLanguage
   })
 
   return (
@@ -282,6 +296,14 @@ export default function AdminMassTimesPage() {
               <option value="published">Published</option>
               <option value="draft">Draft</option>
             </select>
+            <select className="admin-filter-select" value={massLocationFilter} onChange={event => setMassLocationFilter(event.target.value)}>
+              <option value="">All locations</option>
+              {massLocations.map(location => <option key={location} value={location}>{location}</option>)}
+            </select>
+            <select className="admin-filter-select" value={massLanguageFilter} onChange={event => setMassLanguageFilter(event.target.value)}>
+              <option value="">All languages</option>
+              {massLanguages.map(language => <option key={language} value={language}>{language}</option>)}
+            </select>
           </div>
 
           <div className="admin-data-table">
@@ -289,11 +311,11 @@ export default function AdminMassTimesPage() {
               <div key={item.id} className="admin-row">
                 <div>
                   <strong>{item.day}</strong>
-                  <span>{formatTime(item.start_time)}{item.language ? ` • ${item.language}` : ''}</span>
+                  <span>{formatTime(item.start_time)}{item.language ? ` • ${titleCaseWords(item.language)}` : ''}</span>
                 </div>
                 <div>
-                  <small>{item.location || 'Location not set'}</small>
-                  <span className="admin-badge">{item.status}</span>
+                  <small>{item.location ? titleCaseWords(item.location) : 'Location not set'}</small>
+                  <span className="admin-badge">{titleCaseWords(item.status || '')}</span>
                 </div>
                 <div className="admin-row-actions">
                   <button type="button" onClick={() => editMassTime(item.id)}>Edit</button>
@@ -353,19 +375,19 @@ export default function AdminMassTimesPage() {
 
           <label>
             <span>Location</span>
-            <input name="location" value={massTimeForm.location} onChange={handleMassTimeChange} placeholder="e.g. Cathedral" aria-invalid={Boolean(massTimeErrors.location)} />
+            <input name="location" value={massTimeForm.location} onChange={handleMassTimeChange} onBlur={() => formatMassTimeField('location', titleCaseWords)} placeholder="e.g. Cathedral" aria-invalid={Boolean(massTimeErrors.location)} />
             <FieldError errors={massTimeErrors} name="location" />
           </label>
 
           <label>
             <span>Language</span>
-            <input name="language" value={massTimeForm.language} onChange={handleMassTimeChange} placeholder="e.g. English" aria-invalid={Boolean(massTimeErrors.language)} />
+            <input name="language" value={massTimeForm.language} onChange={handleMassTimeChange} onBlur={() => formatMassTimeField('language', titleCaseWords)} placeholder="e.g. English" aria-invalid={Boolean(massTimeErrors.language)} />
             <FieldError errors={massTimeErrors} name="language" />
           </label>
 
           <label>
             <span>Notes</span>
-            <textarea name="notes" rows="4" value={massTimeForm.notes} onChange={handleMassTimeChange} aria-invalid={Boolean(massTimeErrors.notes)} />
+            <textarea name="notes" rows="4" value={massTimeForm.notes} onChange={handleMassTimeChange} onBlur={() => formatMassTimeField('notes', capitalizeFirst)} aria-invalid={Boolean(massTimeErrors.notes)} />
             <FieldError errors={massTimeErrors} name="notes" />
           </label>
 

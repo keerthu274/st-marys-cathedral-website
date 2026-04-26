@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getOverview, updateOverviewItemVisibility } from '../../lib/admin'
 import { useOutletContext } from 'react-router-dom'
+import { titleCaseWords } from '../../lib/textFormat'
 
 function formatDate(value) {
   if (!value) {
@@ -31,6 +32,10 @@ function formatDateTime(date, time) {
   return `${formatDate(date)}${time ? ` at ${formatTime(time)}` : ''}`
 }
 
+function formatDisplayText(value, fallback = 'Not set') {
+  return value ? titleCaseWords(value) : fallback
+}
+
 function buildSections({ events, massTimes, registrations, contactMessages, groupMembers }) {
   return [
     {
@@ -47,7 +52,7 @@ function buildSections({ events, massTimes, registrations, contactMessages, grou
         const base = formatDateTime(item.start_date, item.start_time)
 
         if (item.group_name) {
-          return `${base} • ${item.group_name} • ${item.status}`
+          return `${base} • ${formatDisplayText(item.group_name)} • ${formatDisplayText(item.status)}`
         }
 
         return base
@@ -63,7 +68,7 @@ function buildSections({ events, massTimes, registrations, contactMessages, grou
       items: massTimes,
       getLink: item => `/dashboard/mass-times?edit=${item.id}`,
       getTitle: item => item.day,
-      getSubtitle: item => `${formatTime(item.start_time)}${item.location ? ` • ${item.location}` : ''}`,
+      getSubtitle: item => `${formatTime(item.start_time)}${item.location ? ` • ${formatDisplayText(item.location)}` : ''}`,
     },
     {
       id: 'registrations',
@@ -74,7 +79,7 @@ function buildSections({ events, massTimes, registrations, contactMessages, grou
       emptyMessage: 'No new registration tasks need your attention.',
       items: registrations,
       getLink: item => `/dashboard/registrations?selected=${item.id}`,
-      getTitle: item => item.full_name,
+      getTitle: item => formatDisplayText(item.full_name),
       getSubtitle: item => `${item.member_id} • ${formatDate(item.signed_date)}`,
     },
     {
@@ -86,8 +91,8 @@ function buildSections({ events, massTimes, registrations, contactMessages, grou
       emptyMessage: 'No new contact messages need your attention.',
       items: contactMessages,
       getLink: item => `/dashboard/contact-messages?message=${item.id}`,
-      getTitle: item => item.subject,
-      getSubtitle: item => `${item.name} • ${item.email}`,
+      getTitle: item => formatDisplayText(item.subject, 'No Subject'),
+      getSubtitle: item => `${formatDisplayText(item.name)} • ${item.email}`,
     },
     {
       id: 'group-members',
@@ -98,16 +103,16 @@ function buildSections({ events, massTimes, registrations, contactMessages, grou
       emptyMessage: 'No new group members need your attention.',
       items: groupMembers,
       getLink: item => `/dashboard/groups?group=${item.group_id}&member=${item.id}`,
-      getTitle: item => item.name,
+      getTitle: item => formatDisplayText(item.name),
       getSubtitle: item => {
         const details = []
 
         if (item.group_name) {
-          details.push(item.group_name)
+          details.push(formatDisplayText(item.group_name))
         }
 
         if (item.role) {
-          details.push(item.role)
+          details.push(formatDisplayText(item.role))
         } else if (item.email) {
           details.push(item.email)
         }

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
 import { getBackendUrl } from '../lib/auth'
+import { capitalizeFirst, titleCaseWords } from '../lib/textFormat'
 import { firstError, hasErrors, requireField, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../lib/validation'
 import './ContactPage.css'
 
@@ -109,6 +110,14 @@ export default function ContactPage() {
 
         setContactForm(nextForm)
         setContactErrors(current => ({ ...current, [name]: nextErrors[name] }))
+    }
+
+    function formatContactField(name, formatter) {
+        const value = contactForm[name] || ''
+        setContactForm(current => ({
+            ...current,
+            [name]: formatter(value.trim()),
+        }))
     }
 
     function validateContactForm() {
@@ -266,7 +275,7 @@ export default function ContactPage() {
                                 <div className="grid-2" style={{ gap: '15px' }}>
                                     <div className="form-group">
                                         <label>Name</label>
-                                        <input name="name" value={contactForm.name} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.name)} />
+                                        <input name="name" value={contactForm.name} onChange={handleContactChange} onBlur={() => formatContactField('name', titleCaseWords)} required aria-invalid={Boolean(contactErrors.name)} />
                                         {contactErrors.name ? <span className="field-error">{contactErrors.name[0]}</span> : null}
                                     </div>
                                     <div className="form-group">
@@ -310,7 +319,7 @@ export default function ContactPage() {
                                 <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
                                     <div className="form-group">
                                         <label>Subject</label>
-                                        <input name="subject" value={contactForm.subject} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.subject)} />
+                                        <input name="subject" value={contactForm.subject} onChange={handleContactChange} onBlur={() => formatContactField('subject', titleCaseWords)} required aria-invalid={Boolean(contactErrors.subject)} />
                                         {contactErrors.subject ? <span className="field-error">{contactErrors.subject[0]}</span> : null}
                                     </div>
                                 </div>
@@ -328,7 +337,7 @@ export default function ContactPage() {
 
                                 <div className="form-group">
                                     <label>Message</label>
-                                    <textarea name="message" value={contactForm.message} onChange={handleContactChange} rows={5} required aria-invalid={Boolean(contactErrors.message)}></textarea>
+                                    <textarea name="message" value={contactForm.message} onChange={handleContactChange} onBlur={() => formatContactField('message', capitalizeFirst)} rows={5} required aria-invalid={Boolean(contactErrors.message)}></textarea>
                                     {contactErrors.message ? <span className="field-error">{contactErrors.message[0]}</span> : null}
                                 </div>
 

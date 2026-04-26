@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { countWords, hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder, validateWordLimit } from '../../lib/validation'
 
 const eventLocationOptions = [
@@ -57,6 +58,33 @@ function formatDateTime(date, time) {
   return `${formatDate(date)}${time ? ` at ${formatTime(time)}` : ''}`
 }
 
+function matchesEventDateFilter(value, filter) {
+  if (!filter) {
+    return true
+  }
+
+  if (!value) {
+    return false
+  }
+
+  const date = new Date(`${value}T00:00:00`)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  if (filter === 'upcoming') {
+    return date >= today
+  }
+
+  if (filter === 'past') {
+    return date < today
+  }
+
+  const nextMonth = new Date(today)
+  nextMonth.setDate(nextMonth.getDate() + 30)
+
+  return date >= today && date <= nextMonth
+}
+
 function FieldError({ errors, name }) {
   if (!errors?.[name]?.[0]) {
     return null
@@ -103,6 +131,7 @@ export default function AdminEventsPage() {
   const [eventPreview, setEventPreview] = useState([])
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [eventForm, setEventForm] = useState(emptyEventForm)
+  const [selectedLocationOption, setSelectedLocationOption] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
   const [removeExistingImage, setRemoveExistingImage] = useState(false)
   const [eventErrors, setEventErrors] = useState({})
@@ -118,6 +147,9 @@ export default function AdminEventsPage() {
   const [eventSearch, setEventSearch] = useState('')
   const [eventStatusFilter, setEventStatusFilter] = useState('')
   const [eventCategoryFilter, setEventCategoryFilter] = useState('')
+  const [eventLocationFilter, setEventLocationFilter] = useState('')
+  const [eventGroupFilter, setEventGroupFilter] = useState('')
+  const [eventDateFilter, setEventDateFilter] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -145,6 +177,7 @@ export default function AdminEventsPage() {
       const item = payload.event
 
       setSelectedEventId(id)
+      setSelectedLocationOption(getLocationOptionValue(item.location))
       setEventForm({
         title: item.title || '',
         description: item.description || '',
@@ -243,14 +276,24 @@ export default function AdminEventsPage() {
     }))
   }
 
+  function formatEventField(name, formatter) {
+    setEventForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
+    }))
+  }
+
   function handleLocationSelect(event) {
     const { value } = event.target
-    const nextLocation = value === 'Other' ? (getLocationOptionValue(eventForm.location) === 'Other' ? eventForm.location : '') : value
+    const nextLocation = value === 'Other'
+      ? (getLocationOptionValue(eventForm.location) === 'Other' ? eventForm.location : '')
+      : value
     const nextForm = {
       ...eventForm,
       location: nextLocation,
     }
 
+    setSelectedLocationOption(value)
     setEventForm(nextForm)
     setEventErrors(current => ({
       ...current,
@@ -309,6 +352,7 @@ export default function AdminEventsPage() {
   function startNewEvent() {
     setSelectedEventId(null)
     setEventForm(emptyEventForm)
+    setSelectedLocationOption('')
     setSelectedFile(null)
     setRemoveExistingImage(false)
     setEventErrors({})
@@ -466,7 +510,8 @@ export default function AdminEventsPage() {
   }
 
   const eventCategories = Array.from(new Set(events.map(item => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))
-  const selectedLocationOption = getLocationOptionValue(eventForm.location)
+  const eventLocations = Array.from(new Set(events.map(item => item.location).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const eventGroups = Array.from(new Set(events.map(item => item.group_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const selectedEvent = events.find(item => item.id === selectedEventId)
   const titleWordCount = countWords(eventForm.title)
   const descriptionWordCount = countWords(eventForm.description)
@@ -477,8 +522,11 @@ export default function AdminEventsPage() {
       : true
     const matchesStatus = eventStatusFilter ? item.status === eventStatusFilter : true
     const matchesCategory = eventCategoryFilter ? item.category === eventCategoryFilter : true
+    const matchesLocation = eventLocationFilter ? item.location === eventLocationFilter : true
+    const matchesGroup = eventGroupFilter ? item.group_name === eventGroupFilter : true
+    const matchesDate = matchesEventDateFilter(item.start_date, eventDateFilter)
 
-    return matchesQuery && matchesStatus && matchesCategory
+    return matchesQuery && matchesStatus && matchesCategory && matchesLocation && matchesGroup && matchesDate
   })
 
   return (
@@ -510,25 +558,41 @@ export default function AdminEventsPage() {
               <option value="">All categories</option>
               {eventCategories.map(category => <option key={category} value={category}>{category}</option>)}
             </select>
+            <select className="admin-filter-select" value={eventLocationFilter} onChange={event => setEventLocationFilter(event.target.value)}>
+              <option value="">All locations</option>
+              {eventLocations.map(location => <option key={location} value={location}>{location}</option>)}
+            </select>
+            <select className="admin-filter-select" value={eventGroupFilter} onChange={event => setEventGroupFilter(event.target.value)}>
+              <option value="">All groups</option>
+              {eventGroups.map(group => <option key={group} value={group}>{group}</option>)}
+            </select>
+            <select className="admin-filter-select" value={eventDateFilter} onChange={event => setEventDateFilter(event.target.value)}>
+              <option value="">Any date</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="past">Past</option>
+              <option value="next_30_days">Next 30 days</option>
+            </select>
           </div>
 
           <div className="admin-data-table">
             {filteredEvents.map(item => (
-              <div key={item.id} className={`admin-row ${item.image_url ? 'admin-row-with-thumb' : ''}`}>
+              <div key={item.id} className="admin-row admin-row-with-thumb">
                 {item.image_url ? (
                   <img
                     className="admin-event-thumb"
                     src={getBackendUrl(item.image_url)}
                     alt={item.title}
                   />
-                ) : null}
+                ) : (
+                  <span className="admin-event-thumb admin-event-thumb-placeholder" aria-hidden="true" />
+                )}
                 <div>
-                  <strong>{item.title}</strong>
-                  <span>{formatDateTime(item.start_date, item.start_time)}{item.group_name ? ` • ${item.group_name}` : ''}</span>
+                  <strong>{titleCaseWords(item.title || '')}</strong>
+                  <span>{formatDateTime(item.start_date, item.start_time)}{item.group_name ? ` • ${titleCaseWords(item.group_name)}` : ''}</span>
                 </div>
                 <div>
-                  <small>{item.location || 'Location not set'}</small>
-                  <span className="admin-badge">{item.status}</span>
+                  <small>{item.location ? titleCaseWords(item.location) : 'Location not set'}</small>
+                  <span className="admin-badge">{titleCaseWords(item.status || '')}</span>
                 </div>
                 <div className="admin-row-actions">
                   <button type="button" onClick={() => editEvent(item.id)}>Edit</button>
@@ -552,14 +616,14 @@ export default function AdminEventsPage() {
         <form className="admin-form" onSubmit={submitEvent} noValidate>
           <label>
             <span>Title</span>
-            <input name="title" value={eventForm.title} onChange={handleEventChange} required aria-invalid={Boolean(eventErrors.title)} />
+            <input name="title" value={eventForm.title} onChange={handleEventChange} onBlur={() => formatEventField('title', titleCaseWords)} required aria-invalid={Boolean(eventErrors.title)} />
             <FieldHint current={titleWordCount} max={50} />
             <FieldError errors={eventErrors} name="title" />
           </label>
 
           <label>
             <span>Description</span>
-            <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.description)} />
+            <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} onBlur={() => formatEventField('description', capitalizeFirst)} aria-invalid={Boolean(eventErrors.description)} />
             <FieldHint current={descriptionWordCount} max={250} />
             <FieldError errors={eventErrors} name="description" />
           </label>
@@ -588,7 +652,7 @@ export default function AdminEventsPage() {
               <strong>Current poster</strong>
               <div className="admin-member-preview">
                 <img src={getBackendUrl(selectedEvent.image_url)} alt={selectedEvent.title} />
-                <p>{selectedEvent.image_filename || 'Current uploaded image'} • {formatBytes(selectedEvent.image_size)}</p>
+                <p>Current uploaded poster • {formatBytes(selectedEvent.image_size)}</p>
               </div>
               <button type="button" className="admin-link-btn danger" onClick={removeCurrentImage}>
                 Remove current poster
@@ -662,6 +726,7 @@ export default function AdminEventsPage() {
                   name="location"
                   value={eventForm.location}
                   onChange={handleEventChange}
+                  onBlur={() => formatEventField('location', titleCaseWords)}
                   placeholder="Enter the event location"
                   aria-invalid={Boolean(eventErrors.location)}
                 />
@@ -671,7 +736,7 @@ export default function AdminEventsPage() {
 
             <label>
               <span>Category</span>
-              <input name="category" value={eventForm.category} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.category)} />
+              <input name="category" value={eventForm.category} onChange={handleEventChange} onBlur={() => formatEventField('category', titleCaseWords)} aria-invalid={Boolean(eventErrors.category)} />
               <FieldError errors={eventErrors} name="category" />
             </label>
           </div>

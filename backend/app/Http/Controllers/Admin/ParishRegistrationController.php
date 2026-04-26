@@ -13,7 +13,7 @@ class ParishRegistrationController extends Controller
     // added: show all registrations
     public function index(Request $request)
     {
-        $registrations = ParishRegistration::latest()->paginate(10);
+        $registrations = ParishRegistration::with(['children', 'interest'])->latest()->paginate(10);
 
         if ($request->expectsJson()) {
             return response()->json([

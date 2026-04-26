@@ -9,6 +9,7 @@ import {
   updateParishCouncilMember,
 } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
 const emptyMemberForm = {
@@ -55,6 +56,8 @@ export default function AdminParishCouncilPage() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [memberErrors, setMemberErrors] = useState({})
   const [memberSearch, setMemberSearch] = useState('')
+  const [memberRoleFilter, setMemberRoleFilter] = useState('')
+  const [memberVisibilityFilter, setMemberVisibilityFilter] = useState('')
   const [isSavingMember, setIsSavingMember] = useState(false)
   const [isLoadingMemberEditor, setIsLoadingMemberEditor] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -173,6 +176,13 @@ export default function AdminParishCouncilPage() {
     setMemberErrors(current => ({
       ...current,
       ...validateMemberLiveFields(nextForm, name),
+    }))
+  }
+
+  function formatMemberField(name, formatter) {
+    setMemberForm(current => ({
+      ...current,
+      [name]: formatter(current[name] || ''),
     }))
   }
 
@@ -309,14 +319,20 @@ export default function AdminParishCouncilPage() {
     }
   }
 
+  const memberRoles = Array.from(new Set(members.map(item => item.role).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const filteredMembers = members.filter(item => {
     const query = memberSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${item.name} ${item.role} ${item.bio || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesRole = memberRoleFilter ? item.role === memberRoleFilter : true
+    const matchesVisibility = memberVisibilityFilter === 'active'
+      ? item.is_active
+      : memberVisibilityFilter === 'hidden'
+        ? !item.is_active
+        : true
 
-    if (!query) {
-      return true
-    }
-
-    return `${item.name} ${item.role} ${item.bio || ''}`.toLowerCase().includes(query)
+    return matchesQuery && matchesRole && matchesVisibility
   })
 
   if (!user?.is_main_admin) {
@@ -355,6 +371,15 @@ export default function AdminParishCouncilPage() {
               value={memberSearch}
               onChange={event => setMemberSearch(event.target.value)}
             />
+            <select className="admin-filter-select" value={memberRoleFilter} onChange={event => setMemberRoleFilter(event.target.value)}>
+              <option value="">All roles</option>
+              {memberRoles.map(role => <option key={role} value={role}>{role}</option>)}
+            </select>
+            <select className="admin-filter-select" value={memberVisibilityFilter} onChange={event => setMemberVisibilityFilter(event.target.value)}>
+              <option value="">All visibility</option>
+              <option value="active">Active</option>
+              <option value="hidden">Hidden</option>
+            </select>
           </div>
 
           <div className="admin-data-table">
@@ -373,12 +398,12 @@ export default function AdminParishCouncilPage() {
                 }}
               >
                 <div>
-                  <strong>{item.name}</strong>
-                  <span>{item.role}</span>
+                  <strong>{titleCaseWords(item.name || '')}</strong>
+                  <span>{titleCaseWords(item.role || '')}</span>
                 </div>
                 <div>
                   <small>Sort order: {item.sort_order}</small>
-                  <span className="admin-badge">{item.is_active ? 'active' : 'hidden'}</span>
+                  <span className="admin-badge">{item.is_active ? 'Active' : 'Hidden'}</span>
                 </div>
                 <div className="admin-row-actions">
                   <button type="button" onClick={event => {
@@ -392,7 +417,7 @@ export default function AdminParishCouncilPage() {
                 </div>
               </div>
             ))}
-            {!filteredMembers.length ? <p className="admin-empty">{members.length ? 'No council members match the current search.' : 'No parish council members have been added yet.'}</p> : null}
+            {!filteredMembers.length ? <p className="admin-empty">{members.length ? 'No council members match the current search or filters.' : 'No parish council members have been added yet.'}</p> : null}
           </div>
         </article>
       </div>
@@ -408,19 +433,19 @@ export default function AdminParishCouncilPage() {
         <form className="admin-form" onSubmit={submitMember} noValidate>
           <label>
             <span>Name</span>
-            <input name="name" value={memberForm.name} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.name)} />
+            <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} aria-invalid={Boolean(memberErrors.name)} />
             <FieldError errors={memberErrors} name="name" />
           </label>
 
           <label>
             <span>Role</span>
-            <input name="role" value={memberForm.role} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.role)} />
+            <input name="role" value={memberForm.role} onChange={handleMemberChange} onBlur={() => formatMemberField('role', titleCaseWords)} aria-invalid={Boolean(memberErrors.role)} />
             <FieldError errors={memberErrors} name="role" />
           </label>
 
           <label>
             <span>Short bio</span>
-            <textarea name="bio" rows="4" value={memberForm.bio} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.bio)} />
+            <textarea name="bio" rows="4" value={memberForm.bio} onChange={handleMemberChange} onBlur={() => formatMemberField('bio', capitalizeFirst)} aria-invalid={Boolean(memberErrors.bio)} />
             <FieldError errors={memberErrors} name="bio" />
           </label>
 

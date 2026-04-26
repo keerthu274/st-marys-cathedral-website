@@ -15,12 +15,44 @@ class UpdateParishRegistrationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $children = collect($this->input('children', []))
+            ->map(function ($child) {
+                if (! is_array($child)) {
+                    return $child;
+                }
+
+                $child['child_name'] = $this->titleCase($child['child_name'] ?? null);
+
+                return $child;
+            })
+            ->all();
+
         $this->merge([
-            'full_name' => is_string($this->full_name) ? trim($this->full_name) : $this->full_name,
+            'full_name' => $this->titleCase($this->full_name),
             'email' => is_string($this->email) ? strtolower(trim($this->email)) : $this->email,
             'phone' => is_string($this->phone) ? trim($this->phone) : $this->phone,
-            'partner_name' => is_string($this->partner_name) ? trim($this->partner_name) : $this->partner_name,
+            'partner_name' => $this->titleCase($this->partner_name),
+            'children' => $children,
         ]);
+    }
+
+    private function titleCase(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            "/\b(\p{Ll})([\p{L}\p{M}\p{N}_'’-]*)/u",
+            fn ($match) => mb_strtoupper($match[1], 'UTF-8') . $match[2],
+            $value
+        );
     }
 
     /**

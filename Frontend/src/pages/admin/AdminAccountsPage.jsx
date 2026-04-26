@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import { listGroups } from '../../lib/admin'
+import { titleCaseWords } from '../../lib/textFormat'
 
 function buildAssignmentMap(groups) {
   return new Map(
@@ -14,6 +15,10 @@ function buildAssignmentMap(groups) {
         },
       ]),
   )
+}
+
+function formatDisplayText(value, fallback = 'Not set') {
+  return value ? titleCaseWords(value) : fallback
 }
 
 export default function AdminAccountsPage() {
@@ -131,7 +136,7 @@ export default function AdminAccountsPage() {
         <div className="admin-data-table">
           <div className="admin-row">
             <div>
-              <strong>{user?.name || 'Main admin'}</strong>
+              <strong>{formatDisplayText(user?.name, 'Main Admin')}</strong>
               <span>{user?.email || 'No email available'}</span>
             </div>
             <div>
@@ -159,12 +164,12 @@ export default function AdminAccountsPage() {
               return (
                 <div key={admin.id} className="admin-row">
                   <div>
-                    <strong>{admin.name}</strong>
+                    <strong>{formatDisplayText(admin.name)}</strong>
                     <span>{admin.email}</span>
                   </div>
                   <div>
                     <small>Assigned group</small>
-                    <span>{assignment?.groupName || 'Unknown group'}</span>
+                    <span>{formatDisplayText(assignment?.groupName, 'Unknown Group')}</span>
                   </div>
                   <div className="admin-row-actions">
                     {assignment?.groupId ? <Link to={`/dashboard/groups?group=${assignment.groupId}`}>Open Group</Link> : null}
@@ -189,7 +194,7 @@ export default function AdminAccountsPage() {
             {unassignedAdmins.map(admin => (
               <div key={admin.id} className="admin-row">
                 <div>
-                  <strong>{admin.name}</strong>
+                  <strong>{formatDisplayText(admin.name)}</strong>
                   <span>{admin.email}</span>
                 </div>
                 <div>

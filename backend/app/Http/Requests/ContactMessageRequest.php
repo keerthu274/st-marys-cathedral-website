@@ -14,13 +14,47 @@ class ContactMessageRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'name' => is_string($this->name) ? trim($this->name) : $this->name,
+            'name' => $this->titleCase($this->name),
             'email' => is_string($this->email) ? strtolower(trim($this->email)) : $this->email,
             'phone' => is_string($this->phone) ? trim($this->phone) : $this->phone,
-            'subject' => is_string($this->subject) ? trim($this->subject) : $this->subject,
+            'subject' => $this->titleCase($this->subject),
             'category' => is_string($this->category) ? trim($this->category) : ($this->category ?: 'general'),
-            'message' => is_string($this->message) ? trim($this->message) : $this->message,
+            'message' => $this->capitalizeFirst($this->message),
         ]);
+    }
+
+    private function titleCase(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return preg_replace_callback(
+            "/\b(\p{Ll})([\p{L}\p{M}\p{N}_'’-]*)/u",
+            fn ($match) => mb_strtoupper($match[1], 'UTF-8') . $match[2],
+            $value
+        );
+    }
+
+    private function capitalizeFirst(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
+            return $value;
+        }
+
+        return mb_strtoupper(mb_substr($value, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($value, 1, null, 'UTF-8');
     }
 
     /**

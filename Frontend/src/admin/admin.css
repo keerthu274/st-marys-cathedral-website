@@ -13,11 +13,9 @@
 }
 
 .admin-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  align-items: start;
   gap: 18px;
-  flex-wrap: wrap;
   padding: 18px 20px;
   border-radius: 24px;
   border: 1px solid rgba(24, 52, 84, 0.08);
@@ -25,6 +23,14 @@
   box-shadow:
     0 12px 32px rgba(17, 35, 62, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.admin-topbar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
 }
 
 .admin-brand {
@@ -47,13 +53,9 @@
 }
 
 .admin-topbar-right {
-  display: flex;
-  flex-direction: column;
+  display: block;
   align-items: stretch;
-  gap: 14px;
   min-width: 0;
-  flex: 1;
-  justify-content: flex-start;
 }
 
 .admin-menu-toggle {
@@ -127,11 +129,14 @@
 .admin-user-inline {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(29, 53, 83, 0.08);
+  gap: 10px;
+  margin-left: auto;
+  padding: 8px;
+  border: 1px solid rgba(29, 53, 83, 0.08);
+  border-radius: 18px;
+  background: rgba(246, 249, 253, 0.78);
   flex-shrink: 0;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
 }
 
@@ -456,6 +461,11 @@
   flex-shrink: 0;
 }
 
+.admin-event-thumb-placeholder {
+  background: transparent;
+  border-color: transparent;
+}
+
 .admin-row small {
   display: block;
   color: var(--text-mid);
@@ -682,9 +692,17 @@
 
 .admin-child-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px auto;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.55fr) auto;
   gap: 10px;
-  align-items: center;
+  align-items: end;
+}
+
+.admin-child-field-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-light);
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .admin-pagination {
@@ -798,6 +816,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .admin-topbar-head {
+    width: 100%;
+    align-items: center;
+  }
+
   .admin-menu-toggle {
     display: inline-flex;
   }
@@ -829,9 +852,7 @@
   .admin-user-inline {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    padding-top: 0;
-    border-top: 0;
+    justify-content: flex-end;
   }
 
   .admin-user-meta {
@@ -863,6 +884,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    margin-left: 0;
   }
 
   .admin-user-meta {
@@ -886,6 +908,10 @@
 
   .admin-row-with-thumb {
     grid-template-columns: 1fr;
+  }
+
+  .admin-event-thumb-placeholder {
+    display: none;
   }
 
   .admin-overview-item {

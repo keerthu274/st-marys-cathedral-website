@@ -51,7 +51,8 @@
 }
 
 .ne-event-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: 84px minmax(86px, 120px) minmax(0, 1fr) auto;
     align-items: center;
     gap: 20px;
     padding: 16px 0;
@@ -67,6 +68,11 @@
     border: 1px solid rgba(30, 58, 95, 0.08);
 }
 
+.ne-event-thumb-placeholder {
+    background: transparent;
+    border-color: transparent;
+}
+
 .ne-event-row:last-child {
     border-bottom: none;
 }
@@ -75,7 +81,6 @@
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--navy);
-    min-width: 72px;
 }
 
 .ne-event-info {
@@ -111,14 +116,17 @@
 
 @media (max-width: 640px) {
     .ne-event-row {
+        grid-template-columns: 1fr;
         align-items: flex-start;
-        flex-wrap: wrap;
     }
 
     .ne-event-thumb {
         width: 100%;
-        max-width: 180px;
         height: 120px;
+    }
+
+    .ne-event-thumb-placeholder {
+        display: none;
     }
 }
 
