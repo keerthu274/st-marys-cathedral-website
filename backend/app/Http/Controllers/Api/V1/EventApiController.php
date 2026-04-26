@@ -23,6 +23,7 @@ class EventApiController extends Controller
         // Fetch published events ordered by upcoming date and time
 
         $events = Event::query()
+            ->with('group')
             ->where('status', 'published')        // Only published events
             ->orderBy('start_date', 'asc')        // Upcoming events first
             ->orderBy('start_time', 'asc')
@@ -47,6 +48,7 @@ class EventApiController extends Controller
         // Find the event only if it is published
 
         $event = Event::query()
+            ->with('group')
             ->where('id', $id)
             ->where('status', 'published')
             ->first();

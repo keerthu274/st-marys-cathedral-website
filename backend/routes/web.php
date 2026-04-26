@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\MassTimeController;
 use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\NewsPostController;
 use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
@@ -80,6 +81,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             ->name('newsletters.update-post');
 
         Route::resource('newsletters', NewsletterController::class)
+            ->except(['create', 'show', 'update']);
+
+        Route::post('news/{newsPost}', [NewsPostController::class, 'update'])
+            ->name('news.update-post');
+
+        Route::resource('news', NewsPostController::class)
+            ->parameters(['news' => 'newsPost'])
             ->except(['create', 'show', 'update']);
 
         Route::get('parish-registrations', [ParishRegistrationController::class, 'index'])

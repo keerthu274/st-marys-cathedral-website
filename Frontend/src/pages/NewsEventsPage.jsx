@@ -44,20 +44,48 @@ function formatTimeLabel(startTime, endTime) {
 
 export default function NewsEventsPage() {
   const [events, setEvents] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     let ignore = false
 
     async function loadEvents() {
+      setIsLoading(true)
+      setErrorMessage('')
+
       try {
         const response = await fetch(getBackendUrl('/api/v1/events'))
         const payload = await response.json()
-    
-        if (!ignore && response.ok && Array.isArray(payload?.data)) {
-          setEvents(payload.data)
+
+        if (ignore) {
+          return
         }
+
+        if (!response.ok || !Array.isArray(payload?.data)) {
+          throw new Error(payload?.message || 'Published events could not be loaded.')
+        }
+
+        setEvents(payload.data.filter(event => {
+          if (!event.start_date) {
+            return true
+          }
+
+          const today = new Date()
+          const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+          const eventDate = new Date(`${event.start_date}T00:00:00`)
+
+          return eventDate >= startOfToday
+        }))
       } catch (error) {
-        console.log('Error loading events:', error)
+        if (!ignore) {
+          setErrorMessage(error.message || 'Published events could not be loaded.')
+          setEvents([])
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -82,7 +110,27 @@ export default function NewsEventsPage() {
             <h2 className="ne-events-title">Upcoming Events</h2>
 
             <div className="ne-events-list">
-              {events.map((event) => (
+              {isLoading ? (
+                <div className="ne-event-row">
+                  <span className="ne-event-date">...</span>
+                  <div className="ne-event-info">
+                    <span className="ne-event-name">Loading published events</span>
+                    <span className="ne-event-time">Please wait while the latest events are loaded from the backend.</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {!isLoading && errorMessage ? (
+                <div className="ne-event-row">
+                  <span className="ne-event-date">!</span>
+                  <div className="ne-event-info">
+                    <span className="ne-event-name">Events could not be loaded</span>
+                    <span className="ne-event-time">{errorMessage}</span>
+                  </div>
+                </div>
+              ) : null}
+
+              {!isLoading && !errorMessage ? events.map((event) => (
                 <div key={event.id} className="ne-event-row">
                   {event.image_url ? (
                     <img
@@ -103,9 +151,9 @@ export default function NewsEventsPage() {
 
                   <Link to={`/events/${event.id}`} className="ne-event-details">Details</Link>
                 </div>
-              ))}
+              )) : null}
 
-              {!events.length ? (
+              {!isLoading && !errorMessage && !events.length ? (
                 <div className="ne-event-row">
                   <span className="ne-event-date">Soon</span>
                   <div className="ne-event-info">

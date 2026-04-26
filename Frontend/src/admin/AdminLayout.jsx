@@ -10,6 +10,7 @@ const navItems = [
   { to: '/dashboard/events', label: 'Events', meta: 'Schedule and publish events' },
   { to: '/dashboard/my-group', label: 'My Group', meta: 'Group admin workspace', groupAdminOnly: true },
   { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times', mainAdminOnly: true },
+  { to: '/dashboard/news', label: 'News', meta: 'Publish news and announcements', mainAdminOnly: true },
   { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs', mainAdminOnly: true },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records', mainAdminOnly: true },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },

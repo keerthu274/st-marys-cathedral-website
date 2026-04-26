@@ -211,6 +211,27 @@ export function deleteNewsletter(id) {
   return adminRequest(`/admin/newsletters/${id}`, { method: 'DELETE' })
 }
 
+export function listNewsPosts(page = 1) {
+  const params = new URLSearchParams({ page: String(page) })
+  return adminRequest(`/admin/news?${params.toString()}`)
+}
+
+export function getNewsPost(id) {
+  return adminRequest(`/admin/news/${id}/edit`)
+}
+
+export function createNewsPost(data) {
+  return adminRequest('/admin/news', { method: 'POST', body: data })
+}
+
+export function updateNewsPost(id, data) {
+  return adminRequest(`/admin/news/${id}`, { method: 'POST', body: data })
+}
+
+export function deleteNewsPost(id) {
+  return adminRequest(`/admin/news/${id}`, { method: 'DELETE' })
+}
+
 export function listRegistrations(page = 1) {
   const params = new URLSearchParams({ page: String(page) })
   return adminRequest(`/admin/parish-registrations?${params.toString()}`)

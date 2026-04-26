@@ -20,6 +20,7 @@ import NewsEventsPage from './pages/NewsEventsPage'
 import EventDetailPage from './pages/EventDetailPage'
 import EventsCalendarPage from './pages/EventsCalendarPage'
 import NewsAnnouncementsPage from './pages/NewsAnnouncementsPage'
+import NewsDetailPage from './pages/NewsDetailPage'
 import WeeklyNewsletterPage from './pages/WeeklyNewsletterPage'
 import NewsletterArchivePage from './pages/NewsletterArchivePage'
 import UsefulLinksPage from './pages/UsefulLinksPage'
@@ -43,6 +44,7 @@ import AdminOverviewPage from './pages/admin/AdminOverviewPage'
 import AdminEventsPage from './pages/admin/AdminEventsPage'
 import AdminMassTimesPage from './pages/admin/AdminMassTimesPage'
 import AdminNewslettersPage from './pages/admin/AdminNewslettersPage'
+import AdminNewsPage from './pages/admin/AdminNewsPage'
 import AdminRegistrationsPage from './pages/admin/AdminRegistrationsPage'
 import AdminContactMessagesPage from './pages/admin/AdminContactMessagesPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
@@ -87,6 +89,7 @@ function AppContent() {
             <Route path="events" element={<AdminEventsPage />} />
             <Route path="mass-times" element={<AdminMassTimesPage />} />
             <Route path="newsletters" element={<AdminNewslettersPage />} />
+            <Route path="news" element={<AdminNewsPage />} />
             <Route path="registrations" element={<AdminRegistrationsPage />} />
             <Route path="contact-messages" element={<AdminContactMessagesPage />} />
             <Route path="parish-council" element={<AdminParishCouncilPage />} />
@@ -111,6 +114,7 @@ function AppContent() {
           <Route path="/events" element={<EventsCalendarPage />} />
           <Route path="/events/:eventId" element={<EventDetailPage />} />
           <Route path="/news" element={<NewsAnnouncementsPage />} />
+          <Route path="/news/:newsId" element={<NewsDetailPage />} />
           <Route path="/newsletter" element={<WeeklyNewsletterPage />} />
           <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
           <Route path="/diocese" element={<DiocesePage />} />

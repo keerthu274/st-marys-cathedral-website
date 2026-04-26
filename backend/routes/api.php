@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\MassTimeApiController;
 use App\Http\Controllers\Api\V1\ContactApiController;
 use App\Http\Controllers\Api\V1\ParishRegistrationApiController;
 use App\Http\Controllers\Api\V1\NewsletterApiController;
+use App\Http\Controllers\Api\V1\NewsPostApiController;
 use App\Http\Controllers\Api\V1\ParishCouncilMemberApiController;
 use App\Http\Controllers\Api\V1\GroupApiController;
 
@@ -68,6 +69,9 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::get('newsletters', [NewsletterApiController::class, 'index']);
+    Route::get('news', [NewsPostApiController::class, 'index']);
+    Route::get('news/{id}', [NewsPostApiController::class, 'show']);
+    Route::get('news/{id}/image', [NewsPostApiController::class, 'image']);
 
     /*
     |--------------------------------------------------------------------------

@@ -62,7 +62,7 @@ export const EventsList = ({ events, limit }) => {
             <div className="container">
                 <div style={{ maxWidth: '900px', margin: '0 auto' }}>
                     {displayedEvents.map((event, index) => (
-                        <div key={index} className="event-item-card">
+                        <div key={event.id || `${event.title}-${index}`} className="event-item-card">
                             <div className="event-date-box">
                                 <span className="event-day">{event.day}</span>
                                 <span className="event-month">{event.month}</span>
@@ -78,7 +78,7 @@ export const EventsList = ({ events, limit }) => {
                                 <div className="event-meta">{event.time} | {event.location || 'Cathedral'}</div>
                                 <h3>{event.title}</h3>
                                 {event.description && <p className="text-mid" style={{ marginBottom: '16px', fontSize: '0.95rem' }}>{event.description}</p>}
-                                <Link to={`/events/${index}`} className="text-gold" style={{ fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
+                                <Link to={`/events/${event.id}`} className="text-gold" style={{ fontWeight: 700, fontSize: '0.9rem', textDecoration: 'none' }}>
                                     View Details →
                                 </Link>
                             </div>
@@ -95,13 +95,16 @@ export const NewsGrid = ({ articles }) => (
         <div className="container">
             <div className="grid-3">
                 {articles.map((article, index) => (
-                    <div key={index} className="news-article-card">
-                        <div className="news-article-image" style={{ backgroundImage: `url(${article.image || 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=800'})` }}></div>
+                    <div key={article.id || `${article.title}-${index}`} className="news-article-card">
+                        <div
+                            className="news-article-image"
+                            style={{ backgroundImage: `url(${article.image_url ? getBackendUrl(article.image_url) : article.image || 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=800'})` }}
+                        ></div>
                         <div className="news-article-content">
                             <div className="news-date">{article.date}</div>
                             <h3>{article.title}</h3>
                             <p className="text-mid" style={{ fontSize: '0.95rem', marginBottom: '20px' }}>{article.summary}</p>
-                            <Link to={`/news/${index}`} className="btn-navy" style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>Read More</Link>
+                            <Link to={`/news/${article.id}`} className="btn-navy" style={{ marginTop: 'auto', alignSelf: 'flex-start' }}>Read More</Link>
                         </div>
                     </div>
                 ))}
