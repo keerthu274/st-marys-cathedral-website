@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\NewsPostRequest;
 use App\Http\Resources\NewsPostResource;
 use App\Models\NewsPost;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -51,6 +52,7 @@ class NewsPostController extends Controller
         $validated['image_path'] = $request->hasFile('image') ? $this->storeImage($request) : null;
 
         $newsPost = NewsPost::create($validated);
+        Audit::log($request, 'created news post', $newsPost, $newsPost->title);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -77,6 +79,7 @@ class NewsPostController extends Controller
         }
 
         $newsPost->update($validated);
+        Audit::log($request, 'updated news post', $newsPost, $newsPost->title);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -90,8 +93,10 @@ class NewsPostController extends Controller
 
     public function destroy(Request $request, NewsPost $newsPost)
     {
+        $newsTitle = $newsPost->title;
         $this->deleteImage($newsPost->image_path);
         $newsPost->delete();
+        Audit::log($request, 'deleted news post', $newsPost, $newsTitle);
 
         if ($request->expectsJson()) {
             return response()->json([

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createNewsPost, deleteNewsPost, getNewsPost, listNewsPosts, updateNewsPost } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
@@ -14,6 +15,7 @@ const emptyNewsForm = {
   published_at: new Date().toISOString().slice(0, 10),
   status: 'published',
 }
+const maxImageSize = 2 * 1024 * 1024
 
 function FieldError({ errors, name }) {
   if (!errors?.[name]?.[0]) {
@@ -50,6 +52,10 @@ function formatTypeLabel(value) {
 
 function isImageFile(file) {
   return file?.type?.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file?.name || '')
+}
+
+function isImageSizeAllowed(file) {
+  return !file || file.size <= maxImageSize
 }
 
 function normalizeErrors(error) {
@@ -183,7 +189,7 @@ export default function AdminNewsPage() {
     }))
   }
 
-  function handleFileChange(event) {
+  async function handleFileChange(event) {
     const file = event.target.files?.[0] || null
 
     if (file && !isImageFile(file)) {
@@ -193,7 +199,16 @@ export default function AdminNewsPage() {
       return
     }
 
-    setSelectedFile(file)
+    const preparedFile = file ? await compressImageFile(file, { maxBytes: maxImageSize }) : null
+
+    if (preparedFile && !isImageSizeAllowed(preparedFile)) {
+      setSelectedFile(null)
+      setNewsErrors(current => ({ ...current, image: ['The image is still too large after compression. Please choose one under 2 MB.'] }))
+      event.target.value = ''
+      return
+    }
+
+    setSelectedFile(preparedFile)
     setRemoveCurrentImage(false)
     setNewsErrors(current => ({ ...current, image: undefined }))
   }
@@ -219,6 +234,10 @@ export default function AdminNewsPage() {
     requireField(nextErrors, 'type', newsForm.type, 'Type')
     requireField(nextErrors, 'status', newsForm.status, 'Status')
     validateMaxLength(nextErrors, 'summary', newsForm.summary, 500, 'Summary')
+
+    if (selectedFile && !isImageSizeAllowed(selectedFile)) {
+      nextErrors.image = ['Please upload an image that is 2 MB or smaller.']
+    }
 
     return nextErrors
   }
@@ -433,14 +452,18 @@ export default function AdminNewsPage() {
 
           <label>
             <span>{selectedNewsId ? 'Replace image' : 'Image'}</span>
-            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} aria-invalid={Boolean(newsErrors.image)} />
+            <input ref={fileInputRef} className="admin-file-input-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} aria-invalid={Boolean(newsErrors.image)} />
+            <button className="btn-outline" type="button" onClick={() => fileInputRef.current?.click()}>
+              Choose Image
+            </button>
+            <p className="admin-field-hint">JPG, PNG, or WebP. Large images are compressed automatically.</p>
             <FieldError errors={newsErrors} name="image" />
           </label>
 
           {selectedFile ? (
             <div className="admin-panel">
               <strong>Selected image</strong>
-              <p>{selectedFile.name} • {formatBytes(selectedFile.size)}</p>
+              <p>Selected uploaded image • {formatBytes(selectedFile.size)}</p>
             </div>
           ) : null}
 

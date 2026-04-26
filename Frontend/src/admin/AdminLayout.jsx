@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import FeedbackDialog from '../components/FeedbackDialog'
+import { getOverview } from '../lib/admin'
 import { titleCaseWords } from '../lib/textFormat'
 import { useAdminSession } from './useAdminSession'
 import './admin.css'
@@ -14,19 +15,146 @@ const navItems = [
   { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs', mainAdminOnly: true },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records', mainAdminOnly: true },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
-  { to: '/dashboard/groups', label: 'Groups', meta: 'Manage groups and admins' },
+  { to: '/dashboard/groups', label: 'Groups', meta: 'Manage groups and admins', mainAdminOnly: true },
   { to: '/dashboard/accounts', label: 'Admins', meta: 'Review admin account assignments', mainAdminOnly: true },
   { to: '/dashboard/parish-council', label: 'Parish Council', meta: 'Manage council members', mainAdminOnly: true },
 ]
+const dismissedAlertsStorageKey = 'admin-dismissed-alerts'
+
+function formatAuditDate(value) {
+  if (!value) {
+    return 'Just now'
+  }
+
+  return new Date(value).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18 16v-5a6 6 0 0 0-12 0v5l-2 2h16l-2-2Z" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </svg>
+  )
+}
+
+function ActivityIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8v5l3 2" />
+      <path d="M21 12a9 9 0 1 1-3-6.7" />
+      <path d="M21 3v5h-5" />
+    </svg>
+  )
+}
 
 export default function AdminLayout() {
   const { user, isLoading, isLoggingOut, refreshUser, handleLogout } = useAdminSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
+  const [openPanel, setOpenPanel] = useState('')
+  const [notifications, setNotifications] = useState([])
+  const [dismissedAlerts, setDismissedAlerts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(dismissedAlertsStorageKey) || '[]')
+    } catch {
+      return []
+    }
+  })
+  const [auditLogs, setAuditLogs] = useState([])
+  const visibleNotifications = notifications.filter(item => !dismissedAlerts.includes(`${item.key}:${item.count}`))
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadTopbarPanels() {
+      if (!user) {
+        return
+      }
+
+      try {
+        const payload = await getOverview()
+
+        if (!ignore) {
+          setNotifications(payload.notifications || [])
+          setAuditLogs(payload.recent_audit_logs || [])
+        }
+      } catch {
+        if (!ignore) {
+          setNotifications([])
+          setAuditLogs([])
+        }
+      }
+    }
+
+    loadTopbarPanels()
+
+    return () => {
+      ignore = true
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!openPanel) {
+      return undefined
+    }
+
+    function handleOutsideClick(event) {
+      if (event.target.closest('.admin-topbar-panel') || event.target.closest('.admin-topbar-actions')) {
+        return
+      }
+
+      setOpenPanel('')
+    }
+
+    function handleEscape(event) {
+      if (event.key === 'Escape') {
+        setOpenPanel('')
+      }
+    }
+
+    document.addEventListener('click', handleOutsideClick)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('click', handleOutsideClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [openPanel])
 
   function requestLogout() {
     setIsMenuOpen(false)
+    setOpenPanel('')
     setIsLogoutConfirmOpen(true)
+  }
+
+  function togglePanel(panel) {
+    setOpenPanel(current => current === panel ? '' : panel)
+  }
+
+  function clearAlert(item) {
+    const alertKey = `${item.key}:${item.count}`
+    setDismissedAlerts(current => {
+      const next = Array.from(new Set([...current, alertKey]))
+      localStorage.setItem(dismissedAlertsStorageKey, JSON.stringify(next))
+      return next
+    })
+  }
+
+  function clearAllAlerts() {
+    setDismissedAlerts(current => {
+      const next = Array.from(new Set([
+        ...current,
+        ...visibleNotifications.map(item => `${item.key}:${item.count}`),
+      ]))
+      localStorage.setItem(dismissedAlertsStorageKey, JSON.stringify(next))
+      return next
+    })
   }
 
   function confirmLogout() {
@@ -97,8 +225,63 @@ export default function AdminLayout() {
                 )
               ))}
             </nav>
+            <div className="admin-topbar-actions">
+              <button className="admin-icon-button" type="button" onClick={() => togglePanel('alerts')} aria-expanded={openPanel === 'alerts'} aria-label="Open alerts">
+                <BellIcon />
+                {visibleNotifications.length ? <span className="admin-icon-badge">{visibleNotifications.length}</span> : null}
+              </button>
+              <button className="admin-icon-button" type="button" onClick={() => togglePanel('activity')} aria-expanded={openPanel === 'activity'} aria-label="Open recent activity">
+                <ActivityIcon />
+              </button>
+            </div>
           </div>
         </header>
+
+        {openPanel ? (
+          <div className="admin-topbar-panel">
+            {openPanel === 'alerts' ? (
+              <>
+                <div className="admin-topbar-panel-head">
+                  <strong>Alerts</strong>
+                  <div className="admin-topbar-panel-controls">
+                    {visibleNotifications.length ? <button type="button" onClick={clearAllAlerts}>Clear all</button> : null}
+                    <button type="button" onClick={() => setOpenPanel('')} aria-label="Close alerts">×</button>
+                  </div>
+                </div>
+                <div className="admin-topbar-panel-list">
+                  {visibleNotifications.map(item => (
+                    <div key={item.key} className="admin-panel-alert-item">
+                      <Link className={`admin-alert-row is-${item.tone || 'blue'}`} to={item.link} onClick={() => setOpenPanel('')}>
+                        <strong>{item.title}</strong>
+                        <span>{item.message}</span>
+                      </Link>
+                      <button type="button" className="admin-clear-alert" onClick={() => clearAlert(item)}>Clear</button>
+                    </div>
+                  ))}
+                  {!visibleNotifications.length ? <p className="admin-empty">No alerts right now.</p> : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="admin-topbar-panel-head">
+                  <strong>Recent Activity</strong>
+                  <div className="admin-topbar-panel-controls">
+                    <button type="button" onClick={() => setOpenPanel('')} aria-label="Close recent activity">×</button>
+                  </div>
+                </div>
+                <div className="admin-topbar-panel-list">
+                  {auditLogs.map(item => (
+                    <div key={item.id} className="admin-audit-row">
+                      <strong>{titleCaseWords(item.action || 'Updated record')}</strong>
+                      <span>{item.subject_title || 'Record'} • {item.admin_name} • {formatAuditDate(item.created_at)}</span>
+                    </div>
+                  ))}
+                  {!auditLogs.length ? <p className="admin-empty">No recent activity yet.</p> : null}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
 
         <main className="admin-main">
           <Outlet context={{ user, refreshUser, isLoggingOut, requestLogout }} />

@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
-import { listGroups } from '../../lib/admin'
+import FeedbackDialog from '../../components/FeedbackDialog'
+import { createAdminAccount, deleteAdminAccount, listGroups, updateAdminAccount } from '../../lib/admin'
 import { titleCaseWords } from '../../lib/textFormat'
+
+const emptyAdminForm = {
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  group_id: '',
+}
 
 function buildAssignmentMap(groups) {
   return new Map(
@@ -25,8 +34,19 @@ export default function AdminAccountsPage() {
   const { user } = useOutletContext()
   const [groups, setGroups] = useState([])
   const [availableAdmins, setAvailableAdmins] = useState([])
+  const [editingAdminId, setEditingAdminId] = useState(null)
+  const [adminForm, setAdminForm] = useState(emptyAdminForm)
+  const [adminErrors, setAdminErrors] = useState({})
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [isSavingAdmin, setIsSavingAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [dialogState, setDialogState] = useState({
+    open: false,
+    tone: 'neutral',
+    title: '',
+    message: '',
+  })
 
   useEffect(() => {
     let ignore = false
@@ -68,16 +88,115 @@ export default function AdminAccountsPage() {
   }, [user?.is_main_admin])
 
   const assignmentMap = useMemo(() => buildAssignmentMap(groups), [groups])
-  const groupAdmins = useMemo(() => (
-    availableAdmins
-      .filter(admin => assignmentMap.has(admin.id))
+  const adminAccounts = useMemo(() => (
+    [...availableAdmins]
       .sort((left, right) => left.name.localeCompare(right.name))
-  ), [assignmentMap, availableAdmins])
-  const unassignedAdmins = useMemo(() => (
-    availableAdmins
-      .filter(admin => !assignmentMap.has(admin.id))
-      .sort((left, right) => left.name.localeCompare(right.name))
-  ), [assignmentMap, availableAdmins])
+  ), [availableAdmins])
+
+  async function refreshAccounts() {
+    const payload = await listGroups()
+    setGroups(payload.groups || [])
+    setAvailableAdmins(payload.available_admins || [])
+  }
+
+  function openDialog(tone, title, message) {
+    setDialogState({ open: true, tone, title, message })
+  }
+
+  function closeDialog() {
+    setDialogState(current => ({ ...current, open: false }))
+  }
+
+  function startEditAdmin(admin) {
+    setEditingAdminId(admin.id)
+    setAdminForm({
+      name: admin.name || '',
+      email: admin.email || '',
+      password: '',
+      password_confirmation: '',
+      group_id: admin.group_id ? String(admin.group_id) : '',
+    })
+    setAdminErrors({})
+  }
+
+  function resetAdminForm() {
+    setEditingAdminId(null)
+    setAdminForm(emptyAdminForm)
+    setAdminErrors({})
+  }
+
+  function handleAdminChange(event) {
+    const { name, value } = event.target
+    setAdminForm(current => ({ ...current, [name]: value }))
+    setAdminErrors(current => ({ ...current, [name]: undefined }))
+  }
+
+  async function submitAdmin(event) {
+    event.preventDefault()
+
+    const nextErrors = {}
+
+    if (!adminForm.name.trim()) {
+      nextErrors.name = ['Admin name is required.']
+    }
+
+    if (!adminForm.email.trim()) {
+      nextErrors.email = ['Email is required.']
+    }
+
+    if (!editingAdminId && adminForm.password.length < 8) {
+      nextErrors.password = ['Password must be at least 8 characters.']
+    }
+
+    if (!editingAdminId && adminForm.password !== adminForm.password_confirmation) {
+      nextErrors.password_confirmation = ['Password confirmation must match.']
+    }
+
+    setAdminErrors(nextErrors)
+
+    if (Object.keys(nextErrors).length) {
+      return
+    }
+
+    setIsSavingAdmin(true)
+
+    try {
+      const payload = editingAdminId ? await updateAdminAccount(editingAdminId, {
+        name: adminForm.name,
+        email: adminForm.email,
+        group_id: adminForm.group_id ? Number(adminForm.group_id) : null,
+      }) : await createAdminAccount({
+        name: adminForm.name,
+        email: adminForm.email,
+        password: adminForm.password,
+        password_confirmation: adminForm.password_confirmation,
+        group_id: adminForm.group_id ? Number(adminForm.group_id) : null,
+      })
+      await refreshAccounts()
+      resetAdminForm()
+      openDialog('success', editingAdminId ? 'Admin updated' : 'Admin registered', payload.message || 'The admin account has been saved.')
+    } catch (error) {
+      setAdminErrors(error.errors || {})
+      openDialog('error', editingAdminId ? 'Unable to update admin' : 'Unable to register admin', error.message || 'Please review the admin details and try again.')
+    } finally {
+      setIsSavingAdmin(false)
+    }
+  }
+
+  async function removeAdmin(id) {
+    try {
+      const payload = await deleteAdminAccount(id)
+      await refreshAccounts()
+      if (editingAdminId === id) {
+        resetAdminForm()
+      }
+      openDialog('success', 'Admin deleted', payload.message || 'The admin account has been deleted.')
+    } catch (error) {
+      openDialog('error', 'Unable to delete admin', error.message || 'The admin account could not be deleted.')
+    } finally {
+      setConfirmDeleteId(null)
+    }
+  }
 
   if (!user?.is_main_admin) {
     return (
@@ -97,8 +216,8 @@ export default function AdminAccountsPage() {
     return <div className="admin-surface admin-loading">Loading admin accounts...</div>
   }
 
-  const assignedCount = groupAdmins.length
-  const unassignedCount = unassignedAdmins.length
+  const assignedCount = adminAccounts.filter(admin => assignmentMap.has(admin.id)).length
+  const unassignedCount = adminAccounts.length - assignedCount
   const totalAdminCount = availableAdmins.length + 1
 
   return (
@@ -151,62 +270,119 @@ export default function AdminAccountsPage() {
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
-              <h2>Assigned Group Admins</h2>
-              <p>These accounts are already attached to a group and can manage their own group area.</p>
+              <h2>Group Admin Accounts</h2>
+              <p>Review assignment status and manage group admin accounts from one list.</p>
             </div>
             <Link className="btn-outline" to="/dashboard/groups">Manage Groups</Link>
           </div>
 
           <div className="admin-data-table">
-            {groupAdmins.map(admin => {
+            {adminAccounts.map(admin => {
               const assignment = assignmentMap.get(admin.id)
 
               return (
-                <div key={admin.id} className="admin-row">
+                <div key={admin.id} className="admin-row admin-account-row">
                   <div>
                     <strong>{formatDisplayText(admin.name)}</strong>
                     <span>{admin.email}</span>
                   </div>
                   <div>
-                    <small>Assigned group</small>
-                    <span>{formatDisplayText(assignment?.groupName, 'Unknown Group')}</span>
+                    <small>Status</small>
+                    <span>{assignment ? 'Assigned' : 'Not assigned'}</span>
+                  </div>
+                  <div>
+                    <small>Group</small>
+                    {assignment ? (
+                      <Link to={`/dashboard/groups?group=${assignment.groupId}`}>{formatDisplayText(assignment.groupName)}</Link>
+                    ) : (
+                      <span>None</span>
+                    )}
                   </div>
                   <div className="admin-row-actions">
-                    {assignment?.groupId ? <Link to={`/dashboard/groups?group=${assignment.groupId}`}>Open Group</Link> : null}
+                    <button type="button" onClick={() => startEditAdmin(admin)}>Edit</button>
+                    <button type="button" className="danger" onClick={() => setConfirmDeleteId(admin.id)}>Delete</button>
                   </div>
                 </div>
               )
             })}
-            {!groupAdmins.length ? <p className="admin-empty">No group admins have been assigned yet.</p> : null}
+            {!adminAccounts.length ? <p className="admin-empty">No group admin accounts exist yet.</p> : null}
           </div>
         </article>
 
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
-              <h2>Unassigned Admins</h2>
-              <p>These admin accounts exist, but they are not linked to any parish group yet.</p>
+              <h2>{editingAdminId ? 'Edit Admin' : 'Select Admin'}</h2>
+              <p>{editingAdminId ? 'Update the admin name, email, or group assignment.' : 'Register a normal admin so they can log in with their own email and password.'}</p>
             </div>
-            <Link className="btn-outline" to="/dashboard/groups">Assign in Groups</Link>
           </div>
 
-          <div className="admin-data-table">
-            {unassignedAdmins.map(admin => (
-              <div key={admin.id} className="admin-row">
-                <div>
-                  <strong>{formatDisplayText(admin.name)}</strong>
-                  <span>{admin.email}</span>
+          <form className="admin-form" onSubmit={submitAdmin} noValidate>
+              <label>
+                <span>Admin name</span>
+                <input name="name" value={adminForm.name} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.name)} />
+                {adminErrors.name ? <p className="admin-field-error">{adminErrors.name[0]}</p> : null}
+              </label>
+
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" value={adminForm.email} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.email)} />
+                {adminErrors.email ? <p className="admin-field-error">{adminErrors.email[0]}</p> : null}
+              </label>
+
+              {!editingAdminId ? (
+                <div className="admin-form-grid">
+                  <label>
+                    <span>Password</span>
+                    <input name="password" type="password" value={adminForm.password} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password)} />
+                    {adminErrors.password ? <p className="admin-field-error">{adminErrors.password[0]}</p> : null}
+                  </label>
+
+                  <label>
+                    <span>Confirm password</span>
+                    <input name="password_confirmation" type="password" value={adminForm.password_confirmation} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password_confirmation)} />
+                    {adminErrors.password_confirmation ? <p className="admin-field-error">{adminErrors.password_confirmation[0]}</p> : null}
+                  </label>
                 </div>
-                <div>
-                  <small>Status</small>
-                  <span>Ready to assign</span>
-                </div>
+              ) : null}
+
+              <label>
+                <span>Assigned group</span>
+                <select name="group_id" value={adminForm.group_id} onChange={handleAdminChange}>
+                  <option value="">Not assigned</option>
+                  {groups.map(group => (
+                    <option key={group.id} value={group.id}>{formatDisplayText(group.name)}</option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="admin-actions">
+                <button className="btn-primary" type="submit" disabled={isSavingAdmin}>{isSavingAdmin ? 'Saving...' : editingAdminId ? 'Save Admin' : 'Register Admin'}</button>
+                <button className="btn-outline" type="button" onClick={resetAdminForm}>{editingAdminId ? 'Cancel Edit' : 'Reset'}</button>
               </div>
-            ))}
-            {!unassignedAdmins.length ? <p className="admin-empty">Every existing admin account is already assigned to a group.</p> : null}
-          </div>
+            </form>
         </article>
       </div>
+
+      <FeedbackDialog
+        open={dialogState.open}
+        tone={dialogState.tone}
+        title={dialogState.title}
+        message={dialogState.message}
+        confirmLabel="Close"
+        onClose={closeDialog}
+      />
+      <FeedbackDialog
+        open={confirmDeleteId !== null}
+        tone="neutral"
+        variant="confirm"
+        title="Delete this admin?"
+        message="This will permanently delete the selected group admin account."
+        confirmLabel="Delete Admin"
+        cancelLabel="Keep Admin"
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={() => removeAdmin(confirmDeleteId)}
+      />
     </div>
   )
 }

@@ -65,7 +65,7 @@ class ContactMessageRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'email' => ['required', 'email:rfc', 'max:255'],
-            'phone' => ['nullable', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
+            'phone' => ['required', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
             'subject' => ['required', 'string', 'min:3', 'max:255'],
             'category' => ['required', 'string', 'max:100'],
             'group_id' => ['nullable', 'integer', 'exists:groups,id', 'required_if:category,group_join'],
@@ -77,6 +77,7 @@ class ContactMessageRequest extends FormRequest
     {
         return [
             'name.regex' => 'Name may only contain letters, spaces, apostrophes, hyphens, and full stops.',
+            'phone.required' => 'Phone number is required.',
             'phone.regex' => 'Phone number may only contain numbers, spaces, and common phone symbols.',
             'message.min' => 'Message must be at least 10 characters.',
         ];

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateParishRegistrationRequest;
 use App\Http\Resources\ParishRegistrationResource;
 use App\Models\ParishRegistration;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 
 class ParishRegistrationController extends Controller
@@ -47,6 +48,7 @@ class ParishRegistrationController extends Controller
     // added: delete registration with children and interest
     public function destroy(Request $request, ParishRegistration $parishRegistration)
     {
+        $registrationName = $parishRegistration->full_name;
         // delete children first
         $parishRegistration->children()->delete();
 
@@ -57,6 +59,7 @@ class ParishRegistrationController extends Controller
 
         // delete main record
         $parishRegistration->delete();
+        Audit::log($request, 'deleted registration', $parishRegistration, $registrationName);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -121,6 +124,7 @@ class ParishRegistrationController extends Controller
                 'weekly_newsletter' => (bool) ($validated['weekly_newsletter'] ?? false),
             ],
         );
+        Audit::log($request, 'updated registration', $parishRegistration, $parishRegistration->full_name);
 
         if ($request->expectsJson()) {
             return response()->json([

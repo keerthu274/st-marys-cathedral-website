@@ -9,6 +9,7 @@ import {
   updateParishCouncilMember,
 } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
@@ -19,6 +20,7 @@ const emptyMemberForm = {
   sort_order: '0',
   is_active: true,
 }
+const maxImageSize = 2 * 1024 * 1024
 
 function FieldError({ errors, name }) {
   if (!errors?.[name]?.[0]) {
@@ -186,11 +188,11 @@ export default function AdminParishCouncilPage() {
     }))
   }
 
-  function handleFileChange(event) {
+  async function handleFileChange(event) {
     const file = event.target.files?.[0] || null
-    setSelectedFile(file)
 
     if (!file) {
+      setSelectedFile(null)
       setMemberErrors(current => ({
         ...current,
         photo: selectedMemberId ? undefined : ['Please upload a member photo.'],
@@ -199,21 +201,28 @@ export default function AdminParishCouncilPage() {
     }
 
     if (!isImageFile(file)) {
+      setSelectedFile(null)
       setMemberErrors(current => ({
         ...current,
         photo: ['The photo must be a JPG, PNG, or WebP image.'],
       }))
+      event.target.value = ''
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    const preparedFile = await compressImageFile(file, { maxBytes: maxImageSize })
+
+    if (preparedFile.size > maxImageSize) {
+      setSelectedFile(null)
       setMemberErrors(current => ({
         ...current,
-        photo: ['The photo must be 5MB or smaller.'],
+        photo: ['The photo is still too large after compression. Please choose one under 2 MB.'],
       }))
+      event.target.value = ''
       return
     }
 
+    setSelectedFile(preparedFile)
     setMemberErrors(current => ({ ...current, photo: undefined }))
   }
 
@@ -234,8 +243,8 @@ export default function AdminParishCouncilPage() {
       nextErrors.photo = ['The photo must be a JPG, PNG, or WebP image.']
     }
 
-    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
-      nextErrors.photo = ['The photo must be 5MB or smaller.']
+    if (selectedFile && selectedFile.size > maxImageSize) {
+      nextErrors.photo = ['The photo must be 2 MB or smaller.']
     }
 
     return nextErrors
@@ -464,13 +473,14 @@ export default function AdminParishCouncilPage() {
           <label>
             <span>{selectedMemberId ? 'Replace photo' : 'Photo'}</span>
             <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} aria-invalid={Boolean(memberErrors.photo)} />
+            <p className="admin-field-hint">Large images are compressed automatically.</p>
             <FieldError errors={memberErrors} name="photo" />
           </label>
 
           {selectedFile ? (
             <div className="admin-panel">
               <strong>Selected photo</strong>
-              <p>{selectedFile.name} • {formatBytes(selectedFile.size)}</p>
+              <p>Selected uploaded photo • {formatBytes(selectedFile.size)}</p>
             </div>
           ) : null}
 

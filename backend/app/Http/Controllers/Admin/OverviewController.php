@@ -8,10 +8,13 @@ use App\Http\Resources\EventResource;
 use App\Http\Resources\GroupMemberResource;
 use App\Http\Resources\MassTimeResource;
 use App\Http\Resources\ParishRegistrationResource;
+use App\Models\AuditLog;
 use App\Models\ContactMessage;
 use App\Models\Event;
 use App\Models\GroupMember;
 use App\Models\MassTime;
+use App\Models\NewsPost;
+use App\Models\ParishChild;
 use App\Models\ParishRegistration;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +65,19 @@ class OverviewController extends Controller
             ->latest()
             ->limit(4)
             ->get() : collect();
+        $alertCounts = $this->buildAlertCounts($request);
+        $auditLogs = $user->is_main_admin ? AuditLog::with('user')
+            ->latest()
+            ->limit(6)
+            ->get()
+            ->map(fn (AuditLog $log) => [
+                'id' => $log->id,
+                'action' => $log->action,
+                'subject_title' => $log->subject_title,
+                'admin_name' => $log->user?->name ?? 'Admin',
+                'created_at' => $log->created_at?->toIso8601String(),
+            ])
+            ->values() : collect();
 
         return response()->json([
             'scope' => [
@@ -85,11 +101,14 @@ class OverviewController extends Controller
                 ],
                 'contact_messages' => [
                     'total' => $hasGroupScope ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                    'new' => $alertCounts['new_contact_messages'],
                 ],
                 'group_members' => [
                     'total' => $hasGroupScope ? GroupMember::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
                 ],
             ],
+            'notifications' => $this->buildNotifications($request, $alertCounts),
+            'recent_audit_logs' => $auditLogs,
             'recent' => [
                 'events' => $this->withOverviewKeys(
                     EventResource::collection($events)->resolve($request),
@@ -123,6 +142,102 @@ class OverviewController extends Controller
                 ),
             ],
         ]);
+    }
+
+    private function buildAlertCounts(Request $request): array
+    {
+        $user = $request->user();
+        $hasGroupScope = $user->is_main_admin || (bool) $user->group_id;
+        $today = CarbonImmutable::now()->startOfDay();
+
+        return [
+            'new_contact_messages' => $hasGroupScope
+                ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                    ->where('status', 'new')
+                    ->count()
+                : 0,
+            'draft_events' => $hasGroupScope
+                ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                    ->where('status', 'draft')
+                    ->count()
+                : 0,
+            'draft_news' => $user->is_main_admin ? NewsPost::where('status', 'draft')->count() : 0,
+            'adult_children' => $user->is_main_admin
+                ? ParishChild::whereNotNull('date_of_birth')
+                    ->whereDate('date_of_birth', '<=', $today->subYears(18)->toDateString())
+                    ->count()
+                : 0,
+            'children_turning_18_soon' => $user->is_main_admin
+                ? ParishChild::whereNotNull('date_of_birth')
+                    ->whereBetween('date_of_birth', [
+                        $today->subYears(18)->addDay()->toDateString(),
+                        $today->addMonths(3)->subYears(18)->toDateString(),
+                    ])
+                    ->count()
+                : 0,
+        ];
+    }
+
+    private function buildNotifications(Request $request, array $counts): array
+    {
+        $items = [];
+
+        if ($counts['new_contact_messages'] > 0) {
+            $items[] = [
+                'key' => 'new-contact-messages',
+                'title' => 'New contact messages',
+                'message' => "{$counts['new_contact_messages']} message(s) still need a first review.",
+                'count' => $counts['new_contact_messages'],
+                'tone' => 'gold',
+                'link' => '/dashboard/contact-messages',
+            ];
+        }
+
+        if ($counts['draft_events'] > 0) {
+            $items[] = [
+                'key' => 'draft-events',
+                'title' => 'Draft events',
+                'message' => "{$counts['draft_events']} event(s) are not published yet.",
+                'count' => $counts['draft_events'],
+                'tone' => 'blue',
+                'link' => '/dashboard/events',
+            ];
+        }
+
+        if ($request->user()->is_main_admin && $counts['draft_news'] > 0) {
+            $items[] = [
+                'key' => 'draft-news',
+                'title' => 'Draft news posts',
+                'message' => "{$counts['draft_news']} news post(s) are waiting to publish.",
+                'count' => $counts['draft_news'],
+                'tone' => 'blue',
+                'link' => '/dashboard/news',
+            ];
+        }
+
+        if ($request->user()->is_main_admin && $counts['adult_children'] > 0) {
+            $items[] = [
+                'key' => 'adult-children',
+                'title' => 'Children now 18+',
+                'message' => "{$counts['adult_children']} child record(s) should be reviewed.",
+                'count' => $counts['adult_children'],
+                'tone' => 'red',
+                'link' => '/dashboard/registrations',
+            ];
+        }
+
+        if ($request->user()->is_main_admin && $counts['children_turning_18_soon'] > 0) {
+            $items[] = [
+                'key' => 'children-turning-18',
+                'title' => 'Turning 18 soon',
+                'message' => "{$counts['children_turning_18_soon']} child record(s) turn 18 in the next 3 months.",
+                'count' => $counts['children_turning_18_soon'],
+                'tone' => 'gold',
+                'link' => '/dashboard/registrations',
+            ];
+        }
+
+        return $items;
     }
 
     public function updateItemVisibility(Request $request): JsonResponse

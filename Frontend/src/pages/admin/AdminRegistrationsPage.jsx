@@ -25,6 +25,78 @@ function formatDisplayText(value, fallback = 'Not set') {
   return value ? titleCaseWords(value) : fallback
 }
 
+function getAgeFromDateOfBirth(value) {
+  if (!value) {
+    return null
+  }
+
+  const birthDate = new Date(`${value}T00:00:00`)
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return null
+  }
+
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDifference = today.getMonth() - birthDate.getMonth()
+
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+    age -= 1
+  }
+
+  return age
+}
+
+function getEighteenthBirthday(value) {
+  if (!value) {
+    return null
+  }
+
+  const birthDate = new Date(`${value}T00:00:00`)
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return null
+  }
+
+  return new Date(birthDate.getFullYear() + 18, birthDate.getMonth(), birthDate.getDate())
+}
+
+function formatDateObject(date) {
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function getChildAgeStatus(value) {
+  const age = getAgeFromDateOfBirth(value)
+  const eighteenthBirthday = getEighteenthBirthday(value)
+
+  if (age === null || !eighteenthBirthday) {
+    return { age: null, tone: 'unknown', label: 'Date of birth not provided' }
+  }
+
+  if (age >= 18) {
+    return { age, tone: 'adult', label: '18+ - review family record' }
+  }
+
+  const today = new Date()
+  const soonThreshold = new Date(today)
+  soonThreshold.setMonth(soonThreshold.getMonth() + 3)
+
+  if (eighteenthBirthday <= soonThreshold) {
+    return { age, tone: 'soon', label: `Turns 18 on ${formatDateObject(eighteenthBirthday)}` }
+  }
+
+  return { age, tone: 'child', label: `Age ${age}` }
+}
+
+function isActiveChild(child) {
+  const age = getAgeFromDateOfBirth(child?.date_of_birth)
+  return age !== null && age < 18
+}
+
 const interestOptions = [
   { value: 'volunteering', label: 'Volunteering' },
   { value: 'parish_groups', label: 'Parish Groups' },
@@ -425,7 +497,7 @@ export default function AdminRegistrationsPage() {
       : true
     const matchesType = registrationTypeFilter ? item.registration_type === registrationTypeFilter : true
     const matchesInterest = registrationInterestFilter ? Boolean(item.interest?.[registrationInterestFilter]) : true
-    const childCount = Array.isArray(item.children) ? item.children.length : 0
+    const childCount = Array.isArray(item.children) ? item.children.filter(isActiveChild).length : 0
     const matchesChildren = registrationChildrenFilter === 'with_children'
       ? childCount > 0
       : registrationChildrenFilter === 'without_children'
@@ -567,9 +639,16 @@ export default function AdminRegistrationsPage() {
               <h3>Children</h3>
               {registrationDetail.children?.length ? (
                 <ul className="admin-inline-list">
-                  {registrationDetail.children.map(child => (
-                    <li key={`${child.id}-${child.child_name}`}>{formatDisplayText(child.child_name)} ({child.date_of_birth ? formatDate(child.date_of_birth) : 'DOB not provided'})</li>
-                  ))}
+                  {registrationDetail.children.map(child => {
+                    const ageStatus = getChildAgeStatus(child.date_of_birth)
+
+                    return (
+                      <li key={child.id || child.date_of_birth || child.child_name} className={`admin-age-alert ${ageStatus.tone !== 'child' ? `is-${ageStatus.tone}` : ''}`}>
+                        <span>{formatDisplayText(child.child_name)} ({child.date_of_birth ? formatDate(child.date_of_birth) : 'DOB not provided'})</span>
+                        <strong>{ageStatus.label}</strong>
+                      </li>
+                    )
+                  })}
                 </ul>
               ) : <p>No children listed yet.</p>}
               {registrationDetail.registration_type !== 'individual' ? (
@@ -629,8 +708,11 @@ export default function AdminRegistrationsPage() {
               <strong>Children</strong>
               <p className="admin-panel-copy">Add or remove children here when the family registration needs extra people attached to it.</p>
               <div className="admin-children-list">
-                {registrationForm.children.map((child, index) => (
-	                  <div key={`${index}-${child.child_name}`} className="admin-child-row">
+                {registrationForm.children.map((child, index) => {
+                  const ageStatus = getChildAgeStatus(child.date_of_birth)
+
+                  return (
+	                  <div key={index} className={`admin-child-row ${ageStatus.tone !== 'child' ? `is-${ageStatus.tone}` : ''}`}>
 	                    <div>
                         <span className="admin-child-field-label">Child name</span>
 	                      <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} onBlur={() => formatChildField(index, 'child_name')} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
@@ -644,8 +726,10 @@ export default function AdminRegistrationsPage() {
 	                    <button type="button" className="admin-link-btn danger" onClick={() => setConfirmRemoveChildIndex(index)}>
 	                      Remove
 	                    </button>
+                      {ageStatus.tone === 'adult' || ageStatus.tone === 'soon' ? <p className="admin-child-age-note">{ageStatus.label}</p> : null}
 	                  </div>
-                ))}
+                  )
+                })}
               </div>
               <button type="button" className="admin-link-btn" onClick={addChildRow}>Add child</button>
             </div>

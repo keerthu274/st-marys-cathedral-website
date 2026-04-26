@@ -309,6 +309,18 @@ export function deleteGroup(id) {
   return adminRequest(`/admin/groups/${id}`, { method: 'DELETE' })
 }
 
+export function createAdminAccount(data) {
+  return adminRequest('/admin/admin-accounts', { method: 'POST', body: data })
+}
+
+export function updateAdminAccount(id, data) {
+  return adminRequest(`/admin/admin-accounts/${id}`, { method: 'PUT', body: data })
+}
+
+export function deleteAdminAccount(id) {
+  return adminRequest(`/admin/admin-accounts/${id}`, { method: 'DELETE' })
+}
+
 export function createGroupMember(groupId, data) {
   return adminRequest(`/admin/groups/${groupId}/members`, { method: 'POST', body: data })
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ContactMessageResource;
 use App\Models\ContactMessage;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -59,6 +60,9 @@ class ContactMessageController extends Controller
         $contactMessage->update([
             'status' => $validated['status'],
         ]);
+        Audit::log($request, 'updated contact status', $contactMessage, $contactMessage->subject, [
+            'status' => $validated['status'],
+        ]);
 
         return response()->json([
             'message' => 'Contact message status updated successfully.',
@@ -66,9 +70,11 @@ class ContactMessageController extends Controller
         ]);
     }
 
-    public function destroy(ContactMessage $contactMessage)
+    public function destroy(Request $request, ContactMessage $contactMessage)
     {
+        $subject = $contactMessage->subject;
         $contactMessage->delete();
+        Audit::log($request, 'deleted contact message', $contactMessage, $subject);
 
         return response()->json([
             'message' => 'Contact message deleted successfully.',

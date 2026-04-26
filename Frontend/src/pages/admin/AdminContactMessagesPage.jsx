@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useOutletContext, useSearchParams } from 'react-router-dom'
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteContactMessage, getContactMessage, listContactMessages, updateContactMessageStatus } from '../../lib/admin'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
@@ -78,6 +78,24 @@ function formatDisplayText(value, fallback = 'Not provided') {
 
 function formatMessageCopy(value) {
   return value ? capitalizeFirst(value) : 'No message content.'
+}
+
+function buildAddMemberUrl(message, user) {
+  const params = new URLSearchParams()
+
+  if (message.group_id) {
+    params.set('group', String(message.group_id))
+  }
+
+  params.set('new_member', '1')
+  params.set('name', message.name || '')
+  params.set('email', message.email || '')
+  params.set('phone', message.phone || '')
+  params.set('notes', `From contact message: ${message.subject || 'No subject'}`)
+
+  const basePath = user?.is_main_admin ? '/dashboard/groups' : '/dashboard/my-group'
+
+  return `${basePath}?${params.toString()}`
 }
 
 export default function AdminContactMessagesPage() {
@@ -436,7 +454,7 @@ export default function AdminContactMessagesPage() {
                   ))}
                 </select>
               </label>
-              <p>{isUpdatingStatus ? 'Saving status...' : 'Keep track of whether this enquiry is new, being handled, or finished.'}</p>
+              {isUpdatingStatus ? <p>Saving status...</p> : null}
             </article>
 
             <article className="admin-detail-block">
@@ -447,6 +465,14 @@ export default function AdminContactMessagesPage() {
             <article className="admin-detail-block">
               <h3>Routed Group</h3>
               <p>{messageDetail.group_name ? formatDisplayText(messageDetail.group_name) : 'Main parish inbox only'}</p>
+              {messageDetail.is_existing_group_member ? (
+                <p className="admin-member-status">Already in this group</p>
+              ) : null}
+              {messageDetail.group_id && !messageDetail.is_existing_group_member ? (
+                <Link className="btn-outline admin-add-member-link" to={buildAddMemberUrl(messageDetail, user)}>
+                  Add Member
+                </Link>
+              ) : null}
             </article>
 
             <article className="admin-detail-block admin-detail-block-full">

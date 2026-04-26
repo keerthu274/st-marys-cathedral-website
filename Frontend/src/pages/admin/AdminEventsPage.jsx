@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { countWords, hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder, validateWordLimit } from '../../lib/validation'
 
@@ -106,6 +107,8 @@ function formatBytes(value) {
 
   return `${(kb / 1024).toFixed(1)} MB`
 }
+
+const maxImageSize = 2 * 1024 * 1024
 
 function isImageFile(file) {
   return ['image/jpeg', 'image/png', 'image/webp'].includes(file?.type)
@@ -301,12 +304,12 @@ export default function AdminEventsPage() {
     }))
   }
 
-  function handleImageChange(event) {
+  async function handleImageChange(event) {
     const file = event.target.files?.[0] || null
-    setSelectedFile(file)
     setRemoveExistingImage(false)
 
     if (!file) {
+      setSelectedFile(null)
       setEventErrors(current => ({
         ...current,
         image: undefined,
@@ -315,21 +318,28 @@ export default function AdminEventsPage() {
     }
 
     if (!isImageFile(file)) {
+      setSelectedFile(null)
       setEventErrors(current => ({
         ...current,
         image: ['The event image must be a JPG, PNG, or WebP file.'],
       }))
+      event.target.value = ''
       return
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    const preparedFile = await compressImageFile(file, { maxBytes: maxImageSize })
+
+    if (preparedFile.size > maxImageSize) {
+      setSelectedFile(null)
       setEventErrors(current => ({
         ...current,
-        image: ['The event image must be 5MB or smaller.'],
+        image: ['The event image is still too large after compression. Please choose one under 2 MB.'],
       }))
+      event.target.value = ''
       return
     }
 
+    setSelectedFile(preparedFile)
     setEventErrors(current => ({
       ...current,
       image: undefined,
@@ -429,8 +439,8 @@ export default function AdminEventsPage() {
       nextErrors.image = ['The event image must be a JPG, PNG, or WebP file.']
     }
 
-    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
-      nextErrors.image = ['The event image must be 5MB or smaller.']
+    if (selectedFile && selectedFile.size > maxImageSize) {
+      nextErrors.image = ['The event image must be 2 MB or smaller.']
     }
 
     if (!['draft', 'published'].includes(eventForm.status)) {
@@ -638,12 +648,13 @@ export default function AdminEventsPage() {
               aria-invalid={Boolean(eventErrors.image)}
             />
             <FieldError errors={eventErrors} name="image" />
+            <p className="admin-field-hint">Large images are compressed automatically.</p>
           </label>
 
           {selectedFile ? (
             <div className="admin-panel">
               <strong>Selected image</strong>
-              <p>{selectedFile.name} • {formatBytes(selectedFile.size)}</p>
+              <p>Selected uploaded image • {formatBytes(selectedFile.size)}</p>
             </div>
           ) : null}
 

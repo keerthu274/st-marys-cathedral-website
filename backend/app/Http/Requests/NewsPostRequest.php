@@ -38,7 +38,7 @@ class NewsPostRequest extends FormRequest
                 $newsPost ? 'nullable' : 'nullable',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
-                'max:5120',
+                'max:2048',
             ],
             'remove_image' => ['nullable', 'boolean'],
         ];
@@ -49,7 +49,8 @@ class NewsPostRequest extends FormRequest
         return [
             'image.image' => 'The news image must be an image file.',
             'image.mimes' => 'The news image must be a JPG, PNG, or WebP image.',
-            'image.max' => 'The news image must be 5MB or smaller.',
+            'image.max' => 'The news image must be 2MB or smaller.',
+            'image.uploaded' => 'The news image must be 2MB or smaller.',
         ];
     }
 

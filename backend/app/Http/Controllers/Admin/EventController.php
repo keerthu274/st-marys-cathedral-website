@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;          // Base controller class
 use App\Http\Resources\EventResource;
 use App\Models\Event;                         // Our Event model (database table)
 use App\Http\Requests\EventRequest;           // Event validation request (clash prevention)
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -85,6 +86,7 @@ class EventController extends Controller
 
         // Create the event in the database using validated data
         $event = Event::create($validated);
+        Audit::log($request, 'created event', $event, $event->title);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -174,6 +176,7 @@ class EventController extends Controller
 
         // Update the event using validated data
         $event->update($validated);
+        Audit::log($request, 'updated event', $event, $event->title);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -216,9 +219,11 @@ class EventController extends Controller
     {
         $this->authorizeEventAccess($request, $event);
         $this->deleteImage($event->image_path);
+        $eventTitle = $event->title;
 
         // Delete the selected event from database
         $event->delete();
+        Audit::log($request, 'deleted event', $event, $eventTitle);
 
         if ($request->expectsJson()) {
             return response()->json([

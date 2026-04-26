@@ -92,7 +92,7 @@ export default function ContactPage() {
         } else if (name === 'email') {
             validateEmail(nextErrors, 'email', value)
         } else if (name === 'phone') {
-            validatePhone(nextErrors, 'phone', value)
+            validatePhone(nextErrors, 'phone', value, 'Phone number', true)
         } else if (name === 'subject') {
             requireField(nextErrors, 'subject', value, 'Subject')
             validateMaxLength(nextErrors, 'subject', value, 255, 'Subject')
@@ -126,7 +126,7 @@ export default function ContactPage() {
         validateNameText(nextErrors, 'name', contactForm.name, 'Name', true)
         validateMaxLength(nextErrors, 'name', contactForm.name, 255, 'Name')
         validateEmail(nextErrors, 'email', contactForm.email)
-        validatePhone(nextErrors, 'phone', contactForm.phone)
+        validatePhone(nextErrors, 'phone', contactForm.phone, 'Phone number', true)
         requireField(nextErrors, 'category', contactForm.category, 'Category')
         requireField(nextErrors, 'subject', contactForm.subject, 'Subject')
         validateMaxLength(nextErrors, 'subject', contactForm.subject, 255, 'Subject')
@@ -299,8 +299,8 @@ export default function ContactPage() {
                                         {contactErrors.category ? <span className="field-error">{contactErrors.category[0]}</span> : null}
                                     </div>
                                     <div className="form-group">
-                                        <label>Phone Number</label>
-                                        <input name="phone" value={contactForm.phone} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.phone)} />
+                                        <label>Phone Number <span className="required">*</span></label>
+                                        <input name="phone" value={contactForm.phone} onChange={handleContactChange} required aria-invalid={Boolean(contactErrors.phone)} />
                                         {contactErrors.phone ? <span className="field-error">{contactErrors.phone[0]}</span> : null}
                                     </div>
                                 </div>

@@ -92,6 +92,20 @@ function toMemberForm(member) {
   }
 }
 
+function toPrefilledMemberForm(searchParams) {
+  if (searchParams.get('new_member') !== '1') {
+    return null
+  }
+
+  return {
+    name: searchParams.get('name') || '',
+    email: searchParams.get('email') || '',
+    phone: searchParams.get('phone') || '',
+    role: searchParams.get('role') || '',
+    notes: searchParams.get('notes') || '',
+  }
+}
+
 export default function AdminGroupsPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -110,6 +124,8 @@ export default function AdminGroupsPage() {
   const [groupSearch, setGroupSearch] = useState('')
   const [groupStatusFilter, setGroupStatusFilter] = useState('')
   const [groupAdminFilter, setGroupAdminFilter] = useState('')
+  const [memberSearch, setMemberSearch] = useState('')
+  const [memberJoinedFilter, setMemberJoinedFilter] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [confirmDeleteMemberId, setConfirmDeleteMemberId] = useState(null)
   const [dialogState, setDialogState] = useState({
@@ -120,6 +136,23 @@ export default function AdminGroupsPage() {
   })
 
   const selectedGroup = groups.find(item => item.id === selectedGroupId) || null
+  const filteredMembers = (selectedGroup?.members || []).filter(member => {
+    const query = memberSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${member.name || ''} ${member.email || ''} ${member.phone || ''} ${member.role || ''}`.toLowerCase().includes(query)
+      : true
+    const joinedAt = member.created_at ? new Date(member.created_at) : null
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
+    const matchesJoined = !memberJoinedFilter || (joinedAt && (() => {
+      const threshold = new Date(startOfToday)
+      const days = memberJoinedFilter === '7_days' ? 7 : memberJoinedFilter === '30_days' ? 30 : 365
+      threshold.setDate(threshold.getDate() - (days - 1))
+      return joinedAt >= threshold
+    })())
+
+    return matchesQuery && matchesJoined
+  })
   const filteredGroups = groups.filter(item => {
     const query = groupSearch.trim().toLowerCase()
     const matchesQuery = query
@@ -154,16 +187,18 @@ export default function AdminGroupsPage() {
         const nextGroups = payload.groups || []
         const requestedGroupId = Number(searchParams.get('group') || searchParams.get('edit') || 0) || null
         const requestedMemberId = Number(searchParams.get('member') || 0) || null
+        const prefilledMember = toPrefilledMemberForm(searchParams)
         const nextGroup = nextGroups.find(item => item.id === requestedGroupId) || nextGroups[0] || null
         const nextMember = nextGroup?.members?.find(item => item.id === requestedMemberId) || null
 
         setGroups(nextGroups)
         setAvailableAdmins(payload.available_admins || [])
         setSelectedGroupId(nextGroup?.id || null)
-        setSelectedMemberId(nextMember?.id || null)
+        setSelectedMemberId(prefilledMember ? null : nextMember?.id || null)
         setIsCreatingGroup(false)
         setGroupForm(user?.is_main_admin ? toGroupForm(nextGroup) : emptyGroupForm)
-        setMemberForm(toMemberForm(nextMember))
+        setMemberForm(prefilledMember || toMemberForm(nextMember))
+        setMemberErrors({})
       } catch (error) {
         if (!ignore) {
           openDialog('error', 'Unable to load groups', error.message || 'The group workspace could not be loaded.')
@@ -193,6 +228,7 @@ export default function AdminGroupsPage() {
 
     const requestedGroupId = Number(searchParams.get('group') || searchParams.get('edit') || 0) || null
     const requestedMemberId = Number(searchParams.get('member') || 0) || null
+    const prefilledMember = toPrefilledMemberForm(searchParams)
     const nextGroup = groups.find(item => item.id === requestedGroupId) || groups.find(item => item.id === selectedGroupId) || groups[0]
     const nextMember = nextGroup?.members?.find(item => item.id === requestedMemberId)
       || nextGroup?.members?.find(item => item.id === selectedMemberId)
@@ -205,7 +241,13 @@ export default function AdminGroupsPage() {
       }
     }
 
-    if ((nextMember?.id || null) !== selectedMemberId) {
+    if (prefilledMember) {
+      if (selectedMemberId !== null) {
+        setSelectedMemberId(null)
+      }
+      setMemberForm(prefilledMember)
+      setMemberErrors({})
+    } else if ((nextMember?.id || null) !== selectedMemberId) {
       setSelectedMemberId(nextMember?.id || null)
       setMemberForm(toMemberForm(nextMember))
     }
@@ -491,6 +533,9 @@ export default function AdminGroupsPage() {
     return <div className="admin-surface admin-loading">Loading group workspace...</div>
   }
 
+  const isContactPrefill = searchParams.get('new_member') === '1'
+  const canEditPersonalDetails = user?.is_main_admin || (!selectedMemberId && !isContactPrefill)
+
   return (
     <div className="admin-page-grid two-col">
       <div className="admin-page-grid">
@@ -503,25 +548,27 @@ export default function AdminGroupsPage() {
             {user?.is_main_admin ? <button className="btn-primary" type="button" onClick={startNewGroup}>New Group</button> : null}
           </div>
 
-          <div className="admin-filter-bar">
-            <input
-              type="search"
-              className="admin-filter-input"
-              placeholder="Search groups..."
-              value={groupSearch}
-              onChange={event => setGroupSearch(event.target.value)}
-            />
-            <select className="admin-filter-select" value={groupStatusFilter} onChange={event => setGroupStatusFilter(event.target.value)}>
-              <option value="">All visibility</option>
-              <option value="active">Active</option>
-              <option value="hidden">Hidden</option>
-            </select>
-            <select className="admin-filter-select" value={groupAdminFilter} onChange={event => setGroupAdminFilter(event.target.value)}>
-              <option value="">Any admin assignment</option>
-              <option value="assigned">Has assigned admin</option>
-              <option value="unassigned">No assigned admin</option>
-            </select>
-          </div>
+          {user?.is_main_admin ? (
+            <div className="admin-filter-bar">
+              <input
+                type="search"
+                className="admin-filter-input"
+                placeholder="Search groups..."
+                value={groupSearch}
+                onChange={event => setGroupSearch(event.target.value)}
+              />
+              <select className="admin-filter-select" value={groupStatusFilter} onChange={event => setGroupStatusFilter(event.target.value)}>
+                <option value="">All visibility</option>
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+              </select>
+              <select className="admin-filter-select" value={groupAdminFilter} onChange={event => setGroupAdminFilter(event.target.value)}>
+                <option value="">Any admin assignment</option>
+                <option value="assigned">Has assigned admin</option>
+                <option value="unassigned">No assigned admin</option>
+              </select>
+            </div>
+          ) : null}
 
           {groups.length ? (
             <div className="admin-data-table">
@@ -602,7 +649,25 @@ export default function AdminGroupsPage() {
             </div>
 
             <div className="admin-data-table">
-              {selectedGroup.members?.map(member => (
+              {!user?.is_main_admin ? (
+                <div className="admin-filter-bar">
+                  <input
+                    type="search"
+                    className="admin-filter-input"
+                    placeholder="Search members..."
+                    value={memberSearch}
+                    onChange={event => setMemberSearch(event.target.value)}
+                  />
+                  <select className="admin-filter-select" value={memberJoinedFilter} onChange={event => setMemberJoinedFilter(event.target.value)}>
+                    <option value="">Any date joined</option>
+                    <option value="7_days">Joined in last 7 days</option>
+                    <option value="30_days">Joined in last 30 days</option>
+                    <option value="365_days">Joined in last year</option>
+                  </select>
+                </div>
+              ) : null}
+
+              {filteredMembers.map(member => (
                 <div key={member.id} className={`admin-row ${selectedMemberId === member.id ? 'active' : ''}`}>
                   <div>
                     <strong>{formatDisplayText(member.name)}</strong>
@@ -618,7 +683,7 @@ export default function AdminGroupsPage() {
                   </div>
                 </div>
               ))}
-              {!selectedGroup.members?.length ? <p className="admin-empty">No members have been registered for this group yet.</p> : null}
+              {!filteredMembers.length ? <p className="admin-empty">{selectedGroup.members?.length ? 'No members match the current search or date filter.' : 'No members have been registered for this group yet.'}</p> : null}
             </div>
           </article>
         ) : null}
@@ -690,23 +755,25 @@ export default function AdminGroupsPage() {
             <form className="admin-form" onSubmit={submitMember} noValidate>
               <label>
                 <span>Member name</span>
-	                <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} aria-invalid={Boolean(memberErrors.name)} />
+	                <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} disabled={!canEditPersonalDetails} aria-invalid={Boolean(memberErrors.name)} />
                 <FieldError errors={memberErrors} name="name" />
               </label>
 
               <div className="admin-form-grid">
                 <label>
                   <span>Email</span>
-                  <input name="email" value={memberForm.email} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.email)} />
+                  <input name="email" value={memberForm.email} onChange={handleMemberChange} disabled={!canEditPersonalDetails} aria-invalid={Boolean(memberErrors.email)} />
                   <FieldError errors={memberErrors} name="email" />
                 </label>
 
                 <label>
                   <span>Phone</span>
-                  <input name="phone" value={memberForm.phone} onChange={handleMemberChange} aria-invalid={Boolean(memberErrors.phone)} />
+                  <input name="phone" value={memberForm.phone} onChange={handleMemberChange} disabled={!canEditPersonalDetails} aria-invalid={Boolean(memberErrors.phone)} />
                   <FieldError errors={memberErrors} name="phone" />
                 </label>
               </div>
+
+              {!canEditPersonalDetails ? <p className="admin-field-hint">Personal details from contact messages can only be changed by the main admin. You can update group role and notes here.</p> : null}
 
               <label>
                 <span>Role in group</span>
