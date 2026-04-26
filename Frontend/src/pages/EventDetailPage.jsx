@@ -133,6 +133,13 @@ export default function EventDetailPage() {
           {!loading && event ? (
             <div className="event-detail-layout">
               <article className="event-detail-card event-detail-main">
+                {event.image_url ? (
+                  <img
+                    className="event-detail-poster"
+                    src={getBackendUrl(event.image_url)}
+                    alt={event.title}
+                  />
+                ) : null}
                 <div className="event-detail-meta">
                   <span className="event-detail-badge">{event.category || 'Parish Event'}</span>
                   <span className="event-detail-meta-item">{formatEventDate(event.start_date)}</span>

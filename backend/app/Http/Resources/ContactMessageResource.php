@@ -19,6 +19,7 @@ class ContactMessageResource extends JsonResource
             'phone' => $this->phone,
             'subject' => $this->subject,
             'category' => $this->category,
+            'status' => $this->status,
             'group_id' => $this->group_id,
             'group_name' => $this->whenLoaded('group', fn () => $this->group?->name),
             'message' => $this->message,

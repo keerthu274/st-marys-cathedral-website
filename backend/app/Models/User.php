@@ -54,6 +54,16 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (User $user): void {
+            // Promote the very first account on a fresh install to main admin.
+            if (! $user->isDirty('is_main_admin') && ! static::query()->exists()) {
+                $user->is_main_admin = true;
+            }
+        });
+    }
+
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);

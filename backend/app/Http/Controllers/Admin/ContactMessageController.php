@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ContactMessageResource;
 use App\Models\ContactMessage;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ContactMessageController extends Controller
 {
@@ -40,6 +41,28 @@ class ContactMessageController extends Controller
 
         return response()->json([
             'message' => ContactMessageResource::make($contactMessage->loadMissing('group'))->resolve($request),
+        ]);
+    }
+
+    public function update(Request $request, ContactMessage $contactMessage)
+    {
+        $user = $request->user();
+
+        if (! $user->is_main_admin && (! $user->group_id || $contactMessage->group_id !== $user->group_id)) {
+            abort(403, 'You do not have access to this contact message.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['new', 'in_progress', 'resolved'])],
+        ]);
+
+        $contactMessage->update([
+            'status' => $validated['status'],
+        ]);
+
+        return response()->json([
+            'message' => 'Contact message status updated successfully.',
+            'contact_message' => ContactMessageResource::make($contactMessage->fresh()->loadMissing('group'))->resolve($request),
         ]);
     }
 

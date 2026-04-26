@@ -104,6 +104,7 @@ class ParishRegistrationController extends Controller
                 if (!empty($child['child_name'])) {
                     $parishRegistration->children()->create([
                         'child_name' => $child['child_name'],
+                        'date_of_birth' => $child['date_of_birth'] ?? null,
                         'age' => $child['age'] ?? null,
                     ]);
                 }

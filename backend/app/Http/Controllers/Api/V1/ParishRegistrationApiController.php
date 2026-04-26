@@ -52,6 +52,7 @@ class ParishRegistrationApiController extends Controller
                 ParishChild::create([
                     'registration_id' => $registration->id,
                     'child_name' => $child['child_name'],
+                    'date_of_birth' => $child['date_of_birth'] ?? null,
                     'age' => $child['age'] ?? null,
                 ]);
             }

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import FeedbackDialog from '../components/FeedbackDialog'
 import PageHero from '../components/PageHero'
+import { getBackendUrl } from '../lib/auth'
 import {
     asError,
     firstError,
@@ -24,25 +26,26 @@ function FieldError({ errors, name }) {
 }
 
 export default function RegistrationPage() {
+    const navigate = useNavigate()
     const [regType, setRegType] = useState('individual')
-    const [children, setChildren] = useState([{ id: 1, name: '', age: '' }])
+    const [children, setChildren] = useState([{ id: 1, name: '', date_of_birth: '' }])
     const [formData, setFormData] = useState({})
     const [dialogState, setDialogState] = useState({
         open: false,
         tone: 'neutral',
         title: '',
-        message: null
+        message: null,
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formErrors, setFormErrors] = useState({})
     const formRef = useRef(null)
 
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target
+    const handleChange = event => {
+        const { name, value, type, checked } = event.target
         const nextValue = type === 'checkbox' ? checked : value
         const nextFormData = {
             ...formData,
-            [name]: nextValue
+            [name]: nextValue,
         }
 
         setFormData(nextFormData)
@@ -51,7 +54,7 @@ export default function RegistrationPage() {
 
     const handleChildChange = (id, field, value) => {
         const nextChildren = children.map(child =>
-            child.id === id ? { ...child, [field]: value } : child
+            child.id === id ? { ...child, [field]: value } : child,
         )
         const changedChild = nextChildren.find(child => child.id === id)
         const childErrors = validateChildFields(changedChild)
@@ -60,17 +63,17 @@ export default function RegistrationPage() {
         setFormErrors(current => ({
             ...current,
             [`children.${id}.name`]: childErrors.name,
-            [`children.${id}.age`]: childErrors.age
+            [`children.${id}.date_of_birth`]: childErrors.date_of_birth,
         }))
     }
 
     const handleAddChild = () => {
-        setChildren([...children, { id: Date.now(), name: '', age: '' }])
+        setChildren([...children, { id: Date.now(), name: '', date_of_birth: '' }])
     }
 
-    const handleRemoveChild = (id) => {
+    const handleRemoveChild = id => {
         if (children.length > 1) {
-            setChildren(children.filter(c => c.id !== id))
+            setChildren(children.filter(child => child.id !== id))
         }
     }
 
@@ -78,7 +81,7 @@ export default function RegistrationPage() {
         formRef.current?.reset()
         setFormData({})
         setFormErrors({})
-        setChildren([{ id: 1, name: '', age: '' }])
+        setChildren([{ id: 1, name: '', date_of_birth: '' }])
         setRegType('individual')
     }
 
@@ -110,25 +113,22 @@ export default function RegistrationPage() {
         if (regType === 'family') {
             children.forEach(child => {
                 const hasName = child.name.trim() !== ''
-                const hasAge = String(child.age).trim() !== ''
+                const hasDateOfBirth = String(child.date_of_birth).trim() !== ''
 
-                if (!hasName && hasAge) {
-                    nextErrors[`children.${child.id}.name`] = asError('Child name is required when age is entered.')
+                if (!hasName && hasDateOfBirth) {
+                    nextErrors[`children.${child.id}.name`] = asError('Child name is required when date of birth is entered.')
                 }
 
-                if (hasName && !hasAge) {
-                    nextErrors[`children.${child.id}.age`] = asError('Child age is required when name is entered.')
+                if (hasName && !hasDateOfBirth) {
+                    nextErrors[`children.${child.id}.date_of_birth`] = asError('Child date of birth is required when name is entered.')
                 }
 
                 if (hasName) {
                     validateNameText(nextErrors, `children.${child.id}.name`, child.name, 'Child name')
                 }
 
-                if (hasAge) {
-                    const age = Number(child.age)
-                    if (!Number.isInteger(age) || age < 0 || age > 18) {
-                        nextErrors[`children.${child.id}.age`] = asError('Child age must be a whole number between 0 and 18.')
-                    }
+                if (hasDateOfBirth) {
+                    validateDateNotFuture(nextErrors, `children.${child.id}.date_of_birth`, child.date_of_birth, 'Child date of birth')
                 }
             })
         }
@@ -165,6 +165,7 @@ export default function RegistrationPage() {
             validateNameText(nextErrors, 'city', value, 'City or town', true)
         } else if (name === 'postcode') {
             requireField(nextErrors, 'postcode', value, 'Postcode')
+
             if (value && !UK_POSTCODE_PATTERN.test(value.trim())) {
                 nextErrors.postcode = asError('Enter a valid UK postcode.')
             }
@@ -187,7 +188,7 @@ export default function RegistrationPage() {
         return nextErrors[name]
     }
 
-    const validateChildFields = (child) => {
+    const validateChildFields = child => {
         const nextErrors = {}
 
         if (!child) {
@@ -195,32 +196,29 @@ export default function RegistrationPage() {
         }
 
         const hasName = child.name.trim() !== ''
-        const hasAge = String(child.age).trim() !== ''
+        const hasDateOfBirth = String(child.date_of_birth).trim() !== ''
 
-        if (!hasName && hasAge) {
-            nextErrors.name = asError('Child name is required when age is entered.')
+        if (!hasName && hasDateOfBirth) {
+            nextErrors.name = asError('Child name is required when date of birth is entered.')
         }
 
         if (hasName) {
             validateNameText(nextErrors, 'name', child.name, 'Child name')
         }
 
-        if (hasName && !hasAge) {
-            nextErrors.age = asError('Child age is required when name is entered.')
+        if (hasName && !hasDateOfBirth) {
+            nextErrors.date_of_birth = asError('Child date of birth is required when name is entered.')
         }
 
-        if (hasAge) {
-            const age = Number(child.age)
-            if (!Number.isInteger(age) || age < 0 || age > 18) {
-                nextErrors.age = asError('Child age must be a whole number between 0 and 18.')
-            }
+        if (hasDateOfBirth) {
+            validateDateNotFuture(nextErrors, 'date_of_birth', child.date_of_birth, 'Child date of birth')
         }
 
         return nextErrors
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const handleSubmit = async event => {
+        event.preventDefault()
         const validationErrors = validateRegistrationForm()
         setFormErrors(validationErrors)
 
@@ -229,7 +227,7 @@ export default function RegistrationPage() {
                 open: true,
                 tone: 'error',
                 title: 'Please check the form',
-                message: firstError(validationErrors) || 'Please review the highlighted fields and try again.'
+                message: firstError(validationErrors) || 'Please review the highlighted fields and try again.',
             })
             return
         }
@@ -240,32 +238,31 @@ export default function RegistrationPage() {
             const payload = {
                 ...formData,
                 registration_type: regType,
-                consent_confirmed: !!formData.consent,
-                contact_by_phone: !!formData.contact_by_phone,
-                contact_by_email: !!formData.contact_by_email,
+                consent_confirmed: Boolean(formData.consent),
+                contact_by_phone: Boolean(formData.contact_by_phone),
+                contact_by_email: Boolean(formData.contact_by_email),
                 children: regType === 'family'
                     ? children
                         .filter(child => child.name.trim() !== '')
                         .map(child => ({
                             child_name: child.name,
-                            age: child.age ? Number(child.age) : null
+                            date_of_birth: child.date_of_birth || null,
                         }))
                     : [],
-
                 interests: {
-                    volunteering: !!formData.volunteering,
-                    parish_groups: !!formData.parish_groups,
-                    sacramental_preparation: !!formData.sacramental_preparation,
-                    weekly_newsletter: !!formData.weekly_newsletter
-                }
+                    volunteering: Boolean(formData.volunteering),
+                    parish_groups: Boolean(formData.parish_groups),
+                    sacramental_preparation: Boolean(formData.sacramental_preparation),
+                    weekly_newsletter: Boolean(formData.weekly_newsletter),
+                },
             }
 
-            const response = await fetch('http://127.0.0.1:8000/api/v1/parish-registrations', {
+            const response = await fetch(getBackendUrl('/api/v1/parish-registrations'), {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             })
 
             const data = await response.json()
@@ -281,14 +278,14 @@ export default function RegistrationPage() {
                             <p>Thank you for registering with St Mary's Cathedral Parish.</p>
                             <p>Your parish member ID is <strong>{data.member_id}</strong>.</p>
                         </>
-                    )
+                    ),
                 })
             } else {
                 setDialogState({
                     open: true,
                     tone: 'error',
                     title: 'We could not submit your registration',
-                    message: data.message || 'Please review the form details and try again.'
+                    message: data.message || 'Please review the form details and try again.',
                 })
             }
         } catch (error) {
@@ -297,7 +294,7 @@ export default function RegistrationPage() {
                 open: true,
                 tone: 'error',
                 title: 'Submission failed',
-                message: 'Something went wrong while sending your registration. Please try again in a moment.'
+                message: 'Something went wrong while sending your registration. Please try again in a moment.',
             })
         } finally {
             setIsSubmitting(false)
@@ -313,15 +310,12 @@ export default function RegistrationPage() {
             />
 
             <div className="container reg-container">
-                {/* Welcome Box */}
                 <div className="reg-welcome">
                     <h2 className="reg-welcome-title">Welcome to our Parish Family</h2>
                     <p>We are delighted that you have chosen to join St Mary's Cathedral. Please fill out the form below so we can keep you informed and involved in our community.</p>
                 </div>
 
                 <form ref={formRef} onSubmit={handleSubmit} noValidate>
-
-                    {/* Registration Type Select */}
                     <div className="reg-section">
                         <span className="reg-type-label">Registration Type</span>
                         <div className="reg-type-grid">
@@ -329,20 +323,19 @@ export default function RegistrationPage() {
                                 className={`reg-type-card ${regType === 'individual' ? 'active' : ''}`}
                                 onClick={() => setRegType('individual')}
                             >
-                                <div className="reg-type-icon">👤</div>
+                                <div className="reg-type-icon" aria-hidden="true">1</div>
                                 <span className="reg-type-text">Individual / Couple</span>
                             </div>
                             <div
                                 className={`reg-type-card ${regType === 'family' ? 'active' : ''}`}
                                 onClick={() => setRegType('family')}
                             >
-                                <div className="reg-type-icon">👥</div>
+                                <div className="reg-type-icon" aria-hidden="true">2</div>
                                 <span className="reg-type-text">Family Registration</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Personal Info */}
                     <div className="reg-section">
                         <h2 className="reg-section-title">Personal Information</h2>
 
@@ -386,7 +379,6 @@ export default function RegistrationPage() {
                         </div>
                     </div>
 
-                    {/* Address & Contact Info */}
                     <div className="reg-section">
                         <h2 className="reg-section-title">Address & Contact Information</h2>
 
@@ -424,7 +416,6 @@ export default function RegistrationPage() {
                         </div>
                     </div>
 
-                    {/* Dynamic Partner / Family Section */}
                     {regType === 'individual' ? (
                         <div className="reg-section">
                             <h2 className="reg-section-title">Partner Information (Optional)</h2>
@@ -460,33 +451,29 @@ export default function RegistrationPage() {
                                             placeholder="Full name"
                                             value={child.name}
                                             aria-invalid={Boolean(formErrors[`children.${child.id}.name`])}
-                                            onChange={(e) => handleChildChange(child.id, 'name', e.target.value)}
+                                            onChange={changeEvent => handleChildChange(child.id, 'name', changeEvent.target.value)}
                                         />
                                         <FieldError errors={formErrors} name={`children.${child.id}.name`} />
                                     </div>
                                     <div className="form-group" style={{ marginBottom: 0 }}>
-                                        <label>{index === 0 ? 'Age' : 'Age'}</label>
+                                        <label>Date of Birth</label>
                                         <input
-                                            type="number"
+                                            type="date"
                                             className="form-input"
-                                            placeholder="Years"
-                                            min="0"
-                                            max="18"
-                                            value={child.age}
-                                            aria-invalid={Boolean(formErrors[`children.${child.id}.age`])}
-                                            onChange={(e) => handleChildChange(child.id, 'age', e.target.value)}
+                                            value={child.date_of_birth}
+                                            aria-invalid={Boolean(formErrors[`children.${child.id}.date_of_birth`])}
+                                            onChange={changeEvent => handleChildChange(child.id, 'date_of_birth', changeEvent.target.value)}
                                         />
-                                        <FieldError errors={formErrors} name={`children.${child.id}.age`} />
+                                        <FieldError errors={formErrors} name={`children.${child.id}.date_of_birth`} />
                                     </div>
                                     <div style={{ paddingTop: '28px' }}>
-                                        <button type="button" className="btn-remove-child" onClick={() => handleRemoveChild(child.id)}>×</button>
+                                        <button type="button" className="btn-remove-child" onClick={() => handleRemoveChild(child.id)} aria-label="Remove child">x</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
 
-                    {/* Parish Involvement */}
                     <div className="reg-section">
                         <h2 className="reg-section-title">Parish Involvement (Optional)</h2>
                         <div className="checkbox-group">
@@ -521,7 +508,6 @@ export default function RegistrationPage() {
                         </div>
                     </div>
 
-                    {/* Signature & Consent */}
                     <div className="reg-section">
                         <h2 className="reg-section-title">Data Protection & Signature</h2>
 
@@ -562,21 +548,15 @@ export default function RegistrationPage() {
                         </div>
                     </div>
 
-                    {/* Action Bar */}
                     <div className="reg-action-bar">
                         <span className="reg-footnote">Your information will be securely stored and used only for parish purposes.</span>
                         <div className="reg-action-buttons">
-                            <button
-                                type="reset"
-                                className="btn-outline-white"
-                                onClick={resetRegistrationForm}
-                            >Clear Form</button>
+                            <button type="reset" className="btn-outline-white" onClick={resetRegistrationForm}>Clear Form</button>
                             <button type="submit" className="btn-gold" disabled={isSubmitting}>
                                 {isSubmitting ? 'Submitting...' : 'Submit Registration'}
                             </button>
                         </div>
                     </div>
-
                 </form>
             </div>
             <FeedbackDialog
@@ -584,7 +564,12 @@ export default function RegistrationPage() {
                 tone={dialogState.tone}
                 title={dialogState.title}
                 message={dialogState.message}
-                confirmLabel="Close"
+                confirmLabel={dialogState.tone === 'success' ? 'Register Another' : 'Close'}
+                secondaryLabel={dialogState.tone === 'success' ? 'Back to Home' : ''}
+                onSecondary={dialogState.tone === 'success' ? () => {
+                    setDialogState(current => ({ ...current, open: false }))
+                    navigate('/')
+                } : undefined}
                 onClose={() => setDialogState(current => ({ ...current, open: false }))}
             />
         </div>

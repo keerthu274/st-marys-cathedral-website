@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
     // GET /api/v1/events/{id}
     // Returns a single event
     Route::get('events/{id}', [EventApiController::class, 'show']);
+    Route::get('events/{id}/image', [EventApiController::class, 'image']);
 
     // POST /api/v1/contact
     // Store contact form message

@@ -108,8 +108,6 @@ export default function AdminGroupsPage() {
   })
 
   const selectedGroup = groups.find(item => item.id === selectedGroupId) || null
-  const selectedMember = selectedGroup?.members?.find(item => item.id === selectedMemberId) || null
-
   useEffect(() => {
     let ignore = false
 
@@ -152,7 +150,7 @@ export default function AdminGroupsPage() {
     return () => {
       ignore = true
     }
-  }, [user?.is_main_admin])
+  }, [searchParams, user?.is_main_admin])
 
   useEffect(() => {
     if (isCreatingGroup) {

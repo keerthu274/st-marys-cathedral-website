@@ -34,8 +34,8 @@ class UpdateParishRegistrationRequest extends FormRequest
             'phone' => ['required', 'string', 'min:7', 'max:25', 'regex:/^[0-9+\s().-]+$/'],
             'partner_name' => ['nullable', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'children' => ['sometimes', 'array'],
-            'children.*.child_name' => ['required_with:children.*.age', 'nullable', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
-            'children.*.age' => ['required_with:children.*.child_name', 'nullable', 'integer', 'between:0,18'],
+            'children.*.child_name' => ['required_with:children.*.date_of_birth', 'nullable', 'string', 'min:2', 'max:255', 'regex:/^[\pL\pM\s.\'-]+$/u'],
+            'children.*.date_of_birth' => ['required_with:children.*.child_name', 'nullable', 'date', 'before_or_equal:today'],
             'volunteering' => ['sometimes', 'boolean'],
             'parish_groups' => ['sometimes', 'boolean'],
             'sacramental_preparation' => ['sometimes', 'boolean'],
@@ -61,7 +61,7 @@ class UpdateParishRegistrationRequest extends FormRequest
         return [
             '*.regex' => 'This field contains characters that are not allowed.',
             'phone.regex' => 'Phone number may only contain numbers, spaces, and common phone symbols.',
-            'children.*.age.between' => 'Child age must be between 0 and 18.',
+            'children.*.date_of_birth.before_or_equal' => 'Child date of birth cannot be in the future.',
         ];
     }
 }

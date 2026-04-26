@@ -11,51 +11,109 @@ const initialForm = {
   password_confirmation: '',
 }
 
+const passwordRequirements = [
+  { id: 'length', label: 'At least 12 characters', test: value => value.length >= 12 },
+  { id: 'lowercase', label: 'One lowercase letter', test: value => /[a-z]/.test(value) },
+  { id: 'uppercase', label: 'One uppercase letter', test: value => /[A-Z]/.test(value) },
+  { id: 'number', label: 'One number', test: value => /\d/.test(value) },
+  { id: 'symbol', label: 'One symbol', test: value => /[^A-Za-z0-9]/.test(value) },
+]
+
+function getPasswordRequirementState(password) {
+  return passwordRequirements.map(requirement => ({
+    ...requirement,
+    met: requirement.test(password),
+  }))
+}
+
+function validatePassword(errors, password) {
+  if (!password) {
+    errors.password = asError('Password is required.')
+    return
+  }
+
+  const unmet = getPasswordRequirementState(password).filter(item => !item.met)
+
+  if (!unmet.length) {
+    return
+  }
+
+  errors.password = asError(`Password must include: ${unmet.map(item => item.label.toLowerCase()).join(', ')}.`)
+}
+
 export default function SignupPage() {
   const navigate = useNavigate()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
   const [status, setStatus] = useState({ type: '', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  function handleChange(event) {
-    const { name, value } = event.target
-    const nextForm = { ...form, [name]: value }
+  const requirementState = getPasswordRequirementState(form.password)
+  const metRequirementCount = requirementState.filter(item => item.met).length
+  const passwordProgress = Math.round((metRequirementCount / requirementState.length) * 100)
+
+  function validateField(name, nextForm) {
     const nextErrors = {}
 
     if (name === 'name') {
-      validateNameText(nextErrors, 'name', value, 'Full name', true)
-      validateMaxLength(nextErrors, 'name', value, 255, 'Full name')
+      validateNameText(nextErrors, 'name', nextForm.name, 'Full name', true)
+      validateMaxLength(nextErrors, 'name', nextForm.name, 255, 'Full name')
     }
 
     if (name === 'email') {
-      validateEmail(nextErrors, 'email', value)
+      validateEmail(nextErrors, 'email', nextForm.email)
     }
 
     if (name === 'password') {
-      if (!value) {
-        nextErrors.password = asError('Password is required.')
-      } else if (value.length < 8) {
-        nextErrors.password = asError('Password must be at least 8 characters.')
-      }
+      validatePassword(nextErrors, nextForm.password)
 
-      if (nextForm.password_confirmation && value !== nextForm.password_confirmation) {
+      if (nextForm.password_confirmation && nextForm.password !== nextForm.password_confirmation) {
         nextErrors.password_confirmation = asError('Passwords do not match.')
-      } else if (nextForm.password_confirmation) {
-        nextErrors.password_confirmation = undefined
       }
     }
 
     if (name === 'password_confirmation') {
-      if (!value) {
+      if (!nextForm.password_confirmation) {
         nextErrors.password_confirmation = asError('Please confirm your password.')
-      } else if (nextForm.password !== value) {
+      } else if (nextForm.password !== nextForm.password_confirmation) {
         nextErrors.password_confirmation = asError('Passwords do not match.')
       }
     }
 
+    return nextErrors
+  }
+
+  function handleChange(event) {
+    const { name, value } = event.target
+    const nextForm = { ...form, [name]: value }
+    const nextErrors = validateField(name, nextForm)
+
     setForm(nextForm)
-    setErrors(current => ({ ...current, [name]: nextErrors[name], password_confirmation: nextErrors.password_confirmation ?? (name === 'password' ? undefined : current.password_confirmation) }))
+    setErrors(current => ({
+      ...current,
+      [name]: nextErrors[name],
+      password_confirmation:
+        name === 'password' || name === 'password_confirmation'
+          ? nextErrors.password_confirmation
+          : current.password_confirmation,
+    }))
+  }
+
+  function handleBlur(event) {
+    const { name } = event.target
+    const nextTouched = { ...touched, [name]: true }
+    const nextErrors = validateField(name, form)
+
+    setTouched(nextTouched)
+    setErrors(current => ({
+      ...current,
+      [name]: nextErrors[name],
+      password_confirmation:
+        name === 'password' || name === 'password_confirmation'
+          ? nextErrors.password_confirmation
+          : current.password_confirmation,
+    }))
   }
 
   function validateForm() {
@@ -64,12 +122,7 @@ export default function SignupPage() {
     validateNameText(nextErrors, 'name', form.name, 'Full name', true)
     validateMaxLength(nextErrors, 'name', form.name, 255, 'Full name')
     validateEmail(nextErrors, 'email', form.email)
-
-    if (!form.password) {
-      nextErrors.password = asError('Password is required.')
-    } else if (form.password.length < 8) {
-      nextErrors.password = asError('Password must be at least 8 characters.')
-    }
+    validatePassword(nextErrors, form.password)
 
     if (!form.password_confirmation) {
       nextErrors.password_confirmation = asError('Please confirm your password.')
@@ -84,6 +137,12 @@ export default function SignupPage() {
     event.preventDefault()
     const validationErrors = validateForm()
     setErrors(validationErrors)
+    setTouched({
+      name: true,
+      email: true,
+      password: true,
+      password_confirmation: true,
+    })
     setStatus({ type: '', message: '' })
 
     if (hasErrors(validationErrors)) {
@@ -154,10 +213,11 @@ export default function SignupPage() {
                 autoComplete="name"
                 value={form.name}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 aria-invalid={Boolean(errors.name)}
               />
-              {errors.name ? <span className="auth-field-error">{errors.name[0]}</span> : null}
+              {touched.name && errors.name ? <span className="auth-field-error">{errors.name[0]}</span> : null}
             </div>
 
             <div className="auth-field">
@@ -169,10 +229,11 @@ export default function SignupPage() {
                 autoComplete="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 aria-invalid={Boolean(errors.email)}
               />
-              {errors.email ? <span className="auth-field-error">{errors.email[0]}</span> : null}
+              {touched.email && errors.email ? <span className="auth-field-error">{errors.email[0]}</span> : null}
             </div>
 
             <div className="auth-field">
@@ -184,10 +245,22 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 value={form.password}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 aria-invalid={Boolean(errors.password)}
               />
-              {errors.password ? <span className="auth-field-error">{errors.password[0]}</span> : null}
+              <div className="auth-password-progress" aria-hidden="true">
+                <div className="auth-password-progress-bar" style={{ width: `${passwordProgress}%` }} />
+              </div>
+              <p className="auth-password-summary">{metRequirementCount}/{requirementState.length} requirements met</p>
+              <ul className="auth-password-checklist">
+                {requirementState.map(item => (
+                  <li key={item.id} className={item.met ? 'is-met' : 'is-pending'}>
+                    {item.label}
+                  </li>
+                ))}
+              </ul>
+              {touched.password && errors.password ? <span className="auth-field-error">{errors.password[0]}</span> : null}
             </div>
 
             <div className="auth-field">
@@ -199,10 +272,11 @@ export default function SignupPage() {
                 autoComplete="new-password"
                 value={form.password_confirmation}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 required
                 aria-invalid={Boolean(errors.password_confirmation)}
               />
-              {errors.password_confirmation ? <span className="auth-field-error">{errors.password_confirmation[0]}</span> : null}
+              {touched.password_confirmation && errors.password_confirmation ? <span className="auth-field-error">{errors.password_confirmation[0]}</span> : null}
             </div>
 
             <div className="auth-actions">

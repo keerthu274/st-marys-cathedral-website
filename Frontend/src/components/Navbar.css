@@ -2,8 +2,7 @@
     background: #fdfaf4;
     /* Soft warm ivory cream */
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 100;
 }
 

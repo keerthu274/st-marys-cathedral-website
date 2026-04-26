@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { hasErrors, validateEmail } from '../../lib/validation'
+import { getBackendUrl } from '../../lib/auth'
 import './NewsEvents.css'
 
 export const NewsHero = ({ title, subtitle, image, breadcrumb }) => (
@@ -66,6 +67,13 @@ export const EventsList = ({ events, limit }) => {
                                 <span className="event-day">{event.day}</span>
                                 <span className="event-month">{event.month}</span>
                             </div>
+                            {event.image_url || event.image ? (
+                                <img
+                                    className="event-item-thumb"
+                                    src={event.image_url ? getBackendUrl(event.image_url) : event.image}
+                                    alt={event.title}
+                                />
+                            ) : null}
                             <div className="event-details">
                                 <div className="event-meta">{event.time} | {event.location || 'Cathedral'}</div>
                                 <h3>{event.title}</h3>

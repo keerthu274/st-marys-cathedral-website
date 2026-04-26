@@ -205,6 +205,47 @@
   color: #a93d32;
 }
 
+.auth-password-progress {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e6ebf1;
+  overflow: hidden;
+}
+
+.auth-password-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #c9a84c 0%, #1e5b44 100%);
+  transition: width var(--transition);
+}
+
+.auth-password-summary {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-mid);
+}
+
+.auth-password-checklist {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+}
+
+.auth-password-checklist li {
+  color: var(--text-mid);
+}
+
+.auth-password-checklist li.is-met {
+  color: #1b5e3b;
+}
+
+.auth-password-checklist li.is-pending {
+  color: #8a5a17;
+}
+
 .auth-actions {
   display: flex;
   align-items: center;

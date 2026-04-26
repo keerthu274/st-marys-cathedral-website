@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
-import { deleteContactMessage, getContactMessage, listContactMessages } from '../../lib/admin'
+import { deleteContactMessage, getContactMessage, listContactMessages, updateContactMessageStatus } from '../../lib/admin'
+
+const statusOptions = [
+  { value: 'new', label: 'New' },
+  { value: 'in_progress', label: 'In Progress' },
+  { value: 'resolved', label: 'Resolved' },
+]
 
 function formatDateTime(value) {
   if (!value) {
@@ -16,6 +21,10 @@ function formatDateTime(value) {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+function formatStatusLabel(value) {
+  return statusOptions.find(option => option.value === value)?.label || 'New'
 }
 
 function truncate(text, length = 110) {
@@ -35,6 +44,7 @@ export default function AdminContactMessagesPage() {
   const [messageDetail, setMessageDetail] = useState(null)
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [messageSearch, setMessageSearch] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -80,7 +90,7 @@ export default function AdminContactMessagesPage() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     const selected = searchParams.get('message')
@@ -175,6 +185,33 @@ export default function AdminContactMessagesPage() {
     }
   }
 
+  async function changeMessageStatus(status) {
+    if (!messageDetail?.id) {
+      return
+    }
+
+    setIsUpdatingStatus(true)
+    setErrorMessage('')
+
+    try {
+      const payload = await updateContactMessageStatus(messageDetail.id, status)
+      const updatedMessage = payload.contact_message || null
+
+      if (!updatedMessage) {
+        throw new Error('Unable to save the contact message status.')
+      }
+
+      setMessageDetail(updatedMessage)
+      setMessages(currentMessages =>
+        currentMessages.map(item => (item.id === updatedMessage.id ? { ...item, ...updatedMessage } : item)),
+      )
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to update the message status.')
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
   const filteredMessages = messages.filter(item => {
     const query = messageSearch.trim().toLowerCase()
 
@@ -230,7 +267,7 @@ export default function AdminContactMessagesPage() {
                 </div>
                 <div>
                   <small>{formatDateTime(item.created_at)}</small>
-                  <span>{item.category ? `${item.category} • ` : ''}{truncate(item.message)}</span>
+                  <span>{formatStatusLabel(item.status)}{item.category ? ` • ${item.category}` : ''} • {truncate(item.message)}</span>
                 </div>
               </button>
             ))}
@@ -292,10 +329,33 @@ export default function AdminContactMessagesPage() {
               <span>Phone</span>
               <strong>{messageDetail.phone || 'Not provided'}</strong>
             </div>
+            <div className="admin-detail-card">
+              <span>Status</span>
+              <strong>{formatStatusLabel(messageDetail.status)}</strong>
+            </div>
 
             <article className="admin-detail-block admin-detail-block-full">
               <h3>Subject</h3>
               <p>{messageDetail.subject}</p>
+            </article>
+
+            <article className="admin-detail-block">
+              <h3>Update Status</h3>
+              <label className="admin-inline-field">
+                <span className="sr-only">Contact message status</span>
+                <select
+                  value={messageDetail.status || 'new'}
+                  onChange={event => changeMessageStatus(event.target.value)}
+                  disabled={isUpdatingStatus}
+                >
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p>{isUpdatingStatus ? 'Saving status...' : 'Keep track of whether this enquiry is new, being handled, or finished.'}</p>
             </article>
 
             <article className="admin-detail-block">

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import {
@@ -54,6 +54,7 @@ export default function AdminParishCouncilPage() {
   const [memberForm, setMemberForm] = useState(emptyMemberForm)
   const [selectedFile, setSelectedFile] = useState(null)
   const [memberErrors, setMemberErrors] = useState({})
+  const [memberSearch, setMemberSearch] = useState('')
   const [isSavingMember, setIsSavingMember] = useState(false)
   const [isLoadingMemberEditor, setIsLoadingMemberEditor] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
@@ -90,18 +91,6 @@ export default function AdminParishCouncilPage() {
     }
   }, [user?.is_main_admin])
 
-  useEffect(() => {
-    const editId = searchParams.get('edit')
-
-    if (!editId || !user?.is_main_admin) {
-      return
-    }
-
-    editMember(Number(editId))
-  }, [searchParams, user?.is_main_admin])
-
-  const selectedMember = members.find(item => item.id === selectedMemberId)
-
   function closeDialog() {
     setDialogState(current => ({ ...current, open: false }))
   }
@@ -110,24 +99,7 @@ export default function AdminParishCouncilPage() {
     setDialogState({ open: true, tone, title, message })
   }
 
-  async function refreshMembers() {
-    const payload = await listParishCouncilMembers()
-    setMembers(payload.members || [])
-  }
-
-  function startNewMember() {
-    setSelectedMemberId(null)
-    setMemberForm(emptyMemberForm)
-    setSelectedFile(null)
-    setMemberErrors({})
-    setSearchParams({})
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  async function editMember(id) {
+  const editMember = useCallback(async (id) => {
     setIsLoadingMemberEditor(true)
 
     try {
@@ -153,6 +125,40 @@ export default function AdminParishCouncilPage() {
       openDialog('error', 'Unable to load council member', error.message || 'The selected council member could not be opened.')
     } finally {
       setIsLoadingMemberEditor(false)
+    }
+  }, [setSearchParams])
+
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+
+    if (!editId || !user?.is_main_admin) {
+      return
+    }
+
+    editMember(Number(editId))
+  }, [editMember, searchParams, user?.is_main_admin])
+
+  const selectedMember = members.find(item => item.id === selectedMemberId)
+
+  async function refreshMembers() {
+    const payload = await listParishCouncilMembers()
+    setMembers(payload.members || [])
+  }
+
+  function selectMember(id) {
+    setSelectedMemberId(id)
+    editMember(id)
+  }
+
+  function startNewMember() {
+    setSelectedMemberId(null)
+    setMemberForm(emptyMemberForm)
+    setSelectedFile(null)
+    setMemberErrors({})
+    setSearchParams({})
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -303,6 +309,16 @@ export default function AdminParishCouncilPage() {
     }
   }
 
+  const filteredMembers = members.filter(item => {
+    const query = memberSearch.trim().toLowerCase()
+
+    if (!query) {
+      return true
+    }
+
+    return `${item.name} ${item.role} ${item.bio || ''}`.toLowerCase().includes(query)
+  })
+
   if (!user?.is_main_admin) {
     return (
       <div className="admin-page-grid">
@@ -331,9 +347,31 @@ export default function AdminParishCouncilPage() {
             <button className="btn-primary" type="button" onClick={startNewMember}>New Member</button>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search council members..."
+              value={memberSearch}
+              onChange={event => setMemberSearch(event.target.value)}
+            />
+          </div>
+
           <div className="admin-data-table">
-            {members.map(item => (
-              <div key={item.id} className="admin-row">
+            {filteredMembers.map(item => (
+              <div
+                key={item.id}
+                className={`admin-row admin-row-clickable ${selectedMemberId === item.id ? 'active' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => selectMember(item.id)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    selectMember(item.id)
+                  }
+                }}
+              >
                 <div>
                   <strong>{item.name}</strong>
                   <span>{item.role}</span>
@@ -343,12 +381,18 @@ export default function AdminParishCouncilPage() {
                   <span className="admin-badge">{item.is_active ? 'active' : 'hidden'}</span>
                 </div>
                 <div className="admin-row-actions">
-                  <button type="button" onClick={() => editMember(item.id)}>Edit</button>
-                  <button type="button" className="danger" onClick={() => setConfirmDeleteId(item.id)}>Delete</button>
+                  <button type="button" onClick={event => {
+                    event.stopPropagation()
+                    selectMember(item.id)
+                  }}>Edit</button>
+                  <button type="button" className="danger" onClick={event => {
+                    event.stopPropagation()
+                    setConfirmDeleteId(item.id)
+                  }}>Delete</button>
                 </div>
               </div>
             ))}
-            {!members.length ? <p className="admin-empty">No parish council members have been added yet.</p> : null}
+            {!filteredMembers.length ? <p className="admin-empty">{members.length ? 'No council members match the current search.' : 'No parish council members have been added yet.'}</p> : null}
           </div>
         </article>
       </div>

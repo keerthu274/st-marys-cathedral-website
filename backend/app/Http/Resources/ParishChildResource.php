@@ -16,6 +16,7 @@ class ParishChildResource extends JsonResource
             'id' => $this->id,
             'registration_id' => $this->registration_id,
             'child_name' => $this->child_name,
+            'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'age' => $this->age,
         ];
     }

@@ -25,9 +25,9 @@ function initialRegistrationForm(registration) {
     children: registration?.children?.length
       ? registration.children.map(child => ({
           child_name: child.child_name || '',
-          age: child.age || '',
+          date_of_birth: child.date_of_birth || '',
         }))
-      : [{ child_name: '', age: '' }],
+      : [{ child_name: '', date_of_birth: '' }],
     volunteering: Boolean(registration?.interest?.volunteering),
     parish_groups: Boolean(registration?.interest?.parish_groups),
     sacramental_preparation: Boolean(registration?.interest?.sacramental_preparation),
@@ -90,7 +90,7 @@ export default function AdminRegistrationsPage() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     const selected = searchParams.get('selected')
@@ -196,24 +196,25 @@ export default function AdminRegistrationsPage() {
   function validateRegistrationChild(child, index) {
     const nextErrors = {}
     const hasName = child.child_name.trim() !== ''
-    const hasAge = String(child.age).trim() !== ''
+    const hasDateOfBirth = String(child.date_of_birth).trim() !== ''
 
-    if (!hasName && hasAge) {
-      nextErrors[`children.${index}.child_name`] = asError('Child name is required when age is entered.')
+    if (!hasName && hasDateOfBirth) {
+      nextErrors[`children.${index}.child_name`] = asError('Child name is required when date of birth is entered.')
     }
 
     if (hasName) {
       validateNameText(nextErrors, `children.${index}.child_name`, child.child_name, 'Child name')
     }
 
-    if (hasName && !hasAge) {
-      nextErrors[`children.${index}.age`] = asError('Child age is required when name is entered.')
+    if (hasName && !hasDateOfBirth) {
+      nextErrors[`children.${index}.date_of_birth`] = asError('Child date of birth is required when name is entered.')
     }
 
-    if (hasAge) {
-      const age = Number(child.age)
-      if (!Number.isInteger(age) || age < 0 || age > 18) {
-        nextErrors[`children.${index}.age`] = asError('Child age must be a whole number between 0 and 18.')
+    if (hasDateOfBirth) {
+      const today = new Date().toISOString().slice(0, 10)
+
+      if (child.date_of_birth > today) {
+        nextErrors[`children.${index}.date_of_birth`] = asError('Child date of birth cannot be in the future.')
       }
     }
 
@@ -233,14 +234,14 @@ export default function AdminRegistrationsPage() {
     setRegistrationErrors(current => ({
       ...current,
       [`children.${index}.child_name`]: childErrors[`children.${index}.child_name`],
-      [`children.${index}.age`]: childErrors[`children.${index}.age`],
+      [`children.${index}.date_of_birth`]: childErrors[`children.${index}.date_of_birth`],
     }))
   }
 
   function addChildRow() {
     setRegistrationForm(current => ({
       ...current,
-      children: [...current.children, { child_name: '', age: '' }],
+      children: [...current.children, { child_name: '', date_of_birth: '' }],
     }))
   }
 
@@ -249,6 +250,24 @@ export default function AdminRegistrationsPage() {
       ...current,
       children: current.children.filter((_, childIndex) => childIndex !== index),
     }))
+  }
+
+  function startAddingChild() {
+    if (!registrationDetail) {
+      return
+    }
+
+    if (registrationDetail.registration_type === 'individual') {
+      openDialog('error', 'Children are only available for family registrations', 'Switch this record to a family registration before adding children to it.')
+      return
+    }
+
+    setRegistrationForm(current => ({
+      ...current,
+      children: [...current.children, { child_name: '', date_of_birth: '' }],
+    }))
+    setRegistrationErrors({})
+    setIsEditingRegistration(true)
   }
 
   async function saveRegistration(event) {
@@ -299,24 +318,25 @@ export default function AdminRegistrationsPage() {
 
     registrationForm.children.forEach((child, index) => {
       const hasName = child.child_name.trim() !== ''
-      const hasAge = String(child.age).trim() !== ''
+      const hasDateOfBirth = String(child.date_of_birth).trim() !== ''
 
-      if (!hasName && hasAge) {
-        nextErrors[`children.${index}.child_name`] = asError('Child name is required when age is entered.')
+      if (!hasName && hasDateOfBirth) {
+        nextErrors[`children.${index}.child_name`] = asError('Child name is required when date of birth is entered.')
       }
 
-      if (hasName && !hasAge) {
-        nextErrors[`children.${index}.age`] = asError('Child age is required when name is entered.')
+      if (hasName && !hasDateOfBirth) {
+        nextErrors[`children.${index}.date_of_birth`] = asError('Child date of birth is required when name is entered.')
       }
 
       if (hasName) {
         validateNameText(nextErrors, `children.${index}.child_name`, child.child_name, 'Child name')
       }
 
-      if (hasAge) {
-        const age = Number(child.age)
-        if (!Number.isInteger(age) || age < 0 || age > 18) {
-          nextErrors[`children.${index}.age`] = asError('Child age must be a whole number between 0 and 18.')
+      if (hasDateOfBirth) {
+        const today = new Date().toISOString().slice(0, 10)
+
+        if (child.date_of_birth > today) {
+          nextErrors[`children.${index}.date_of_birth`] = asError('Child date of birth cannot be in the future.')
         }
       }
     })
@@ -416,6 +436,11 @@ export default function AdminRegistrationsPage() {
           </div>
           {registrationDetail ? (
             <div className="admin-actions">
+              {registrationDetail.registration_type !== 'individual' ? (
+                <button className="btn-outline" type="button" onClick={startAddingChild}>
+                  Add Child
+                </button>
+              ) : null}
               <button className="btn-outline" type="button" onClick={() => setIsEditingRegistration(current => !current)}>
                 {isEditingRegistration ? 'Cancel Edit' : 'Edit'}
               </button>
@@ -464,10 +489,15 @@ export default function AdminRegistrationsPage() {
               {registrationDetail.children?.length ? (
                 <ul className="admin-inline-list">
                   {registrationDetail.children.map(child => (
-                    <li key={`${child.id}-${child.child_name}`}>{child.child_name} ({child.age || 'N/A'})</li>
+                    <li key={`${child.id}-${child.child_name}`}>{child.child_name} ({child.date_of_birth ? formatDate(child.date_of_birth) : 'DOB not provided'})</li>
                   ))}
                 </ul>
-              ) : <p>No children listed.</p>}
+              ) : <p>No children listed yet.</p>}
+              {registrationDetail.registration_type !== 'individual' ? (
+                <button type="button" className="admin-link-btn" onClick={startAddingChild}>
+                  Add another child
+                </button>
+              ) : null}
             </article>
 
             <article className="admin-detail-block">
@@ -518,6 +548,7 @@ export default function AdminRegistrationsPage() {
 
             <div className="admin-panel">
               <strong>Children</strong>
+              <p className="admin-panel-copy">Add or remove children here when the family registration needs extra people attached to it.</p>
               <div className="admin-children-list">
                 {registrationForm.children.map((child, index) => (
                   <div key={`${index}-${child.child_name}`} className="admin-child-row">
@@ -526,8 +557,8 @@ export default function AdminRegistrationsPage() {
                       <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
                     </div>
                     <div>
-                      <input placeholder="Age" type="number" min="0" max="18" value={child.age} onChange={event => handleChildChange(index, 'age', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.age`])} />
-                      <FieldError errors={registrationErrors} name={`children.${index}.age`} />
+                      <input placeholder="Date of birth" type="date" value={child.date_of_birth} onChange={event => handleChildChange(index, 'date_of_birth', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.date_of_birth`])} />
+                      <FieldError errors={registrationErrors} name={`children.${index}.date_of_birth`} />
                     </div>
                     <button type="button" className="admin-link-btn danger" onClick={() => removeChildRow(index)}>
                       Remove

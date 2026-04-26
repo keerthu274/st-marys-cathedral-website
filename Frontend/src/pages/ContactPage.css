@@ -156,6 +156,7 @@
 }
 
 .contact-form-minimal input,
+.contact-form-minimal select,
 .contact-form-minimal textarea {
     padding: 10px 15px;
     border: 1px solid #ddd;
@@ -167,6 +168,7 @@
 }
 
 .contact-form-minimal input:focus,
+.contact-form-minimal select:focus,
 .contact-form-minimal textarea:focus {
     border-color: var(--navy);
     background: #fff;
@@ -174,9 +176,16 @@
 }
 
 .contact-form-minimal input[aria-invalid="true"],
+.contact-form-minimal select[aria-invalid="true"],
 .contact-form-minimal textarea[aria-invalid="true"] {
     border-color: #b42318;
     background: #fff8f6;
+}
+
+.field-hint {
+    color: var(--text-light);
+    font-size: 0.82rem;
+    line-height: 1.4;
 }
 
 .field-error {

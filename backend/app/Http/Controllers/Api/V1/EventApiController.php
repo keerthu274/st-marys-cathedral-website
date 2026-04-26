@@ -67,4 +67,23 @@ class EventApiController extends Controller
             'data' => EventResource::make($event)->resolve($request),
         ]);
     }
+
+    public function image(Request $request, int $id)
+    {
+        $event = Event::query()->find($id);
+
+        abort_unless($event && ($event->status === 'published' || $request->user()), 404);
+        abort_unless($event->image_path, 404);
+
+        $path = storage_path("app/private/{$event->image_path}");
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path, [
+            'Content-Type' => match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            },
+        ]);
+    }
 }

@@ -1,27 +1,24 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Outlet } from 'react-router-dom'
 import { useAdminSession } from './useAdminSession'
 import './admin.css'
 
 const navItems = [
   { to: '/dashboard', end: true, label: 'Overview', meta: 'Summary and quick access' },
   { to: '/dashboard/events', label: 'Events', meta: 'Schedule and publish events' },
+  { to: '/dashboard/my-group', label: 'My Group', meta: 'Group admin workspace', groupAdminOnly: true },
   { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times', mainAdminOnly: true },
   { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs', mainAdminOnly: true },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records', mainAdminOnly: true },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
   { to: '/dashboard/groups', label: 'Groups', meta: 'Manage groups and admins' },
+  { to: '/dashboard/accounts', label: 'Admins', meta: 'Review admin account assignments', mainAdminOnly: true },
   { to: '/dashboard/parish-council', label: 'Parish Council', meta: 'Manage council members', mainAdminOnly: true },
 ]
 
 export default function AdminLayout() {
-  const location = useLocation()
   const { user, isLoading, isLoggingOut, refreshUser, handleLogout } = useAdminSession()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  useEffect(() => {
-    setIsMenuOpen(false)
-  }, [location.pathname])
 
   if (isLoading) {
     return (
@@ -58,11 +55,12 @@ export default function AdminLayout() {
           <div id="admin-mobile-menu" className={`admin-topbar-right ${isMenuOpen ? 'is-open' : ''}`}>
             <nav className="admin-topnav">
               {navItems.map(item => (
-                item.mainAdminOnly && !user?.is_main_admin ? null : (
+                item.mainAdminOnly && !user?.is_main_admin ? null : item.groupAdminOnly && user?.is_main_admin ? null : (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  onClick={() => setIsMenuOpen(false)}
                   className={({ isActive }) => `admin-topnav-link ${isActive ? 'active' : ''}`}
                 >
                   {item.label}
@@ -76,10 +74,13 @@ export default function AdminLayout() {
                 <span>{user?.name}</span>
                 <small>{user?.email}</small>
               </div>
-              <NavLink className={({ isActive }) => `btn-outline admin-profile-link ${isActive ? 'active' : ''}`} to="/dashboard/profile">
+              <NavLink className={({ isActive }) => `btn-outline admin-profile-link ${isActive ? 'active' : ''}`} to="/dashboard/profile" onClick={() => setIsMenuOpen(false)}>
                 Profile
               </NavLink>
-              <button className="btn-outline admin-logout-inline" type="button" onClick={handleLogout} disabled={isLoggingOut}>
+              <button className="btn-outline admin-logout-inline" type="button" onClick={() => {
+                setIsMenuOpen(false)
+                handleLogout()
+              }} disabled={isLoggingOut}>
                 {isLoggingOut ? 'Signing Out...' : 'Logout'}
               </button>
             </div>

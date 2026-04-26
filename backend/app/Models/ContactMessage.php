@@ -29,6 +29,7 @@ class ContactMessage extends Model
         'phone',
         'subject',
         'category',
+        'status',
         'group_id',
         'message'
     ];

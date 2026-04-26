@@ -40,12 +40,21 @@ class EventRequest extends FormRequest
             'category' => ['nullable', 'string', 'max:255'],
 
             'all_day' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_image' => ['nullable', 'boolean'],
         ];
     }
 
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            if ($this->wordCount((string) $this->input('title')) > 50) {
+                $validator->errors()->add('title', 'Title must be 50 words or fewer.');
+            }
+
+            if ($this->wordCount((string) $this->input('description')) > 250) {
+                $validator->errors()->add('description', 'Description must be 250 words or fewer.');
+            }
 
             if ($this->start_time && $this->end_time) {
 
@@ -54,5 +63,18 @@ class EventRequest extends FormRequest
                 }
             }
         });
+    }
+
+    private function wordCount(string $value): int
+    {
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return 0;
+        }
+
+        preg_match_all('/\S+/u', $trimmed, $matches);
+
+        return count($matches[0]);
     }
 }

@@ -1,10 +1,8 @@
-// added hooks to load mass times from backend
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
+import { getBackendUrl } from '../lib/auth'
 import './MassTimesPage.css'
-
-// removed hardcoded regularMasses because mass times will now come from the backend API
 
 const confessionTimes = [
     'Saturday: 10.30am to 11.30am',
@@ -29,15 +27,13 @@ const prayerSchedule = [
 ]
 
 export default function MassTimesPage() {
-    // store mass times coming from Laravel backend
     const [massTimes, setMassTimes] = useState([])
 
-    // when page loads, request mass times from the backend API
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/api/v1/mass-times")
+        fetch(getBackendUrl('/api/v1/mass-times'))
             .then(res => res.json())
-            .then(data => setMassTimes(data.data))
-            .catch(err => console.log("Error loading mass times:", err))
+            .then(data => setMassTimes(Array.isArray(data?.data) ? data.data : []))
+            .catch(err => console.log('Error loading mass times:', err))
     }, [])
 
     return (
@@ -54,7 +50,6 @@ export default function MassTimesPage() {
                     <p className="section-subtitle">Please check the weekly newsletter for weekday updates and seasonal notices</p>
 
                     <div className="grid-2 mass-times-grid">
-                        {/* using backend mass times instead of hardcoded data */}
                         {massTimes.map((mass, index) => (
                             <div key={mass.id} className="card mass-time-card">
                                 <div className="mt-card-header">
@@ -68,7 +63,6 @@ export default function MassTimesPage() {
                                 </div>
 
                                 <div className="mt-card-details" style={{ marginTop: '20px' }}>
-                                    {/* showing day and time from backend */}
                                     <p className="mt-time-chip">
                                         <strong>{mass.day}: {mass.start_time}</strong>
                                     </p>
@@ -88,7 +82,7 @@ export default function MassTimesPage() {
 
                     <div className="text-center mt-48 newsletter-cta">
                         <Link to="/newsletter" className="newsletter-link-full">
-                            See the weekly newsletter for the latest liturgical schedule and parish notices <span>→</span>
+                            See the weekly newsletter for the latest liturgical schedule and parish notices <span>&rarr;</span>
                         </Link>
                     </div>
                 </section>

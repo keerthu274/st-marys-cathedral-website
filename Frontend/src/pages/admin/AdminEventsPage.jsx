@@ -1,9 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
-import { hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder } from '../../lib/validation'
+import { getBackendUrl } from '../../lib/auth'
+import { countWords, hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder, validateWordLimit } from '../../lib/validation'
+
+const eventLocationOptions = [
+  { value: '', label: 'Select a location' },
+  { value: "St Mary's Cathedral", label: 'Cathedral' },
+  { value: 'Cathedral Hall', label: 'Cathedral Hall' },
+  { value: 'Coedpoeth', label: 'Coedpoeth' },
+  { value: 'Parish Centre', label: 'Parish Centre' },
+  { value: 'Presbytery', label: 'Presbytery' },
+  { value: 'Other', label: 'Other location' },
+]
 
 const emptyEventForm = {
   title: '',
@@ -54,13 +65,46 @@ function FieldError({ errors, name }) {
   return <p className="admin-field-error">{errors[name][0]}</p>
 }
 
+function formatBytes(value) {
+  if (!value) {
+    return 'Unknown size'
+  }
+
+  const kb = value / 1024
+
+  if (kb < 1024) {
+    return `${Math.round(kb)} KB`
+  }
+
+  return `${(kb / 1024).toFixed(1)} MB`
+}
+
+function isImageFile(file) {
+  return ['image/jpeg', 'image/png', 'image/webp'].includes(file?.type)
+}
+
+function getLocationOptionValue(location) {
+  if (!location) {
+    return ''
+  }
+
+  return eventLocationOptions.some(option => option.value === location) ? location : 'Other'
+}
+
+function FieldHint({ current, max }) {
+  return <p className="admin-field-hint">{current}/{max} words</p>
+}
+
 export default function AdminEventsPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
+  const fileInputRef = useRef(null)
   const [events, setEvents] = useState([])
   const [eventPreview, setEventPreview] = useState([])
   const [selectedEventId, setSelectedEventId] = useState(null)
   const [eventForm, setEventForm] = useState(emptyEventForm)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [removeExistingImage, setRemoveExistingImage] = useState(false)
   const [eventErrors, setEventErrors] = useState({})
   const [dialogState, setDialogState] = useState({
     open: false,
@@ -93,6 +137,41 @@ export default function AdminEventsPage() {
     }
   }, [])
 
+  const editEvent = useCallback(async (id) => {
+    setIsLoadingEventEditor(true)
+
+    try {
+      const payload = await getEvent(id)
+      const item = payload.event
+
+      setSelectedEventId(id)
+      setEventForm({
+        title: item.title || '',
+        description: item.description || '',
+        start_date: item.start_date || '',
+        start_time: item.start_time ? item.start_time.slice(0, 5) : '',
+        end_date: item.end_date || '',
+        end_time: item.end_time ? item.end_time.slice(0, 5) : '',
+        location: item.location || '',
+        status: item.status || 'draft',
+        category: item.category || '',
+        all_day: item.start_time === '00:00:00' && item.end_time === '23:59:00',
+      })
+      setSelectedFile(null)
+      setRemoveExistingImage(false)
+      setEventErrors({})
+      setSearchParams({ edit: String(id) })
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } catch (error) {
+      openDialog('error', 'Unable to load event', error.message || 'The selected event could not be opened.')
+    } finally {
+      setIsLoadingEventEditor(false)
+    }
+  }, [setSearchParams])
+
   useEffect(() => {
     const editId = searchParams.get('edit')
 
@@ -101,7 +180,7 @@ export default function AdminEventsPage() {
     }
 
     editEvent(Number(editId))
-  }, [searchParams])
+  }, [editEvent, searchParams])
 
   useEffect(() => {
     let ignore = false
@@ -164,40 +243,80 @@ export default function AdminEventsPage() {
     }))
   }
 
-  async function editEvent(id) {
-    setIsLoadingEventEditor(true)
+  function handleLocationSelect(event) {
+    const { value } = event.target
+    const nextLocation = value === 'Other' ? (getLocationOptionValue(eventForm.location) === 'Other' ? eventForm.location : '') : value
+    const nextForm = {
+      ...eventForm,
+      location: nextLocation,
+    }
 
-    try {
-      const payload = await getEvent(id)
-      const item = payload.event
+    setEventForm(nextForm)
+    setEventErrors(current => ({
+      ...current,
+      ...validateEventLiveFields(nextForm, 'location'),
+    }))
+  }
 
-      setSelectedEventId(id)
-      setEventForm({
-        title: item.title || '',
-        description: item.description || '',
-        start_date: item.start_date || '',
-        start_time: item.start_time ? item.start_time.slice(0, 5) : '',
-        end_date: item.end_date || '',
-        end_time: item.end_time ? item.end_time.slice(0, 5) : '',
-        location: item.location || '',
-        status: item.status || 'draft',
-        category: item.category || '',
-        all_day: item.start_time === '00:00:00' && item.end_time === '23:59:00',
-      })
-      setEventErrors({})
-      setSearchParams({ edit: String(id) })
-    } catch (error) {
-      openDialog('error', 'Unable to load event', error.message || 'The selected event could not be opened.')
-    } finally {
-      setIsLoadingEventEditor(false)
+  function handleImageChange(event) {
+    const file = event.target.files?.[0] || null
+    setSelectedFile(file)
+    setRemoveExistingImage(false)
+
+    if (!file) {
+      setEventErrors(current => ({
+        ...current,
+        image: undefined,
+      }))
+      return
+    }
+
+    if (!isImageFile(file)) {
+      setEventErrors(current => ({
+        ...current,
+        image: ['The event image must be a JPG, PNG, or WebP file.'],
+      }))
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setEventErrors(current => ({
+        ...current,
+        image: ['The event image must be 5MB or smaller.'],
+      }))
+      return
+    }
+
+    setEventErrors(current => ({
+      ...current,
+      image: undefined,
+    }))
+  }
+
+  function removeCurrentImage() {
+    setSelectedFile(null)
+    setRemoveExistingImage(true)
+    setEventErrors(current => ({
+      ...current,
+      image: undefined,
+    }))
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
   function startNewEvent() {
     setSelectedEventId(null)
     setEventForm(emptyEventForm)
+    setSelectedFile(null)
+    setRemoveExistingImage(false)
     setEventErrors({})
     setSearchParams({})
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   async function submitEvent(event) {
@@ -212,14 +331,34 @@ export default function AdminEventsPage() {
 
     setIsSavingEvent(true)
 
+    const payload = new FormData()
+    payload.append('title', eventForm.title)
+    payload.append('description', eventForm.description || '')
+    payload.append('start_date', eventForm.start_date)
+    payload.append('start_time', eventForm.start_time)
+    payload.append('end_date', eventForm.end_date || '')
+    payload.append('end_time', eventForm.end_time)
+    payload.append('location', eventForm.location || '')
+    payload.append('status', eventForm.status)
+    payload.append('category', eventForm.category || '')
+    payload.append('all_day', eventForm.all_day ? '1' : '0')
+
+    if (selectedFile) {
+      payload.append('image', selectedFile)
+    }
+
+    if (removeExistingImage) {
+      payload.append('remove_image', '1')
+    }
+
     try {
-      const payload = selectedEventId
-        ? await updateEvent(selectedEventId, eventForm)
-        : await createEvent(eventForm)
+      const response = selectedEventId
+        ? await updateEvent(selectedEventId, payload)
+        : await createEvent(payload)
 
       await refreshEvents()
       startNewEvent()
-      openDialog('success', 'Event saved successfully', payload.message || 'The event details have been saved and the form has been cleared.')
+      openDialog('success', 'Event saved successfully', response.message || 'The event details have been saved and the form has been cleared.')
     } catch (error) {
       setEventErrors(error.errors || {})
       openDialog('error', 'Unable to save event', error.message || 'Please review the event details and try again.')
@@ -232,7 +371,8 @@ export default function AdminEventsPage() {
     const nextErrors = {}
 
     requireField(nextErrors, 'title', eventForm.title, 'Title')
-    validateMaxLength(nextErrors, 'title', eventForm.title, 255, 'Title')
+    validateWordLimit(nextErrors, 'title', eventForm.title, 50, 'Title')
+    validateWordLimit(nextErrors, 'description', eventForm.description, 250, 'Description')
     requireField(nextErrors, 'start_date', eventForm.start_date, 'Start date')
     requireField(nextErrors, 'start_time', eventForm.start_time, 'Start time')
     requireField(nextErrors, 'end_time', eventForm.end_time, 'End time')
@@ -240,6 +380,14 @@ export default function AdminEventsPage() {
     validateTimeOrder(nextErrors, 'end_time', eventForm.start_time, eventForm.end_time, 'End time must be after start time.')
     validateMaxLength(nextErrors, 'location', eventForm.location, 255, 'Location')
     validateMaxLength(nextErrors, 'category', eventForm.category, 255, 'Category')
+
+    if (selectedFile && !isImageFile(selectedFile)) {
+      nextErrors.image = ['The event image must be a JPG, PNG, or WebP file.']
+    }
+
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
+      nextErrors.image = ['The event image must be 5MB or smaller.']
+    }
 
     if (!['draft', 'published'].includes(eventForm.status)) {
       nextErrors.status = ['Select a valid status.']
@@ -253,7 +401,11 @@ export default function AdminEventsPage() {
 
     if (changedName === 'title') {
       requireField(nextErrors, 'title', form.title, 'Title')
-      validateMaxLength(nextErrors, 'title', form.title, 255, 'Title')
+      validateWordLimit(nextErrors, 'title', form.title, 50, 'Title')
+    }
+
+    if (changedName === 'description') {
+      validateWordLimit(nextErrors, 'description', form.description, 250, 'Description')
     }
 
     if (changedName === 'start_date') {
@@ -289,6 +441,7 @@ export default function AdminEventsPage() {
 
     return {
       [changedName]: nextErrors[changedName],
+      description: changedName === 'description' ? nextErrors.description : undefined,
       end_date: changedName === 'start_date' || changedName === 'end_date' ? nextErrors.end_date : undefined,
       end_time: ['start_time', 'end_time', 'all_day'].includes(changedName) ? nextErrors.end_time : undefined,
       start_time: ['start_time', 'all_day'].includes(changedName) ? nextErrors.start_time : undefined,
@@ -313,6 +466,10 @@ export default function AdminEventsPage() {
   }
 
   const eventCategories = Array.from(new Set(events.map(item => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const selectedLocationOption = getLocationOptionValue(eventForm.location)
+  const selectedEvent = events.find(item => item.id === selectedEventId)
+  const titleWordCount = countWords(eventForm.title)
+  const descriptionWordCount = countWords(eventForm.description)
   const filteredEvents = events.filter(item => {
     const query = eventSearch.trim().toLowerCase()
     const matchesQuery = query
@@ -357,7 +514,14 @@ export default function AdminEventsPage() {
 
           <div className="admin-data-table">
             {filteredEvents.map(item => (
-              <div key={item.id} className="admin-row">
+              <div key={item.id} className={`admin-row ${item.image_url ? 'admin-row-with-thumb' : ''}`}>
+                {item.image_url ? (
+                  <img
+                    className="admin-event-thumb"
+                    src={getBackendUrl(item.image_url)}
+                    alt={item.title}
+                  />
+                ) : null}
                 <div>
                   <strong>{item.title}</strong>
                   <span>{formatDateTime(item.start_date, item.start_time)}{item.group_name ? ` • ${item.group_name}` : ''}</span>
@@ -389,14 +553,55 @@ export default function AdminEventsPage() {
           <label>
             <span>Title</span>
             <input name="title" value={eventForm.title} onChange={handleEventChange} required aria-invalid={Boolean(eventErrors.title)} />
+            <FieldHint current={titleWordCount} max={50} />
             <FieldError errors={eventErrors} name="title" />
           </label>
 
           <label>
             <span>Description</span>
             <textarea name="description" rows="4" value={eventForm.description} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.description)} />
+            <FieldHint current={descriptionWordCount} max={250} />
             <FieldError errors={eventErrors} name="description" />
           </label>
+
+          <label>
+            <span>{selectedEventId ? 'Event photo or poster' : 'Upload event photo or poster'}</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleImageChange}
+              aria-invalid={Boolean(eventErrors.image)}
+            />
+            <FieldError errors={eventErrors} name="image" />
+          </label>
+
+          {selectedFile ? (
+            <div className="admin-panel">
+              <strong>Selected image</strong>
+              <p>{selectedFile.name} • {formatBytes(selectedFile.size)}</p>
+            </div>
+          ) : null}
+
+          {selectedEvent?.image_url && !selectedFile && !removeExistingImage ? (
+            <div className="admin-panel">
+              <strong>Current poster</strong>
+              <div className="admin-member-preview">
+                <img src={getBackendUrl(selectedEvent.image_url)} alt={selectedEvent.title} />
+                <p>{selectedEvent.image_filename || 'Current uploaded image'} • {formatBytes(selectedEvent.image_size)}</p>
+              </div>
+              <button type="button" className="admin-link-btn danger" onClick={removeCurrentImage}>
+                Remove current poster
+              </button>
+            </div>
+          ) : null}
+
+          {removeExistingImage ? (
+            <div className="admin-panel">
+              <strong>Current poster will be removed</strong>
+              <p>Save the event to remove the existing uploaded poster from this event.</p>
+            </div>
+          ) : null}
 
           <div className="admin-form-grid">
             <label>
@@ -445,7 +650,22 @@ export default function AdminEventsPage() {
           <div className="admin-form-grid">
             <label>
               <span>Location</span>
-              <input name="location" value={eventForm.location} onChange={handleEventChange} aria-invalid={Boolean(eventErrors.location)} />
+              <select value={selectedLocationOption} onChange={handleLocationSelect} aria-invalid={Boolean(eventErrors.location)}>
+                {eventLocationOptions.map(option => (
+                  <option key={option.value || 'blank'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {selectedLocationOption === 'Other' ? (
+                <input
+                  name="location"
+                  value={eventForm.location}
+                  onChange={handleEventChange}
+                  placeholder="Enter the event location"
+                  aria-invalid={Boolean(eventErrors.location)}
+                />
+              ) : null}
               <FieldError errors={eventErrors} name="location" />
             </label>
 

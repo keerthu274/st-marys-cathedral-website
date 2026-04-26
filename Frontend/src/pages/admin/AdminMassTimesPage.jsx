@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createMassTime, deleteMassTime, getMassTime, listMassTimes, listMassTimesByDay, updateMassTime } from '../../lib/admin'
@@ -71,6 +71,31 @@ export default function AdminMassTimesPage() {
     }
   }, [])
 
+  const editMassTime = useCallback(async (id) => {
+    setIsLoadingMassTimeEditor(true)
+
+    try {
+      const payload = await getMassTime(id)
+      const item = payload.mass_time
+
+      setSelectedMassTimeId(id)
+      setMassTimeForm({
+        day: item.day || '',
+        start_time: item.start_time || '',
+        location: item.location || '',
+        language: item.language || '',
+        notes: item.notes || '',
+        status: item.status || 'draft',
+      })
+      setMassTimeErrors({})
+      setSearchParams({ edit: String(id) })
+    } catch (error) {
+      openDialog('error', 'Unable to load Mass time', error.message || 'The selected Mass time could not be opened.')
+    } finally {
+      setIsLoadingMassTimeEditor(false)
+    }
+  }, [setSearchParams])
+
   useEffect(() => {
     const editId = searchParams.get('edit')
 
@@ -79,7 +104,7 @@ export default function AdminMassTimesPage() {
     }
 
     editMassTime(Number(editId))
-  }, [searchParams])
+  }, [editMassTime, searchParams])
 
   useEffect(() => {
     let ignore = false
@@ -146,31 +171,6 @@ export default function AdminMassTimesPage() {
 
     setMassTimeForm(nextForm)
     setMassTimeErrors(current => ({ ...current, [name]: nextErrors[name] }))
-  }
-
-  async function editMassTime(id) {
-    setIsLoadingMassTimeEditor(true)
-
-    try {
-      const payload = await getMassTime(id)
-      const item = payload.mass_time
-
-      setSelectedMassTimeId(id)
-      setMassTimeForm({
-        day: item.day || '',
-        start_time: item.start_time || '',
-        location: item.location || '',
-        language: item.language || '',
-        notes: item.notes || '',
-        status: item.status || 'draft',
-      })
-      setMassTimeErrors({})
-      setSearchParams({ edit: String(id) })
-    } catch (error) {
-      openDialog('error', 'Unable to load Mass time', error.message || 'The selected Mass time could not be opened.')
-    } finally {
-      setIsLoadingMassTimeEditor(false)
-    }
   }
 
   function startNewMassTime() {

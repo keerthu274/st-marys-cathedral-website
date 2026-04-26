@@ -138,6 +138,11 @@ export function createEvent(data) {
 }
 
 export function updateEvent(id, data) {
+  if (data instanceof FormData) {
+    data.append('_method', 'PUT')
+    return adminRequest(`/admin/events/${id}`, { method: 'POST', body: data })
+  }
+
   return adminRequest(`/admin/events/${id}`, { method: 'PUT', body: data })
 }
 
@@ -230,6 +235,13 @@ export function listContactMessages(page = 1) {
 
 export function getContactMessage(id) {
   return adminRequest(`/admin/contact-messages/${id}`)
+}
+
+export function updateContactMessageStatus(id, status) {
+  return adminRequest(`/admin/contact-messages/${id}`, {
+    method: 'PATCH',
+    body: { status },
+  })
 }
 
 export function deleteContactMessage(id) {

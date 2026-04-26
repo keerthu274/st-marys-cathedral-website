@@ -12,6 +12,7 @@ import DonatePage from './pages/DonatePage'
 import OurParishPage from './pages/OurParishPage'
 import ParishCouncilPage from './pages/ParishCouncilPage'
 import ParishGroupsPage from './pages/ParishGroupsPage'
+import GroupJoinPage from './pages/GroupJoinPage'
 import BuildingProjectPage from './pages/BuildingProjectPage'
 import FundraisingPage from './pages/FundraisingPage'
 import SafeguardingPage from './pages/SafeguardingPage'
@@ -47,17 +48,24 @@ import AdminContactMessagesPage from './pages/admin/AdminContactMessagesPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
 import AdminParishCouncilPage from './pages/admin/AdminParishCouncilPage'
 import AdminGroupsPage from './pages/admin/AdminGroupsPage'
+import AdminAccountsPage from './pages/admin/AdminAccountsPage'
+import AdminMyGroupPage from './pages/admin/AdminMyGroupPage'
 
 function AppContent() {
   const location = useLocation()
   const isDashboardRoute = location.pathname.startsWith('/dashboard')
+  const mainClassName = isDashboardRoute ? '' : 'app-main-with-fixed-header'
 
   return (
     <>
       <ScrollToTop />
-      {!isDashboardRoute ? <TopBar /> : null}
-      {!isDashboardRoute ? <Navbar /> : null}
-      <main>
+      {!isDashboardRoute ? (
+        <div className="site-header-fixed">
+          <TopBar />
+          <Navbar />
+        </div>
+      ) : null}
+      <main className={mainClassName}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
@@ -83,12 +91,15 @@ function AppContent() {
             <Route path="contact-messages" element={<AdminContactMessagesPage />} />
             <Route path="parish-council" element={<AdminParishCouncilPage />} />
             <Route path="groups" element={<AdminGroupsPage />} />
+            <Route path="accounts" element={<AdminAccountsPage />} />
+            <Route path="my-group" element={<AdminMyGroupPage />} />
             <Route path="profile" element={<AdminProfilePage />} />
           </Route>
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
           <Route path="/parish-council" element={<ParishCouncilPage />} />
           <Route path="/parish-groups" element={<ParishGroupsPage />} />
+          <Route path="/parish-groups/:groupSlug/join" element={<GroupJoinPage />} />
           <Route path="/building-project" element={<BuildingProjectPage />} />
           <Route path="/fundraising" element={<FundraisingPage />} />
           <Route path="/safeguarding" element={<SafeguardingPage />} />

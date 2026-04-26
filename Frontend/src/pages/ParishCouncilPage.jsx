@@ -79,7 +79,7 @@ export default function ParishCouncilPage() {
                             The PowerPoint lists resignations for 2026 as Elizabeth Roberts and Helen Schoonjans.
                         </p>
                         <p>
-                            The group&apos;s guiding principles are inspired by the Church&apos;s call “to give witness to the truth, to save and not to judge, to serve and not to be served.”
+                            The group&apos;s guiding principles are inspired by the Church&apos;s call "to give witness to the truth, to save and not to judge, to serve and not to be served."
                         </p>
                     </div>
                 </div>

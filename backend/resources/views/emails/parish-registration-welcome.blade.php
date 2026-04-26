@@ -65,7 +65,7 @@
     <h3>Family Details</h3>
     <ul>
         @foreach($registration->children as $child)
-            <li>{{ $child->child_name }}@if(!is_null($child->age)) - age {{ $child->age }}@endif</li>
+            <li>{{ $child->child_name }}@if(!is_null($child->date_of_birth)) - DOB {{ \Illuminate\Support\Carbon::parse($child->date_of_birth)->format('d M Y') }}@endif</li>
         @endforeach
     </ul>
 @endif

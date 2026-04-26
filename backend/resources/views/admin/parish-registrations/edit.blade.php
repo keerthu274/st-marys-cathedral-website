@@ -46,11 +46,11 @@
                                        class="border p-2 rounded"
                                        placeholder="Child Name">
 
-                                <input type="number"
-                                       name="children[{{ $index }}][age]"
-                                       value="{{ $child->age }}"
+                                <input type="date"
+                                       name="children[{{ $index }}][date_of_birth]"
+                                       value="{{ $child->date_of_birth }}"
                                        class="border p-2 rounded"
-                                       placeholder="Age">
+                                       placeholder="Date of Birth">
                             </div>
                         @endforeach
                     </div>

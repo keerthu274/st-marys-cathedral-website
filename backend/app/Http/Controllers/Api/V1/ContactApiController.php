@@ -26,6 +26,7 @@ class ContactApiController extends Controller
             'phone' => $validated['phone'] ?? null,
             'subject' => $validated['subject'],
             'category' => $validated['category'],
+            'status' => 'new',
             'group_id' => $validated['group_id'] ?? null,
             'message' => $validated['message'],
         ]);

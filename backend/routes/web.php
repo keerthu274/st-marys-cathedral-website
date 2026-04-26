@@ -11,12 +11,16 @@ use App\Http\Controllers\Admin\ParishCouncilMemberController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\GroupMemberController;
 use App\Http\Controllers\Auth\ApiAuthController;
+use App\Http\Controllers\EventImageController;
 use App\Http\Controllers\NewsletterFileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('events/{event}/image', [EventImageController::class, 'show'])
+    ->name('events.image');
 
 Route::get('/dashboard', function () {
     return redirect()->away(rtrim(config('app.frontend_url'), '/').'/dashboard');
@@ -46,6 +50,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     Route::get('contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])
         ->name('contact-messages.show');
+
+    Route::patch('contact-messages/{contactMessage}', [ContactMessageController::class, 'update'])
+        ->name('contact-messages.update');
 
     Route::get('groups', [GroupController::class, 'index'])
         ->name('groups.index');

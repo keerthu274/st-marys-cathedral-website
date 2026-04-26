@@ -11,6 +11,9 @@
 }
 
 :root {
+  --site-topbar-height: 32px;
+  --site-navbar-height: 68px;
+  --site-header-height: calc(var(--site-topbar-height) + var(--site-navbar-height));
   --navy: #1e3a5f;
   --navy-dark: #152d4a;
   --navy-light: #2a4f7c;
@@ -52,6 +55,16 @@ body {
   line-height: 1.6;
   font-size: 16px;
   overflow-x: hidden;
+}
+
+.site-header-fixed {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 1000;
+}
+
+.app-main-with-fixed-header {
+  padding-top: var(--site-header-height);
 }
 
 a {
@@ -342,6 +355,11 @@ button {
 @media (max-width: 768px) {
   .container {
     padding: 0 20px;
+  }
+
+  :root {
+    --site-topbar-height: 32px;
+    --site-navbar-height: 68px;
   }
 
   .grid-2,

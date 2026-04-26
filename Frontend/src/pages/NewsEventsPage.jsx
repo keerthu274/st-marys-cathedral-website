@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
+import { getBackendUrl } from '../lib/auth'
 import './NewsEventsPage.css'
 
 function formatDateLabel(dateString) {
@@ -49,7 +50,7 @@ export default function NewsEventsPage() {
 
     async function loadEvents() {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/v1/events')
+        const response = await fetch(getBackendUrl('/api/v1/events'))
         const payload = await response.json()
     
         if (!ignore && response.ok && Array.isArray(payload?.data)) {
@@ -83,11 +84,19 @@ export default function NewsEventsPage() {
             <div className="ne-events-list">
               {events.map((event) => (
                 <div key={event.id} className="ne-event-row">
+                  {event.image_url ? (
+                    <img
+                      className="ne-event-thumb"
+                      src={getBackendUrl(event.image_url)}
+                      alt={event.title}
+                    />
+                  ) : null}
                   <span className="ne-event-date">{formatDateLabel(event.start_date)}</span>
 
                   <div className="ne-event-info">
                     <span className="ne-event-name">{event.title}</span>
                     <span className="ne-event-time">{formatTimeLabel(event.start_time, event.end_time)}</span>
+                    <span className="ne-event-time">{event.location || "St Mary's Cathedral"}</span>
                   </div>
 
                   <Link to={`/events/${event.id}`} className="ne-event-details">Details</Link>

@@ -9,7 +9,9 @@ export default function FeedbackDialog({
   message,
   confirmLabel = 'Close',
   cancelLabel = 'Cancel',
+  secondaryLabel = '',
   onConfirm,
+  onSecondary,
   onClose,
 }) {
   useEffect(() => {
@@ -63,9 +65,16 @@ export default function FeedbackDialog({
               </button>
             </>
           ) : (
-            <button type="button" className="btn-primary" onClick={onClose}>
-              {confirmLabel}
-            </button>
+            <>
+              {secondaryLabel ? (
+                <button type="button" className="btn-outline" onClick={onSecondary || onClose}>
+                  {secondaryLabel}
+                </button>
+              ) : null}
+              <button type="button" className="btn-primary" onClick={onClose}>
+                {confirmLabel}
+              </button>
+            </>
           )}
         </div>
       </div>

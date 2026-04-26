@@ -61,6 +61,22 @@ export function validateMaxLength(errors, name, value, max, label) {
   }
 }
 
+export function countWords(value) {
+  const trimmed = trimValue(value)
+
+  if (!trimmed) {
+    return 0
+  }
+
+  return trimmed.split(/\s+/u).length
+}
+
+export function validateWordLimit(errors, name, value, maxWords, label) {
+  if (countWords(value) > maxWords) {
+    errors[name] = asError(`${label} must be ${maxWords} words or fewer.`)
+  }
+}
+
 export function validateNameText(errors, name, value, label, required = false) {
   const trimmed = trimValue(value)
 

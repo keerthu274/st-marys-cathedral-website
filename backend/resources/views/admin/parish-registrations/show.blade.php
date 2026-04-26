@@ -27,7 +27,7 @@
 
                     <ul class="list-disc pl-6">
                         @foreach($parishRegistration->children as $child)
-                            <li>{{ $child->child_name }} (Age: {{ $child->age ?? 'N/A' }})</li>
+                            <li>{{ $child->child_name }} (DOB: {{ $child->date_of_birth ? \Illuminate\Support\Carbon::parse($child->date_of_birth)->format('d M Y') : 'N/A' }})</li>
                         @endforeach
                     </ul>
                 @endif
@@ -82,5 +82,4 @@
         </div>
     </div>
 </x-app-layout>
-
 
