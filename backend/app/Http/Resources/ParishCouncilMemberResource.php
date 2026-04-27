@@ -12,14 +12,17 @@ class ParishCouncilMemberResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $photoPath = $this->photo_path ? storage_path("app/private/{$this->photo_path}") : null;
+        $hasPhoto = $photoPath && is_file($photoPath);
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'role' => $this->role,
             'bio' => $this->bio,
-            'photo_url' => $this->photo_path ? "/api/v1/parish-council-members/{$this->id}/photo" : null,
+            'photo_url' => $hasPhoto ? "/api/v1/parish-council-members/{$this->id}/photo" : null,
             'photo_filename' => $this->photo_filename,
-            'photo_size' => $this->photo_size,
+            'photo_size' => $hasPhoto ? filesize($photoPath) : null,
             'sort_order' => $this->sort_order,
             'is_active' => (bool) $this->is_active,
             'created_at' => $this->created_at,

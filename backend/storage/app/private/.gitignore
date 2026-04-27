@@ -1,2 +1,10 @@
 *
 !.gitignore
+!events/
+!events/**
+!news/
+!news/**
+!newsletters/
+!newsletters/**
+!parish-council-members/
+!parish-council-members/**
