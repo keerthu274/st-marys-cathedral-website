@@ -8,8 +8,8 @@ use App\Models\Event;
 use App\Models\Group;
 use App\Models\MassTime;
 use App\Models\ParishRegistration;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class PublicApiTest extends TestCase
@@ -112,7 +112,7 @@ class PublicApiTest extends TestCase
 
         $this->assertDatabaseHas(ContactMessage::class, [
             'email' => 'john@example.com',
-            'subject' => 'Mass enquiry',
+            'subject' => 'Mass Enquiry',
         ]);
     }
 

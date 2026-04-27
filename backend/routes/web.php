@@ -45,6 +45,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('events/by-date', [EventController::class, 'byDate'])
         ->name('events.by-date');
 
+    Route::get('events/{event}/image', [EventController::class, 'image'])
+        ->name('events.admin-image');
+
     Route::resource('events', EventController::class);
 
     Route::get('contact-messages', [ContactMessageController::class, 'index'])

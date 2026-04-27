@@ -13,7 +13,8 @@ class ParishCouncilMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $members = ParishCouncilMember::orderBy('sort_order')
+        $members = ParishCouncilMember::orderByRaw('CASE WHEN sort_order <= 0 THEN 1 ELSE 0 END')
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 

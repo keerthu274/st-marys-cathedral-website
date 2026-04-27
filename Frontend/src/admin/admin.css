@@ -290,14 +290,16 @@
   gap: 10px;
 }
 
-.admin-panel-alert-item {
+.admin-panel-alert-item,
+.admin-panel-activity-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
 }
 
-.admin-panel-alert-item .admin-alert-row {
+.admin-panel-alert-item .admin-alert-row,
+.admin-panel-activity-item .admin-audit-row {
   min-width: 0;
 }
 
@@ -739,9 +741,11 @@
 
 .admin-account-row {
   align-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
 .admin-account-row .admin-row-actions {
+  grid-column: 2 / -1;
   align-self: end;
   justify-self: end;
 }

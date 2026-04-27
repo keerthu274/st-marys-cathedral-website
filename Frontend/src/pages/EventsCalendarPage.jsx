@@ -67,6 +67,10 @@ function isUpcoming(event) {
     return eventDate >= startOfToday
 }
 
+function compareEventDateDesc(left, right) {
+    return String(right.start_date || '').localeCompare(String(left.start_date || ''))
+}
+
 export default function EventsCalendarPage() {
     const [events, setEvents] = useState([])
     const [isLoading, setIsLoading] = useState(true)
@@ -112,6 +116,7 @@ export default function EventsCalendarPage() {
     }, [])
 
     const upcomingEvents = useMemo(() => events.filter(isUpcoming).map(toCalendarEvent), [events])
+    const pastEvents = useMemo(() => events.filter(event => !isUpcoming(event)).sort(compareEventDateDesc).map(toCalendarEvent), [events])
     const featuredEvent = upcomingEvents[0] || null
 
     return (
@@ -164,6 +169,16 @@ export default function EventsCalendarPage() {
                         <p className="text-mid">No published upcoming events are available yet.</p>
                     </div>
                 </section>
+            ) : null}
+
+            {!isLoading && !errorMessage && pastEvents.length ? (
+                <>
+                    <NewsIntro
+                        title="Past Events"
+                        text="Published events that have already taken place are kept here for reference."
+                    />
+                    <EventsList events={pastEvents} />
+                </>
             ) : null}
 
             <div style={{ textAlign: 'center', padding: '40px 0' }}>

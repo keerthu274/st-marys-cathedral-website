@@ -8,6 +8,7 @@ use App\Support\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
 
 class AdminAccountController extends Controller
@@ -15,9 +16,9 @@ class AdminAccountController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255', Rule::unique('users', 'email')],
+            'password' => ['required', 'confirmed', $this->passwordRule()],
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
         ]);
 
@@ -96,5 +97,14 @@ class AdminAccountController extends Controller
             fn ($match) => mb_strtoupper($match[1], 'UTF-8') . $match[2],
             $value
         );
+    }
+
+    private function passwordRule(): Rules\Password
+    {
+        return Rules\Password::min(12)
+            ->letters()
+            ->mixedCase()
+            ->numbers()
+            ->symbols();
     }
 }

@@ -149,7 +149,6 @@ export default function AdminEventsPage() {
   const [isLoadingEventEditor, setIsLoadingEventEditor] = useState(false)
   const [eventSearch, setEventSearch] = useState('')
   const [eventStatusFilter, setEventStatusFilter] = useState('')
-  const [eventCategoryFilter, setEventCategoryFilter] = useState('')
   const [eventLocationFilter, setEventLocationFilter] = useState('')
   const [eventGroupFilter, setEventGroupFilter] = useState('')
   const [eventDateFilter, setEventDateFilter] = useState('')
@@ -519,7 +518,6 @@ export default function AdminEventsPage() {
     }
   }
 
-  const eventCategories = Array.from(new Set(events.map(item => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const eventLocations = Array.from(new Set(events.map(item => item.location).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const eventGroups = Array.from(new Set(events.map(item => item.group_name).filter(Boolean))).sort((a, b) => a.localeCompare(b))
   const selectedEvent = events.find(item => item.id === selectedEventId)
@@ -528,15 +526,14 @@ export default function AdminEventsPage() {
   const filteredEvents = events.filter(item => {
     const query = eventSearch.trim().toLowerCase()
     const matchesQuery = query
-      ? `${item.title} ${item.description || ''} ${item.location || ''} ${item.category || ''}`.toLowerCase().includes(query)
+      ? `${item.title} ${item.description || ''} ${item.location || ''} ${item.category || ''} ${item.group_name || ''}`.toLowerCase().includes(query)
       : true
     const matchesStatus = eventStatusFilter ? item.status === eventStatusFilter : true
-    const matchesCategory = eventCategoryFilter ? item.category === eventCategoryFilter : true
     const matchesLocation = eventLocationFilter ? item.location === eventLocationFilter : true
-    const matchesGroup = eventGroupFilter ? item.group_name === eventGroupFilter : true
+    const matchesGroup = user?.is_main_admin && eventGroupFilter ? item.group_name === eventGroupFilter : true
     const matchesDate = matchesEventDateFilter(item.start_date, eventDateFilter)
 
-    return matchesQuery && matchesStatus && matchesCategory && matchesLocation && matchesGroup && matchesDate
+    return matchesQuery && matchesStatus && matchesLocation && matchesGroup && matchesDate
   })
 
   return (
@@ -559,38 +556,36 @@ export default function AdminEventsPage() {
               value={eventSearch}
               onChange={event => setEventSearch(event.target.value)}
             />
-            <select className="admin-filter-select" value={eventStatusFilter} onChange={event => setEventStatusFilter(event.target.value)}>
-              <option value="">All statuses</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-            <select className="admin-filter-select" value={eventCategoryFilter} onChange={event => setEventCategoryFilter(event.target.value)}>
-              <option value="">All categories</option>
-              {eventCategories.map(category => <option key={category} value={category}>{category}</option>)}
-            </select>
-            <select className="admin-filter-select" value={eventLocationFilter} onChange={event => setEventLocationFilter(event.target.value)}>
-              <option value="">All locations</option>
-              {eventLocations.map(location => <option key={location} value={location}>{location}</option>)}
-            </select>
-            <select className="admin-filter-select" value={eventGroupFilter} onChange={event => setEventGroupFilter(event.target.value)}>
-              <option value="">All groups</option>
-              {eventGroups.map(group => <option key={group} value={group}>{group}</option>)}
-            </select>
+            {user?.is_main_admin ? (
+              <select className="admin-filter-select" value={eventGroupFilter} onChange={event => setEventGroupFilter(event.target.value)}>
+                <option value="">All groups</option>
+                {eventGroups.map(group => <option key={group} value={group}>{group}</option>)}
+              </select>
+            ) : null}
             <select className="admin-filter-select" value={eventDateFilter} onChange={event => setEventDateFilter(event.target.value)}>
               <option value="">Any date</option>
               <option value="upcoming">Upcoming</option>
               <option value="past">Past</option>
               <option value="next_30_days">Next 30 days</option>
             </select>
+            <select className="admin-filter-select" value={eventStatusFilter} onChange={event => setEventStatusFilter(event.target.value)}>
+              <option value="">Published and draft</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+            <select className="admin-filter-select" value={eventLocationFilter} onChange={event => setEventLocationFilter(event.target.value)}>
+              <option value="">All locations</option>
+              {eventLocations.map(location => <option key={location} value={location}>{location}</option>)}
+            </select>
           </div>
 
           <div className="admin-data-table">
             {filteredEvents.map(item => (
               <div key={item.id} className="admin-row admin-row-with-thumb">
-                {item.image_url ? (
+                {item.admin_image_url || item.image_url ? (
                   <img
                     className="admin-event-thumb"
-                    src={getBackendUrl(item.image_url)}
+                    src={getBackendUrl(item.admin_image_url || item.image_url)}
                     alt={item.title}
                   />
                 ) : (
@@ -658,11 +653,11 @@ export default function AdminEventsPage() {
             </div>
           ) : null}
 
-          {selectedEvent?.image_url && !selectedFile && !removeExistingImage ? (
+          {(selectedEvent?.admin_image_url || selectedEvent?.image_url) && !selectedFile && !removeExistingImage ? (
             <div className="admin-panel">
               <strong>Current poster</strong>
               <div className="admin-member-preview">
-                <img src={getBackendUrl(selectedEvent.image_url)} alt={selectedEvent.title} />
+                <img src={getBackendUrl(selectedEvent.admin_image_url || selectedEvent.image_url)} alt={selectedEvent.title} />
                 <p>Current uploaded poster • {formatBytes(selectedEvent.image_size)}</p>
               </div>
               <button type="button" className="admin-link-btn danger" onClick={removeCurrentImage}>

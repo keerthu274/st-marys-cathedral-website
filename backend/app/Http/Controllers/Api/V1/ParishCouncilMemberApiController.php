@@ -13,6 +13,7 @@ class ParishCouncilMemberApiController extends Controller
     public function index(Request $request): JsonResponse
     {
         $members = ParishCouncilMember::where('is_active', true)
+            ->orderByRaw('CASE WHEN sort_order <= 0 THEN 1 ELSE 0 END')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

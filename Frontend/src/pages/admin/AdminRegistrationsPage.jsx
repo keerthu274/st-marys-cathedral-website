@@ -712,22 +712,22 @@ export default function AdminRegistrationsPage() {
                   const ageStatus = getChildAgeStatus(child.date_of_birth)
 
                   return (
-	                  <div key={index} className={`admin-child-row ${ageStatus.tone !== 'child' ? `is-${ageStatus.tone}` : ''}`}>
-	                    <div>
+                    <div key={index} className={`admin-child-row ${ageStatus.tone !== 'child' ? `is-${ageStatus.tone}` : ''}`}>
+                      <div>
                         <span className="admin-child-field-label">Child name</span>
-	                      <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} onBlur={() => formatChildField(index, 'child_name')} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
-	                      <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
-	                    </div>
-	                    <div>
+                        <input placeholder="Child name" value={child.child_name} onChange={event => handleChildChange(index, 'child_name', event.target.value)} onBlur={() => formatChildField(index, 'child_name')} aria-invalid={Boolean(registrationErrors[`children.${index}.child_name`])} />
+                        <FieldError errors={registrationErrors} name={`children.${index}.child_name`} />
+                      </div>
+                      <div>
                         <span className="admin-child-field-label">Date of birth</span>
-	                      <input type="date" value={child.date_of_birth} onChange={event => handleChildChange(index, 'date_of_birth', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.date_of_birth`])} />
-	                      <FieldError errors={registrationErrors} name={`children.${index}.date_of_birth`} />
-	                    </div>
-	                    <button type="button" className="admin-link-btn danger" onClick={() => setConfirmRemoveChildIndex(index)}>
-	                      Remove
-	                    </button>
+                        <input type="date" value={child.date_of_birth} onChange={event => handleChildChange(index, 'date_of_birth', event.target.value)} aria-invalid={Boolean(registrationErrors[`children.${index}.date_of_birth`])} />
+                        <FieldError errors={registrationErrors} name={`children.${index}.date_of_birth`} />
+                      </div>
+                      <button type="button" className="admin-link-btn danger" onClick={() => setConfirmRemoveChildIndex(index)}>
+                        Remove
+                      </button>
                       {ageStatus.tone === 'adult' || ageStatus.tone === 'soon' ? <p className="admin-child-age-note">{ageStatus.label}</p> : null}
-	                  </div>
+                    </div>
                   )
                 })}
               </div>

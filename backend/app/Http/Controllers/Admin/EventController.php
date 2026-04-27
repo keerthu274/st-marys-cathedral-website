@@ -212,6 +212,23 @@ class EventController extends Controller
         return response()->json($events);
     }
 
+    public function image(Request $request, Event $event)
+    {
+        $this->authorizeEventAccess($request, $event);
+        abort_unless($event->image_path, 404);
+
+        $path = storage_path("app/private/{$event->image_path}");
+        abort_unless(is_file($path), 404);
+
+        return response()->file($path, [
+            'Content-Type' => match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'webp' => 'image/webp',
+                default => 'image/png',
+            },
+        ]);
+    }
+
     /**
      * Delete an event (DELETE /admin/events/{event}).
      */

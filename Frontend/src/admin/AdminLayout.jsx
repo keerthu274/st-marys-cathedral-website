@@ -20,6 +20,48 @@ const navItems = [
   { to: '/dashboard/parish-council', label: 'Parish Council', meta: 'Manage council members', mainAdminOnly: true },
 ]
 const dismissedAlertsStorageKey = 'admin-dismissed-alerts'
+const alertFirstSeenStorageKey = 'admin-alert-first-seen'
+const dismissedActivitiesStorageKey = 'admin-dismissed-activities'
+const oneWeekMs = 7 * 24 * 60 * 60 * 1000
+
+function loadStoredArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '[]')
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+}
+
+function loadStoredObject(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || '{}')
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveStoredArray(key, value) {
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function saveStoredObject(key, value) {
+  localStorage.setItem(key, JSON.stringify(value))
+}
+
+function alertKeyFor(item) {
+  return `${item.key}:${item.count}`
+}
+
+function isWithinOneWeek(value) {
+  if (!value) {
+    return true
+  }
+
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) && Date.now() - time < oneWeekMs
+}
 
 function formatAuditDate(value) {
   if (!value) {
@@ -59,15 +101,19 @@ export default function AdminLayout() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false)
   const [openPanel, setOpenPanel] = useState('')
   const [notifications, setNotifications] = useState([])
-  const [dismissedAlerts, setDismissedAlerts] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(dismissedAlertsStorageKey) || '[]')
-    } catch {
-      return []
-    }
-  })
+  const [dismissedAlerts, setDismissedAlerts] = useState(() => loadStoredArray(dismissedAlertsStorageKey))
+  const [alertFirstSeen, setAlertFirstSeen] = useState(() => loadStoredObject(alertFirstSeenStorageKey))
   const [auditLogs, setAuditLogs] = useState([])
-  const visibleNotifications = notifications.filter(item => !dismissedAlerts.includes(`${item.key}:${item.count}`))
+  const [dismissedActivities, setDismissedActivities] = useState(() => loadStoredArray(dismissedActivitiesStorageKey))
+  const visibleNotifications = notifications.filter(item => {
+    const alertKey = alertKeyFor(item)
+    const firstSeen = alertFirstSeen[alertKey] || new Date().toISOString()
+
+    return !dismissedAlerts.includes(alertKey) && isWithinOneWeek(firstSeen)
+  })
+  const visibleAuditLogs = auditLogs.filter(item => (
+    !dismissedActivities.includes(String(item.id)) && isWithinOneWeek(item.created_at)
+  ))
 
   useEffect(() => {
     let ignore = false
@@ -81,7 +127,24 @@ export default function AdminLayout() {
         const payload = await getOverview()
 
         if (!ignore) {
-          setNotifications(payload.notifications || [])
+          const nextNotifications = payload.notifications || []
+          const activeAlertKeys = nextNotifications.map(alertKeyFor)
+          const storedFirstSeen = loadStoredObject(alertFirstSeenStorageKey)
+          const storedDismissedAlerts = loadStoredArray(dismissedAlertsStorageKey)
+          const now = new Date().toISOString()
+          const nextFirstSeen = {}
+          const nextDismissedAlerts = storedDismissedAlerts.filter(key => activeAlertKeys.includes(key))
+
+          activeAlertKeys.forEach(key => {
+            nextFirstSeen[key] = storedFirstSeen[key] || now
+          })
+
+          saveStoredObject(alertFirstSeenStorageKey, nextFirstSeen)
+          saveStoredArray(dismissedAlertsStorageKey, nextDismissedAlerts)
+
+          setNotifications(nextNotifications)
+          setAlertFirstSeen(nextFirstSeen)
+          setDismissedAlerts(nextDismissedAlerts)
           setAuditLogs(payload.recent_audit_logs || [])
         }
       } catch {
@@ -138,10 +201,10 @@ export default function AdminLayout() {
   }
 
   function clearAlert(item) {
-    const alertKey = `${item.key}:${item.count}`
+    const alertKey = alertKeyFor(item)
     setDismissedAlerts(current => {
       const next = Array.from(new Set([...current, alertKey]))
-      localStorage.setItem(dismissedAlertsStorageKey, JSON.stringify(next))
+      saveStoredArray(dismissedAlertsStorageKey, next)
       return next
     })
   }
@@ -150,9 +213,28 @@ export default function AdminLayout() {
     setDismissedAlerts(current => {
       const next = Array.from(new Set([
         ...current,
-        ...visibleNotifications.map(item => `${item.key}:${item.count}`),
+        ...visibleNotifications.map(alertKeyFor),
       ]))
-      localStorage.setItem(dismissedAlertsStorageKey, JSON.stringify(next))
+      saveStoredArray(dismissedAlertsStorageKey, next)
+      return next
+    })
+  }
+
+  function clearActivity(item) {
+    setDismissedActivities(current => {
+      const next = Array.from(new Set([...current, String(item.id)]))
+      saveStoredArray(dismissedActivitiesStorageKey, next)
+      return next
+    })
+  }
+
+  function clearAllActivities() {
+    setDismissedActivities(current => {
+      const next = Array.from(new Set([
+        ...current,
+        ...visibleAuditLogs.map(item => String(item.id)),
+      ]))
+      saveStoredArray(dismissedActivitiesStorageKey, next)
       return next
     })
   }
@@ -266,17 +348,21 @@ export default function AdminLayout() {
                 <div className="admin-topbar-panel-head">
                   <strong>Recent Activity</strong>
                   <div className="admin-topbar-panel-controls">
+                    {visibleAuditLogs.length ? <button type="button" onClick={clearAllActivities}>Clear all</button> : null}
                     <button type="button" onClick={() => setOpenPanel('')} aria-label="Close recent activity">×</button>
                   </div>
                 </div>
                 <div className="admin-topbar-panel-list">
-                  {auditLogs.map(item => (
-                    <div key={item.id} className="admin-audit-row">
-                      <strong>{titleCaseWords(item.action || 'Updated record')}</strong>
-                      <span>{item.subject_title || 'Record'} • {item.admin_name} • {formatAuditDate(item.created_at)}</span>
+                  {visibleAuditLogs.map(item => (
+                    <div key={item.id} className="admin-panel-activity-item">
+                      <div className="admin-audit-row">
+                        <strong>{titleCaseWords(item.action || 'Updated record')}</strong>
+                        <span>{item.subject_title || 'Record'} • {item.admin_name} • {formatAuditDate(item.created_at)}</span>
+                      </div>
+                      <button type="button" className="admin-clear-alert" onClick={() => clearActivity(item)}>Clear</button>
                     </div>
                   ))}
-                  {!auditLogs.length ? <p className="admin-empty">No recent activity yet.</p> : null}
+                  {!visibleAuditLogs.length ? <p className="admin-empty">No recent activity yet.</p> : null}
                 </div>
               </>
             )}

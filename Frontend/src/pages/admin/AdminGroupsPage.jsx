@@ -755,7 +755,7 @@ export default function AdminGroupsPage() {
             <form className="admin-form" onSubmit={submitMember} noValidate>
               <label>
                 <span>Member name</span>
-	                <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} disabled={!canEditPersonalDetails} aria-invalid={Boolean(memberErrors.name)} />
+                <input name="name" value={memberForm.name} onChange={handleMemberChange} onBlur={() => formatMemberField('name', titleCaseWords)} disabled={!canEditPersonalDetails} aria-invalid={Boolean(memberErrors.name)} />
                 <FieldError errors={memberErrors} name="name" />
               </label>
 
@@ -777,13 +777,13 @@ export default function AdminGroupsPage() {
 
               <label>
                 <span>Role in group</span>
-	                <input name="role" value={memberForm.role} onChange={handleMemberChange} onBlur={() => formatMemberField('role', titleCaseWords)} aria-invalid={Boolean(memberErrors.role)} />
+                <input name="role" value={memberForm.role} onChange={handleMemberChange} onBlur={() => formatMemberField('role', titleCaseWords)} aria-invalid={Boolean(memberErrors.role)} />
                 <FieldError errors={memberErrors} name="role" />
               </label>
 
               <label>
                 <span>Notes</span>
-	                <textarea name="notes" rows="4" value={memberForm.notes} onChange={handleMemberChange} onBlur={() => formatMemberField('notes', capitalizeFirst)} aria-invalid={Boolean(memberErrors.notes)} />
+                <textarea name="notes" rows="4" value={memberForm.notes} onChange={handleMemberChange} onBlur={() => formatMemberField('notes', capitalizeFirst)} aria-invalid={Boolean(memberErrors.notes)} />
                 <FieldError errors={memberErrors} name="notes" />
               </label>
 

@@ -3,6 +3,7 @@ import { Link, useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createAdminAccount, deleteAdminAccount, listGroups, updateAdminAccount } from '../../lib/admin'
 import { titleCaseWords } from '../../lib/textFormat'
+import { asError, validateEmail, validateMaxLength, validateNameText } from '../../lib/validation'
 
 const emptyAdminForm = {
   name: '',
@@ -10,6 +11,27 @@ const emptyAdminForm = {
   password: '',
   password_confirmation: '',
   group_id: '',
+}
+
+const passwordRequirements = [
+  { id: 'length', label: 'At least 12 characters', test: value => value.length >= 12 },
+  { id: 'lowercase', label: 'One lowercase letter', test: value => /[a-z]/.test(value) },
+  { id: 'uppercase', label: 'One uppercase letter', test: value => /[A-Z]/.test(value) },
+  { id: 'number', label: 'One number', test: value => /\d/.test(value) },
+  { id: 'symbol', label: 'One symbol', test: value => /[^A-Za-z0-9]/.test(value) },
+]
+
+function validatePassword(errors, password) {
+  if (!password) {
+    errors.password = asError('Password is required.')
+    return
+  }
+
+  const unmet = passwordRequirements.filter(requirement => !requirement.test(password))
+
+  if (unmet.length) {
+    errors.password = asError(`Password must include: ${unmet.map(item => item.label.toLowerCase()).join(', ')}.`)
+  }
 }
 
 function buildAssignmentMap(groups) {
@@ -37,6 +59,8 @@ export default function AdminAccountsPage() {
   const [editingAdminId, setEditingAdminId] = useState(null)
   const [adminForm, setAdminForm] = useState(emptyAdminForm)
   const [adminErrors, setAdminErrors] = useState({})
+  const [adminSearch, setAdminSearch] = useState('')
+  const [adminAssignmentFilter, setAdminAssignmentFilter] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [isSavingAdmin, setIsSavingAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -92,6 +116,20 @@ export default function AdminAccountsPage() {
     [...availableAdmins]
       .sort((left, right) => left.name.localeCompare(right.name))
   ), [availableAdmins])
+  const filteredAdminAccounts = useMemo(() => adminAccounts.filter(admin => {
+    const assignment = assignmentMap.get(admin.id)
+    const query = adminSearch.trim().toLowerCase()
+    const matchesQuery = query
+      ? `${admin.name || ''} ${admin.email || ''} ${assignment?.groupName || ''}`.toLowerCase().includes(query)
+      : true
+    const matchesAssignment = adminAssignmentFilter === 'assigned'
+      ? Boolean(assignment)
+      : adminAssignmentFilter === 'not_assigned'
+        ? !assignment
+        : true
+
+    return matchesQuery && matchesAssignment
+  }), [adminAccounts, adminAssignmentFilter, adminSearch, assignmentMap])
 
   async function refreshAccounts() {
     const payload = await listGroups()
@@ -136,20 +174,18 @@ export default function AdminAccountsPage() {
 
     const nextErrors = {}
 
-    if (!adminForm.name.trim()) {
-      nextErrors.name = ['Admin name is required.']
+    validateNameText(nextErrors, 'name', adminForm.name, 'Admin name', true)
+    validateMaxLength(nextErrors, 'name', adminForm.name, 255, 'Admin name')
+    validateEmail(nextErrors, 'email', adminForm.email)
+
+    if (!editingAdminId) {
+      validatePassword(nextErrors, adminForm.password)
     }
 
-    if (!adminForm.email.trim()) {
-      nextErrors.email = ['Email is required.']
-    }
-
-    if (!editingAdminId && adminForm.password.length < 8) {
-      nextErrors.password = ['Password must be at least 8 characters.']
-    }
-
-    if (!editingAdminId && adminForm.password !== adminForm.password_confirmation) {
-      nextErrors.password_confirmation = ['Password confirmation must match.']
+    if (!editingAdminId && !adminForm.password_confirmation) {
+      nextErrors.password_confirmation = asError('Please confirm your password.')
+    } else if (!editingAdminId && adminForm.password !== adminForm.password_confirmation) {
+      nextErrors.password_confirmation = asError('Passwords do not match.')
     }
 
     setAdminErrors(nextErrors)
@@ -270,14 +306,28 @@ export default function AdminAccountsPage() {
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
-              <h2>Group Admin Accounts</h2>
-              <p>Review assignment status and manage group admin accounts from one list.</p>
+              <h2>Admin Accounts</h2>
             </div>
             <Link className="btn-outline" to="/dashboard/groups">Manage Groups</Link>
           </div>
 
+          <div className="admin-filter-bar">
+            <input
+              type="search"
+              className="admin-filter-input"
+              placeholder="Search admin accounts..."
+              value={adminSearch}
+              onChange={event => setAdminSearch(event.target.value)}
+            />
+            <select className="admin-filter-select" value={adminAssignmentFilter} onChange={event => setAdminAssignmentFilter(event.target.value)}>
+              <option value="">All assignments</option>
+              <option value="assigned">Assigned</option>
+              <option value="not_assigned">Not assigned</option>
+            </select>
+          </div>
+
           <div className="admin-data-table">
-            {adminAccounts.map(admin => {
+            {filteredAdminAccounts.map(admin => {
               const assignment = assignmentMap.get(admin.id)
 
               return (
@@ -305,62 +355,62 @@ export default function AdminAccountsPage() {
                 </div>
               )
             })}
-            {!adminAccounts.length ? <p className="admin-empty">No group admin accounts exist yet.</p> : null}
+            {!filteredAdminAccounts.length ? <p className="admin-empty">{adminAccounts.length ? 'No admin accounts match the current filters.' : 'No admin accounts exist yet.'}</p> : null}
           </div>
         </article>
 
         <article className="admin-surface">
           <div className="admin-section-head">
             <div>
-              <h2>{editingAdminId ? 'Edit Admin' : 'Select Admin'}</h2>
-              <p>{editingAdminId ? 'Update the admin name, email, or group assignment.' : 'Register a normal admin so they can log in with their own email and password.'}</p>
+              <h2>{editingAdminId ? 'Edit Admin' : 'Create Admin'}</h2>
+              <p>{editingAdminId ? 'Update the admin name, email, or group assignment.' : 'Create a group administrator account with secure login details and assign group access if required.'}</p>
             </div>
           </div>
 
           <form className="admin-form" onSubmit={submitAdmin} noValidate>
-              <label>
-                <span>Admin name</span>
-                <input name="name" value={adminForm.name} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.name)} />
-                {adminErrors.name ? <p className="admin-field-error">{adminErrors.name[0]}</p> : null}
-              </label>
+            <label>
+              <span>Admin name</span>
+              <input name="name" value={adminForm.name} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.name)} />
+              {adminErrors.name ? <p className="admin-field-error">{adminErrors.name[0]}</p> : null}
+            </label>
 
-              <label>
-                <span>Email</span>
-                <input name="email" type="email" value={adminForm.email} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.email)} />
-                {adminErrors.email ? <p className="admin-field-error">{adminErrors.email[0]}</p> : null}
-              </label>
+            <label>
+              <span>Email</span>
+              <input name="email" type="email" value={adminForm.email} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.email)} />
+              {adminErrors.email ? <p className="admin-field-error">{adminErrors.email[0]}</p> : null}
+            </label>
 
-              {!editingAdminId ? (
-                <div className="admin-form-grid">
-                  <label>
-                    <span>Password</span>
-                    <input name="password" type="password" value={adminForm.password} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password)} />
-                    {adminErrors.password ? <p className="admin-field-error">{adminErrors.password[0]}</p> : null}
-                  </label>
+            {!editingAdminId ? (
+              <div className="admin-form-grid">
+                <label>
+                  <span>Password</span>
+                  <input name="password" type="password" value={adminForm.password} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password)} />
+                  {adminErrors.password ? <p className="admin-field-error">{adminErrors.password[0]}</p> : null}
+                </label>
 
-                  <label>
-                    <span>Confirm password</span>
-                    <input name="password_confirmation" type="password" value={adminForm.password_confirmation} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password_confirmation)} />
-                    {adminErrors.password_confirmation ? <p className="admin-field-error">{adminErrors.password_confirmation[0]}</p> : null}
-                  </label>
-                </div>
-              ) : null}
-
-              <label>
-                <span>Assigned group</span>
-                <select name="group_id" value={adminForm.group_id} onChange={handleAdminChange}>
-                  <option value="">Not assigned</option>
-                  {groups.map(group => (
-                    <option key={group.id} value={group.id}>{formatDisplayText(group.name)}</option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="admin-actions">
-                <button className="btn-primary" type="submit" disabled={isSavingAdmin}>{isSavingAdmin ? 'Saving...' : editingAdminId ? 'Save Admin' : 'Register Admin'}</button>
-                <button className="btn-outline" type="button" onClick={resetAdminForm}>{editingAdminId ? 'Cancel Edit' : 'Reset'}</button>
+                <label>
+                  <span>Confirm password</span>
+                  <input name="password_confirmation" type="password" value={adminForm.password_confirmation} onChange={handleAdminChange} aria-invalid={Boolean(adminErrors.password_confirmation)} />
+                  {adminErrors.password_confirmation ? <p className="admin-field-error">{adminErrors.password_confirmation[0]}</p> : null}
+                </label>
               </div>
-            </form>
+            ) : null}
+
+            <label>
+              <span>Assigned group</span>
+              <select name="group_id" value={adminForm.group_id} onChange={handleAdminChange}>
+                <option value="">Not assigned</option>
+                {groups.map(group => (
+                  <option key={group.id} value={group.id}>{formatDisplayText(group.name)}</option>
+                ))}
+              </select>
+            </label>
+
+            <div className="admin-actions">
+              <button className="btn-primary" type="submit" disabled={isSavingAdmin}>{isSavingAdmin ? 'Saving...' : editingAdminId ? 'Save Admin' : 'Register Admin'}</button>
+              <button className="btn-outline" type="button" onClick={resetAdminForm}>{editingAdminId ? 'Cancel Edit' : 'Reset'}</button>
+            </div>
+          </form>
         </article>
       </div>
 

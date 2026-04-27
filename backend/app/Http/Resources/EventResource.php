@@ -27,6 +27,7 @@ class EventResource extends JsonResource
             'category' => $this->category,
             'image_path' => $this->image_path,
             'image_url' => $this->image_path ? "/api/v1/events/{$this->id}/image" : null,
+            'admin_image_url' => $this->image_path ? "/admin/events/{$this->id}/image" : null,
             'image_filename' => $this->image_path ? basename($this->image_path) : null,
             'image_size' => ($imagePath && is_file($imagePath)) ? filesize($imagePath) : null,
             'group_id' => $this->group_id,

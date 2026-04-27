@@ -17,7 +17,7 @@ const emptyMemberForm = {
   name: '',
   role: '',
   bio: '',
-  sort_order: '0',
+  sort_order: '1',
   is_active: true,
 }
 const maxImageSize = 2 * 1024 * 1024
@@ -156,8 +156,12 @@ export default function AdminParishCouncilPage() {
   }
 
   function startNewMember() {
+    const suggestedSortOrder = String(members.length + 1)
     setSelectedMemberId(null)
-    setMemberForm(emptyMemberForm)
+    setMemberForm({
+      ...emptyMemberForm,
+      sort_order: suggestedSortOrder,
+    })
     setSelectedFile(null)
     setMemberErrors({})
     setSearchParams({})
@@ -329,6 +333,11 @@ export default function AdminParishCouncilPage() {
   }
 
   const memberRoles = Array.from(new Set(members.map(item => item.role).filter(Boolean))).sort((a, b) => a.localeCompare(b))
+  const suggestedSortOrder = selectedMemberId ? memberForm.sort_order || '1' : String(members.length + 1)
+  const sortOrderOptions = Array.from(
+    { length: Math.max(1, selectedMemberId ? members.length : members.length + 1) },
+    (_, index) => String(index + 1)
+  )
   const filteredMembers = members.filter(item => {
     const query = memberSearch.trim().toLowerCase()
     const matchesQuery = query
@@ -395,7 +404,7 @@ export default function AdminParishCouncilPage() {
             {filteredMembers.map(item => (
               <div
                 key={item.id}
-                className={`admin-row admin-row-clickable ${selectedMemberId === item.id ? 'active' : ''}`}
+                className={`admin-row admin-row-clickable admin-row-with-thumb ${selectedMemberId === item.id ? 'active' : ''}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => selectMember(item.id)}
@@ -406,6 +415,15 @@ export default function AdminParishCouncilPage() {
                   }
                 }}
               >
+                {item.photo_url ? (
+                  <img
+                    className="admin-event-thumb"
+                    src={getBackendUrl(item.photo_url)}
+                    alt={item.name}
+                  />
+                ) : (
+                  <span className="admin-event-thumb admin-event-thumb-placeholder" aria-hidden="true" />
+                )}
                 <div>
                   <strong>{titleCaseWords(item.name || '')}</strong>
                   <span>{titleCaseWords(item.role || '')}</span>
@@ -461,7 +479,12 @@ export default function AdminParishCouncilPage() {
           <div className="admin-form-grid">
             <label>
               <span>Sort order</span>
-              <input type="number" min="0" name="sort_order" value={memberForm.sort_order} onChange={handleMemberChange} />
+              <select name="sort_order" value={memberForm.sort_order || suggestedSortOrder} onChange={handleMemberChange}>
+                {sortOrderOptions.map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+              <p className="admin-field-hint">Current member count: {members.length}. Choose 1 for the first person.</p>
             </label>
 
             <label className="admin-checkbox">
