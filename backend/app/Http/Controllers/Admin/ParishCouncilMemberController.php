@@ -50,6 +50,14 @@ class ParishCouncilMemberController extends Controller
         ]);
     }
 
+    public function photo(ParishCouncilMember $parishCouncilMember)
+    {
+        $path = storage_path("app/private/{$parishCouncilMember->photo_path}");
+        abort_unless($parishCouncilMember->photo_path && is_file($path), 404);
+
+        return response()->file($path);
+    }
+
     public function update(ParishCouncilMemberRequest $request, ParishCouncilMember $parishCouncilMember)
     {
         $validated = $request->validated();

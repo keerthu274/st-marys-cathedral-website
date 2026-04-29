@@ -48,6 +48,10 @@ function isImageFile(file) {
   return ['image/jpeg', 'image/png', 'image/webp'].includes(file?.type)
 }
 
+function getMemberPhotoUrl(member) {
+  return member?.admin_photo_url || member?.photo_url || null
+}
+
 export default function AdminParishCouncilPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -415,10 +419,10 @@ export default function AdminParishCouncilPage() {
                   }
                 }}
               >
-                {item.photo_url ? (
+                {getMemberPhotoUrl(item) ? (
                   <img
                     className="admin-event-thumb"
-                    src={getBackendUrl(item.photo_url)}
+                    src={getBackendUrl(getMemberPhotoUrl(item))}
                     alt={item.name}
                   />
                 ) : (
@@ -507,11 +511,11 @@ export default function AdminParishCouncilPage() {
             </div>
           ) : null}
 
-          {selectedMember?.photo_url && !selectedFile ? (
+          {getMemberPhotoUrl(selectedMember) && !selectedFile ? (
             <div className="admin-panel">
               <strong>Current photo</strong>
               <div className="admin-member-preview">
-                <img src={getBackendUrl(selectedMember.photo_url)} alt={selectedMember.name} />
+                <img src={getBackendUrl(getMemberPhotoUrl(selectedMember))} alt={selectedMember.name} />
                 <p>{selectedMember.photo_filename || 'Current uploaded image'} • {formatBytes(selectedMember.photo_size)}</p>
               </div>
             </div>
