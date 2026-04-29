@@ -16,6 +16,7 @@ use App\Models\MassTime;
 use App\Models\NewsPost;
 use App\Models\ParishChild;
 use App\Models\ParishRegistration;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,35 +39,41 @@ class OverviewController extends Controller
 
         $hasGroupScope = $user->is_main_admin || (bool) $user->group_id;
 
-        $events = $hasGroupScope ? Event::with(['group', 'creator'])
+        $events = $hasGroupScope ? Event::query()
+            ->with(['group', 'creator'])
             ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
             ->orderBy('start_date', 'desc')
             ->orderBy('start_time', 'desc')
             ->limit(4)
             ->get() : collect();
 
-        $massTimes = $user->is_main_admin ? MassTime::orderByRaw($this->dayOrderSql())
+        $massTimes = $user->is_main_admin ? MassTime::query()
+            ->orderByRaw($this->dayOrderSql())
             ->orderBy('start_time')
             ->limit(4)
             ->get() : collect();
 
-        $registrations = $user->is_main_admin ? ParishRegistration::latest()
+        $registrations = $user->is_main_admin ? ParishRegistration::query()
+            ->latest()
             ->limit(4)
             ->get() : collect();
 
-        $contactMessages = $hasGroupScope ? ContactMessage::with('group')
+        $contactMessages = $hasGroupScope ? ContactMessage::query()
+            ->with('group')
             ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
             ->latest()
             ->limit(4)
             ->get() : collect();
 
-        $groupMembers = $hasGroupScope ? GroupMember::with('group')
+        $groupMembers = $hasGroupScope ? GroupMember::query()
+            ->with('group')
             ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
             ->latest()
             ->limit(4)
             ->get() : collect();
         $alertCounts = $this->buildAlertCounts($request);
-        $auditLogs = $user->is_main_admin ? AuditLog::with('user')
+        $auditLogs = $user->is_main_admin ? AuditLog::query()
+            ->with('user')
             ->latest()
             ->limit(6)
             ->get()
@@ -89,22 +96,22 @@ class OverviewController extends Controller
             ],
             'stats' => [
                 'events' => [
-                    'total' => $hasGroupScope ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
-                    'published' => $hasGroupScope ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->where('status', 'published')->count() : 0,
+                    'total' => $hasGroupScope ? Event::query()->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                    'published' => $hasGroupScope ? Event::query()->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->where('status', 'published')->count() : 0,
                 ],
                 'mass_times' => [
-                    'total' => $user->is_main_admin ? MassTime::count() : 0,
-                    'published' => $user->is_main_admin ? MassTime::where('status', 'published')->count() : 0,
+                    'total' => $user->is_main_admin ? MassTime::query()->count() : 0,
+                    'published' => $user->is_main_admin ? MassTime::query()->where('status', 'published')->count() : 0,
                 ],
                 'registrations' => [
-                    'total' => $user->is_main_admin ? ParishRegistration::count() : 0,
+                    'total' => $user->is_main_admin ? ParishRegistration::query()->count() : 0,
                 ],
                 'contact_messages' => [
-                    'total' => $hasGroupScope ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                    'total' => $hasGroupScope ? ContactMessage::query()->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
                     'new' => $alertCounts['new_contact_messages'],
                 ],
                 'group_members' => [
-                    'total' => $hasGroupScope ? GroupMember::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
+                    'total' => $hasGroupScope ? GroupMember::query()->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))->count() : 0,
                 ],
             ],
             'notifications' => $this->buildNotifications($request, $alertCounts),
@@ -152,23 +159,27 @@ class OverviewController extends Controller
 
         return [
             'new_contact_messages' => $hasGroupScope
-                ? ContactMessage::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                ? ContactMessage::query()
+                    ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
                     ->where('status', 'new')
                     ->count()
                 : 0,
             'draft_events' => $hasGroupScope
-                ? Event::when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
+                ? Event::query()
+                    ->when(! $user->is_main_admin, fn ($query) => $query->where('group_id', $user->group_id))
                     ->where('status', 'draft')
                     ->count()
                 : 0,
-            'draft_news' => $user->is_main_admin ? NewsPost::where('status', 'draft')->count() : 0,
+            'draft_news' => $user->is_main_admin ? NewsPost::query()->where('status', 'draft')->count() : 0,
             'adult_children' => $user->is_main_admin
-                ? ParishChild::whereNotNull('date_of_birth')
+                ? ParishChild::query()
+                    ->whereNotNull('date_of_birth')
                     ->whereDate('date_of_birth', '<=', $today->subYears(18)->toDateString())
                     ->count()
                 : 0,
             'children_turning_18_soon' => $user->is_main_admin
-                ? ParishChild::whereNotNull('date_of_birth')
+                ? ParishChild::query()
+                    ->whereNotNull('date_of_birth')
                     ->whereBetween('date_of_birth', [
                         $today->subYears(18)->addDay()->toDateString(),
                         $today->addMonths(3)->subYears(18)->toDateString(),
@@ -311,8 +322,12 @@ class OverviewController extends Controller
         ];
     }
 
-    private function saveOverviewPreferences($user, array $preferences): void
+    private function saveOverviewPreferences(?User $user, array $preferences): void
     {
+        if (! $user) {
+            return;
+        }
+
         $user->forceFill([
             'hidden_overview_items' => $preferences,
         ])->save();
