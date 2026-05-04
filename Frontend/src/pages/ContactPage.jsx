@@ -7,6 +7,8 @@ import { capitalizeFirst, titleCaseWords } from '../lib/textFormat'
 import { firstError, hasErrors, requireField, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../lib/validation'
 import './ContactPage.css'
 
+const publicAsset = (path) => encodeURI(`${import.meta.env.BASE_URL}${path}`)
+
 const categoryOptions = [
     { value: '', label: 'Select enquiry type' },
     { value: 'general', label: 'General Enquiry', hint: 'General questions about the cathedral, parish life, or visiting.' },
@@ -181,9 +183,8 @@ export default function ContactPage() {
         <div className="contact-page-container">
             <PageHero
                 title="Contact Us"
-                subtitle="We'd love to hear from you. Get in touch with our parish team."
+                subtitle="We would be glad to hear from you. Contact the parish team for worship, sacraments, visits, groups, and pastoral support."
                 centered={true}
-                image="https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=1600"
             />
 
             <section className="contact-top-section">
@@ -201,7 +202,8 @@ export default function ContactPage() {
                             ></iframe>
                         </div>
                         <div className="contact-intro-content">
-                            <h2>FIND US</h2>
+                            <p className="contact-kicker">Parish Office</p>
+                            <h2>Find us in the heart of Wrexham</h2>
                             <p>
                                 Thank you for your interest in St Mary's Cathedral. Please use the form below or the parish office contact details for enquiries about worship, parish life, sacramental preparation, or pastoral support.
                             </p>
@@ -214,19 +216,47 @@ export default function ContactPage() {
                             <p>
                                 For more directions via Google Maps, please <a href="https://goo.gl/maps/8nN7F1H1R3J2" target="_blank" rel="noopener noreferrer" className="click-here-link">click here</a>.
                             </p>
+                            <div className="contact-photo-wrap">
+                                <img src={publicAsset('gallery/IMG_4301.jpeg')} alt="Entrance to St Mary's Cathedral" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="contact-methods">
+                        <a className="contact-method-card" href="tel:01978263943">
+                            <span className="contact-method-icon">Tel</span>
+                            <span>
+                                <strong>Call the office</strong>
+                                <small>01978 263943</small>
+                            </span>
+                        </a>
+                        <a className="contact-method-card" href="mailto:secretarywrexhamcathedral@rcdwxm.org.uk">
+                            <span className="contact-method-icon">@</span>
+                            <span>
+                                <strong>Email us</strong>
+                                <small>secretarywrexhamcathedral@rcdwxm.org.uk</small>
+                            </span>
+                        </a>
+                        <div className="contact-method-card">
+                            <span className="contact-method-icon">Hrs</span>
+                            <span>
+                                <strong>Office hours</strong>
+                                <small>Tue, Wed, Fri: 9:30 AM - 2:30 PM</small>
+                            </span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section className="section">
+            <section className="section contact-main-section">
                 <div className="container">
                     <div className="contact-bottom-grid two-columns">
-                        <div className="contact-column">
-                            <h3>Address</h3>
+                        <div className="contact-column contact-details-panel">
+                            <p className="contact-kicker">Visit and Write</p>
+                            <h3>Contact Details</h3>
                             <div className="address-list">
                                 <div className="address-item">
-                                    <span className="address-icon" aria-hidden="true">[C]</span>
+                                    <span className="address-icon" aria-hidden="true">C</span>
                                     <div className="address-text">
                                         <strong>Cathedral Location</strong><br />
                                         St Mary's Cathedral<br />
@@ -235,7 +265,7 @@ export default function ContactPage() {
                                     </div>
                                 </div>
                                 <div className="address-item">
-                                    <span className="address-icon" aria-hidden="true">[O]</span>
+                                    <span className="address-icon" aria-hidden="true">O</span>
                                     <div className="address-text">
                                         <strong>Parish Office / Mailing</strong><br />
                                         Cathedral House<br />
@@ -244,11 +274,11 @@ export default function ContactPage() {
                                     </div>
                                 </div>
                                 <div className="address-item">
-                                    <span className="address-icon" aria-hidden="true">[T]</span>
+                                    <span className="address-icon" aria-hidden="true">T</span>
                                     <div className="address-text">01978 263943</div>
                                 </div>
                                 <div className="address-item">
-                                    <span className="address-icon" aria-hidden="true">[@]</span>
+                                    <span className="address-icon" aria-hidden="true">@</span>
                                     <div className="address-text">
                                         secretarywrexhamcathedral@rcdwxm.org.uk<br />
                                         Office hours: Tuesday, Wednesday and Friday, 9:30 AM - 2:30 PM<br />
@@ -259,8 +289,12 @@ export default function ContactPage() {
                             </div>
                         </div>
 
-                        <div className="contact-column">
-                            <h3>Contact Form</h3>
+                        <div className="contact-column contact-form-panel">
+                            <div className="contact-form-heading">
+                                <p className="contact-kicker">Send a Message</p>
+                                <h3>How can we help?</h3>
+                                <p>Choose the best enquiry type and your message will be sent to the parish team.</p>
+                            </div>
 
                             {error ? <div className="contact-feedback error">{error}</div> : null}
 
@@ -272,7 +306,7 @@ export default function ContactPage() {
                                 }}
                                 noValidate
                             >
-                                <div className="grid-2" style={{ gap: '15px' }}>
+                                <div className="grid-2 contact-form-grid">
                                     <div className="form-group">
                                         <label>Name</label>
                                         <input name="name" value={contactForm.name} onChange={handleContactChange} onBlur={() => formatContactField('name', titleCaseWords)} required aria-invalid={Boolean(contactErrors.name)} />
@@ -285,7 +319,7 @@ export default function ContactPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
+                                <div className="grid-2 contact-form-grid">
                                     <div className="form-group">
                                         <label>Category</label>
                                         <select name="category" value={contactForm.category} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.category)}>
@@ -306,7 +340,7 @@ export default function ContactPage() {
                                 </div>
 
                                 {contactForm.category === 'group_join' ? (
-                                    <div className="form-group" style={{ marginTop: '15px' }}>
+                                    <div className="form-group">
                                         <label>Which group would you like to join?</label>
                                         <select name="group_id" value={contactForm.group_id} onChange={handleContactChange} aria-invalid={Boolean(contactErrors.group_id)}>
                                             <option value="">Select a group</option>
@@ -316,7 +350,7 @@ export default function ContactPage() {
                                     </div>
                                 ) : null}
 
-                                <div className="grid-2" style={{ gap: '15px', marginTop: '15px' }}>
+                                <div className="contact-form-grid single">
                                     <div className="form-group">
                                         <label>Subject</label>
                                         <input name="subject" value={contactForm.subject} onChange={handleContactChange} onBlur={() => formatContactField('subject', titleCaseWords)} required aria-invalid={Boolean(contactErrors.subject)} />
@@ -324,7 +358,7 @@ export default function ContactPage() {
                                     </div>
                                 </div>
 
-                                <div className="radio-group" style={{ margin: '15px 0' }}>
+                                <div className="radio-group">
                                     <label className="radio-option">
                                         <input type="radio" name="isMember" value="yes" checked={contactForm.isMember === 'yes'} onChange={handleContactChange} />
                                         Yes, I attend St Mary's.
@@ -344,8 +378,7 @@ export default function ContactPage() {
                                 <div className="form-actions-row">
                                     <button
                                         type="button"
-                                        className="btn-minimal-dark"
-                                        style={{ background: '#777' }}
+                                        className="btn-form-secondary"
                                         onClick={() => {
                                             setContactForm(initialContactForm)
                                             setContactErrors({})
@@ -354,7 +387,7 @@ export default function ContactPage() {
                                     >
                                         Clear
                                     </button>
-                                    <button type="submit" className="btn-minimal-dark" disabled={loading}>
+                                    <button type="submit" className="btn-form-primary" disabled={loading}>
                                         {loading ? 'Sending...' : 'Send Message'}
                                     </button>
                                 </div>
