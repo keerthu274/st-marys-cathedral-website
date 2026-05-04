@@ -55,13 +55,7 @@ class ParishCouncilMemberController extends Controller
         $path = storage_path("app/private/{$parishCouncilMember->photo_path}");
         abort_unless($parishCouncilMember->photo_path && is_file($path), 404);
 
-        return response()->file($path, [
-            'Content-Type' => match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
-                'jpg', 'jpeg' => 'image/jpeg',
-                'webp' => 'image/webp',
-                default => 'image/png',
-            },
-        ]);
+        return response()->file($path);
     }
 
     public function update(ParishCouncilMemberRequest $request, ParishCouncilMember $parishCouncilMember)
