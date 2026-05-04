@@ -1,9 +1,6 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
-import Navbar from './components/Navbar'
-import TopBar from './components/TopBar'
-import Footer from './components/Footer'
-import ScrollToTop from './components/ScrollToTop'
+import PublicLayout from './layouts/PublicLayout'
 import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage'
 import MassTimesPage from './pages/MassTimesPage'
@@ -53,22 +50,11 @@ import AdminGroupsPage from './pages/admin/AdminGroupsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminMyGroupPage from './pages/admin/AdminMyGroupPage'
 
-function AppContent() {
-  const location = useLocation()
-  const isDashboardRoute = location.pathname.startsWith('/dashboard')
-  const mainClassName = isDashboardRoute ? '' : 'app-main-with-fixed-header'
-
+function App() {
   return (
-    <>
-      <ScrollToTop />
-      {!isDashboardRoute ? (
-        <div className="site-header-fixed">
-          <TopBar />
-          <Navbar />
-        </div>
-      ) : null}
-      <main className={mainClassName}>
-        <Routes>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/mass-times" element={<MassTimesPage />} />
@@ -84,20 +70,6 @@ function AppContent() {
           <Route path="/registration" element={<RegistrationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/dashboard" element={<AdminLayout />}>
-            <Route index element={<AdminOverviewPage />} />
-            <Route path="events" element={<AdminEventsPage />} />
-            <Route path="mass-times" element={<AdminMassTimesPage />} />
-            <Route path="newsletters" element={<AdminNewslettersPage />} />
-            <Route path="news" element={<AdminNewsPage />} />
-            <Route path="registrations" element={<AdminRegistrationsPage />} />
-            <Route path="contact-messages" element={<AdminContactMessagesPage />} />
-            <Route path="parish-council" element={<AdminParishCouncilPage />} />
-            <Route path="groups" element={<AdminGroupsPage />} />
-            <Route path="accounts" element={<AdminAccountsPage />} />
-            <Route path="my-group" element={<AdminMyGroupPage />} />
-            <Route path="profile" element={<AdminProfilePage />} />
-          </Route>
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
           <Route path="/parish-council" element={<ParishCouncilPage />} />
@@ -119,17 +91,23 @@ function AppContent() {
           <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
           <Route path="/diocese" element={<DiocesePage />} />
           <Route path="/links" element={<UsefulLinksPage />} />
-        </Routes>
-      </main>
-      {!isDashboardRoute ? <Footer /> : null}
-    </>
-  )
-}
+        </Route>
 
-function App() {
-  return (
-    <BrowserRouter>
-      <AppContent />
+        <Route path="/dashboard" element={<AdminLayout />}>
+          <Route index element={<AdminOverviewPage />} />
+          <Route path="events" element={<AdminEventsPage />} />
+          <Route path="mass-times" element={<AdminMassTimesPage />} />
+          <Route path="newsletters" element={<AdminNewslettersPage />} />
+          <Route path="news" element={<AdminNewsPage />} />
+          <Route path="registrations" element={<AdminRegistrationsPage />} />
+          <Route path="contact-messages" element={<AdminContactMessagesPage />} />
+          <Route path="parish-council" element={<AdminParishCouncilPage />} />
+          <Route path="groups" element={<AdminGroupsPage />} />
+          <Route path="accounts" element={<AdminAccountsPage />} />
+          <Route path="my-group" element={<AdminMyGroupPage />} />
+          <Route path="profile" element={<AdminProfilePage />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }

@@ -28,6 +28,7 @@ const prayerSchedule = [
 
 export default function MassTimesPage() {
     const [massTimes, setMassTimes] = useState([])
+    const [locationFilter, setLocationFilter] = useState('all')
 
     useEffect(() => {
         fetch(getBackendUrl('/api/v1/mass-times'))
@@ -35,6 +36,33 @@ export default function MassTimesPage() {
             .then(data => setMassTimes(Array.isArray(data?.data) ? data.data : []))
             .catch(err => console.log('Error loading mass times:', err))
     }, [])
+
+    const normalized = massTimes
+        .map(item => ({
+            ...item,
+            location: item.location || "St Mary's Cathedral",
+            day: item.day || 'Day',
+            start_time: item.start_time || '',
+        }))
+
+    const filtered = normalized.filter(item => {
+        if (locationFilter === 'all') {
+            return true
+        }
+
+        const isCoedpoeth = /coedpoeth/i.test(item.location) || /holy family/i.test(item.location)
+
+        return locationFilter === 'coedpoeth' ? isCoedpoeth : !isCoedpoeth
+    })
+
+    const groupedByLocationThenDay = filtered.reduce((acc, item) => {
+        const locationKey = item.location
+        const locationGroup = acc[locationKey] || {}
+        const times = locationGroup[item.day] || []
+        locationGroup[item.day] = [...times, item.start_time].filter(Boolean)
+        acc[locationKey] = locationGroup
+        return acc
+    }, {})
 
     return (
         <div className="mass-sac-page">
@@ -49,26 +77,44 @@ export default function MassTimesPage() {
                     <h2 className="section-title">Mass Times</h2>
                     <p className="section-subtitle">Please check the weekly newsletter for weekday updates and seasonal notices</p>
 
-                    <div className="grid-2 mass-times-grid">
-                        {massTimes.map((mass, index) => (
-                            <div key={mass.id} className="card mass-time-card">
-                                <div className="mt-card-header">
-                                    <div className={`mt-icon-box mt-icon-variant-${(index % 2) + 1}`}>
-                                        <span className={`mt-clock mt-clock-${(index % 2) + 1}`} aria-hidden="true"></span>
-                                    </div>
-                                    <div className="mt-card-heading">
-                                        <h3 className="mt-card-title">{mass.location}</h3>
-                                        <div className="mt-card-day">Regular schedule</div>
-                                    </div>
-                                </div>
+                    <div className="mt-filter-bar" role="tablist" aria-label="Filter mass times by location">
+                        <button type="button" className={`mt-filter-tab ${locationFilter === 'all' ? 'active' : ''}`} onClick={() => setLocationFilter('all')}>
+                            All
+                        </button>
+                        <button type="button" className={`mt-filter-tab ${locationFilter === 'cathedral' ? 'active' : ''}`} onClick={() => setLocationFilter('cathedral')}>
+                            Cathedral
+                        </button>
+                        <button type="button" className={`mt-filter-tab ${locationFilter === 'coedpoeth' ? 'active' : ''}`} onClick={() => setLocationFilter('coedpoeth')}>
+                            Coedpoeth
+                        </button>
+                    </div>
 
-                                <div className="mt-card-details" style={{ marginTop: '20px' }}>
-                                    <p className="mt-time-chip">
-                                        <strong>{mass.day}: {mass.start_time}</strong>
-                                    </p>
+                    <div className="mt-schedule">
+                        {Object.keys(groupedByLocationThenDay).length ? Object.entries(groupedByLocationThenDay).map(([location, days]) => (
+                            <div key={location} className="mt-location-block">
+                                <h3 className="mt-location-title">{location}</h3>
+                                <div className="mt-day-grid">
+                                    {Object.entries(days).map(([day, times]) => (
+                                        <div key={`${location}-${day}`} className="mt-day-card">
+                                            <div className="mt-day-head">
+                                                <span className="mt-day-name">{day}</span>
+                                                <span className="mt-day-count">{times.length} time{times.length === 1 ? '' : 's'}</span>
+                                            </div>
+                                            <div className="mt-time-list">
+                                                {times.map((time) => (
+                                                    <span key={`${location}-${day}-${time}`} className="mt-time-pill">{time}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="content-card" style={{ textAlign: 'center' }}>
+                                <h3>No schedule yet</h3>
+                                <p>Published Mass times will appear here automatically.</p>
+                            </div>
+                        )}
                     </div>
 
                     <div className="contact-strip" style={{ marginTop: '32px' }}>

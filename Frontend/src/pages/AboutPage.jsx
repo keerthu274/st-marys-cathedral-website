@@ -1,4 +1,6 @@
 import PageHero from '../components/PageHero'
+import Container from '../components/ui/Container'
+import Section from '../components/ui/Section'
 import './AboutPage.css'
 
 const values = [
@@ -9,22 +11,56 @@ const values = [
 ]
 
 const staff = [
-    { role: 'Bishop of Wrexham', name: 'Bishop Peter Brignall', title: 'Diocesan Bishop' },
-    { role: 'Cathedral Dean', name: 'Fr Nicolas Enzama', title: 'Cathedral Dean and Parish Priest' },
-    { role: 'Permanent Deacons', name: 'Deacon Michael Schoonjans and Deacon Steve Davies', title: 'Serving Cathedral parish life and ministry' },
-    { role: 'Religious Sisters', name: 'Sisters of the Holy Family and the Evangelising Sisters of Mary', title: 'Part of Cathedral parish life' },
+    { role: 'Bishop of Wrexham', name: 'Bishop Peter Brignall', title: 'Diocesan Bishop', bio: 'Episcopal leadership for Catholic communities across North Wales.', image: '/leadership/bishop-peter-brignall.jpg' },
+    { role: 'Cathedral Dean', name: 'Fr Nicolas Enzama', title: 'Cathedral Dean and Parish Priest', bio: 'Pastoral leadership for the Cathedral parish and Coedpoeth.', image: '/leadership/fr-nicolas-enzama.jpg' },
+    { role: 'Permanent Deacons', name: 'Deacon Michael Schoonjans and Deacon Steve Davies', title: 'Serving Cathedral parish life and ministry', bio: 'Supporting liturgy, pastoral care, and parish outreach.', image: '/leadership/person-4.jpg' },
+    { role: 'Religious Sisters', name: 'Sisters of the Holy Family and the Evangelising Sisters of Mary', title: 'Part of Cathedral parish life', bio: 'A longstanding presence of prayer, service, and community support.', image: '/leadership/person-6.jpg' },
+]
+
+const historyTimeline = [
+    {
+        date: '1584',
+        title: 'Faith Under Pressure',
+        content: 'Saint Richard Gwyn was executed in Wrexham for his Catholic faith and remains a local witness to conscience and courage.',
+    },
+    {
+        date: '1828',
+        title: 'Catholic Worship Re-established',
+        content: "Saint David's Chapel was built on King Street as the Catholic community grew and worship life became more visible.",
+    },
+    {
+        date: '1857',
+        title: "St Mary's Opens",
+        content: "Edward Welby Pugin's church on Regent Street opened on 19 November 1857, dedicated to Our Lady of Sorrows.",
+    },
+    {
+        date: '1907–1987',
+        title: 'From Pro-cathedral to Cathedral',
+        content: 'The church became the pro-cathedral in 1907 and was raised to cathedral status in 1987 with the creation of the Diocese of Wrexham.',
+    },
 ]
 
 export default function AboutPage() {
     return (
-        <div>
+        <div className="about-page">
             <PageHero
                 title="About St Mary's Cathedral"
                 subtitle="Mother church of the Diocese of Wrexham and home to a welcoming parish community"
             />
 
-            <section className="section">
-                <div className="container about-history">
+            <div className="about-subnav">
+                <Container>
+                    <a href="#welcome">Welcome</a>
+                    <a href="#leadership">Leadership</a>
+                    <a href="#history">History</a>
+                    <a href="#artefacts">Art</a>
+                    <a href="#values">Values</a>
+                    <a href="#mission">Mission</a>
+                </Container>
+            </div>
+
+            <Section id="welcome">
+                <Container className="about-history">
                     <div className="history-text">
                         <h2 className="about-heading">Croeso / Welcome</h2>
                         <p>
@@ -36,26 +72,38 @@ export default function AboutPage() {
                         <p>
                             The Cathedral is both the mother church of the Diocese of Wrexham and a living parish community serving worship, formation, pastoral care, and outreach.
                         </p>
+                        <div className="about-contact-card">
+                            <div className="about-contact-kicker">Contact</div>
+                            <div className="about-contact-lines">
+                                <div><strong>Address</strong>: Regent Street, Wrexham, LL11 1RB</div>
+                                <div><strong>Phone</strong>: 01978 263943</div>
+                                <div><strong>Email</strong>: secretarywrexhamcathedral@rcdwxm.org.uk</div>
+                                <div><strong>Office hours</strong>: Tue/Wed/Fri, 9:30am–2:30pm</div>
+                            </div>
+                        </div>
                     </div>
                     <div className="history-image">
                         <img
-                            src="https://images.unsplash.com/photo-1548625149-720754951eca?w=600&q=80"
+                            src="/cathedral-photo.png"
                             alt="Cathedral exterior"
                         />
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
+            <Section id="leadership" className="about-band">
+                <Container>
                     <h2 className="section-title">Cathedral Leadership</h2>
                     <div className="grid-4" style={{ marginTop: '40px' }}>
                         {staff.map((person) => (
                             <div key={person.role} className="card staff-card">
-                                <div className="staff-avatar">SM</div>
+                                <div className="staff-avatar">
+                                    <img src={person.image} alt={person.name} loading="lazy" />
+                                </div>
                                 <h3 className="staff-role">{person.role}</h3>
                                 <p className="staff-name">{person.name}</p>
                                 <p className="staff-title">{person.title}</p>
+                                {person.bio ? <p className="staff-bio">{person.bio}</p> : null}
                             </div>
                         ))}
                     </div>
@@ -76,40 +124,31 @@ export default function AboutPage() {
                             </p>
                         </div>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section">
-                <div className="container">
+            <Section id="history">
+                <Container>
                     <h2 className="section-title">History of the Cathedral</h2>
-                    <div className="content-stack" style={{ marginTop: '40px' }}>
-                        <div className="content-card">
-                            <h3>Before the Cathedral</h3>
-                            <p>
-                                After the Reformation, Catholics in Wrexham were left without a church of their own and often gathered for Mass in private homes or hidden chapels. Saint Richard Gwyn, a local schoolmaster, was executed in 1584 for his Catholic faith and became a martyr and inspiration for later generations.
-                            </p>
-                            <p>
-                                As restrictions gradually eased, Saint David&apos;s Chapel was built on King Street in 1828 on land purchased by John Thompson. The growing Catholic population eventually needed a larger church.
-                            </p>
-                        </div>
-                        <div className="content-card">
-                            <h3>The Construction of St Mary&apos;s</h3>
-                            <p>
-                                In 1856, Richard Thompson commissioned the church on Regent Street in memory of his wife Ellen. Edward Welby Pugin designed it in the Decorated Gothic style, and it opened on 19 November 1857 dedicated to Our Lady of Sorrows.
-                            </p>
-                            <p>
-                                Over time the church gained stained glass, a new altar, family tombs, a rebuilt and enlarged spire, a parish hall in 1911, and later a cloister and side chapel. It became the pro-cathedral in 1907 and was elevated to cathedral status in 1987 when the Diocese of Wrexham was created.
-                            </p>
-                        </div>
-                        <div className="quote-panel">
-                            “This beautiful structure, which has attracted so much attention and caused so much admiration in the town, is one of the most beautiful specimens of church architecture in the Principality.”
-                        </div>
+                    <ol className="about-timeline">
+                        {historyTimeline.map((item) => (
+                            <li key={item.date} className="about-timeline-item">
+                                <div className="about-timeline-date">{item.date}</div>
+                                <div className="about-timeline-card">
+                                    <h3>{item.title}</h3>
+                                    <p>{item.content}</p>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                    <div className="quote-panel about-quote">
+                        "This beautiful structure, which has attracted so much attention and caused so much admiration in the town, is one of the most beautiful specimens of church architecture in the Principality."
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
+            <Section id="artefacts" className="about-band">
+                <Container>
                     <h2 className="section-title">Art And Artefacts</h2>
                     <div className="content-grid" style={{ marginTop: '40px' }}>
                         <div className="content-card">
@@ -125,11 +164,11 @@ export default function AboutPage() {
                             </p>
                         </div>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section">
-                <div className="container">
+            <Section>
+                <Container>
                     <h2 className="section-title">Saint Richard Gwyn</h2>
                     <div className="content-card" style={{ marginTop: '40px' }}>
                         <h3>Wrexham&apos;s Martyr</h3>
@@ -140,11 +179,11 @@ export default function AboutPage() {
                             Witnesses remembered his calmness, forgiveness, and courage. He was canonised by Pope Paul VI in 1970 and remains a powerful example of conscience, integrity, and faith. The parish notes a commemorative Mass each year near 15 October.
                         </p>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
+            <Section id="values" className="about-band">
+                <Container>
                     <h2 className="section-title">Our Values</h2>
                     <div className="grid-4" style={{ marginTop: '40px' }}>
                         {values.map((value) => (
@@ -155,16 +194,16 @@ export default function AboutPage() {
                             </div>
                         ))}
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="mission-banner">
-                <div className="container" style={{ textAlign: 'center' }}>
+            <section className="mission-banner" id="mission">
+                <Container style={{ textAlign: 'center' }}>
                     <h2 className="mission-title">Our Mission</h2>
                     <p className="mission-quote">
                         To be a welcoming Cathedral parish, centred on Christ and the Eucharist, helping people grow in faith, prayer, service, and fellowship.
                     </p>
-                </div>
+                </Container>
             </section>
         </div>
     )

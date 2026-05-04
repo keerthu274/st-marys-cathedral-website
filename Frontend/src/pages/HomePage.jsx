@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getBackendUrl } from '../lib/auth'
 import './HomePage.css'
@@ -62,18 +62,17 @@ const services = [
   },
 ]
 
-const news = [
-  {
-    date: 'Building Project',
-    title: 'Renovation Planning And Floor Repairs',
-    desc: 'The Diocese of Wrexham is progressing a 5-to-10-year renovation plan with priority work focused on heating renewal, asbestos removal, and a new cathedral floor.',
-  },
-  {
-    date: 'Parish Life',
-    title: 'Youth Group And Community Activities',
-    desc: 'Our parish gathers for youth formation, prayer groups, social events, fundraising, and outreach that strengthen faith and friendship across the community.',
-  },
-]
+function formatNewsDate(value) {
+  if (!value) {
+    return 'Recent update'
+  }
+
+  return new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
 
 function formatTime(timeString) {
   if (!timeString) {
@@ -93,6 +92,7 @@ function formatTime(timeString) {
 export default function HomePage() {
   const [heroIdx, setHeroIdx] = useState(0)
   const [homeMassTimes, setHomeMassTimes] = useState([])
+  const [homeNewsPosts, setHomeNewsPosts] = useState([])
   const activeHeroSlide = heroSlides[heroIdx]
 
   useEffect(() => {
@@ -118,6 +118,25 @@ export default function HomePage() {
       } catch {
         if (!ignore) {
           setHomeMassTimes([])
+        }
+      }
+
+      try {
+        const newsResponse = await fetch(getBackendUrl('/api/v1/news'))
+        const newsPayload = await newsResponse.json()
+
+        if (ignore) {
+          return
+        }
+
+        if (newsResponse.ok && Array.isArray(newsPayload.data)) {
+          setHomeNewsPosts(newsPayload.data.slice(0, 3))
+        } else {
+          setHomeNewsPosts([])
+        }
+      } catch {
+        if (!ignore) {
+          setHomeNewsPosts([])
         }
       }
     }
@@ -171,6 +190,7 @@ export default function HomePage() {
             <p className="hero-desc">{activeHeroSlide.desc}</p>
             <div className="hero-btns">
               <Link to={activeHeroSlide.link} className="btn-primary-grand">{activeHeroSlide.btnText}</Link>
+              <Link to="/contact" className="btn-outline-white hero-secondary-btn">Contact Us</Link>
             </div>
           </div>
 
@@ -190,7 +210,7 @@ export default function HomePage() {
       <section className="info-bar">
         <div className="container info-bar-grid">
           <div className="info-bar-item">
-            <span className="info-bar-icon">🏛️</span>
+            <span className="info-bar-icon">1857</span>
             <div className="info-bar-text">
               <h3>Est. 1857</h3>
               <p>A Rich History</p>
@@ -198,7 +218,7 @@ export default function HomePage() {
           </div>
           <div className="info-bar-divider"></div>
           <div className="info-bar-item">
-            <span className="info-bar-icon">🕊️</span>
+            <span className="info-bar-icon">ALL</span>
             <div className="info-bar-text">
               <h3>Parish Family</h3>
               <p>Growing Together</p>
@@ -206,7 +226,7 @@ export default function HomePage() {
           </div>
           <div className="info-bar-divider"></div>
           <div className="info-bar-item">
-            <span className="info-bar-icon">🤝</span>
+            <span className="info-bar-icon">OK</span>
             <div className="info-bar-text">
               <h3>100% Welcome</h3>
               <p>Open To Everyone</p>
@@ -214,7 +234,7 @@ export default function HomePage() {
           </div>
           <div className="info-bar-divider"></div>
           <div className="info-bar-item">
-            <span className="info-bar-icon">📍</span>
+            <span className="info-bar-icon">WX</span>
             <div className="info-bar-text">
               <h3>Wrexham</h3>
               <p>Diocese Seat</p>
@@ -326,24 +346,35 @@ export default function HomePage() {
         <div className="container news-newsletter-grid">
           <div className="news-col">
             <h2 className="section-title" style={{ textAlign: 'left', marginBottom: '24px' }}>Latest News</h2>
-            {news.map((item) => (
-              <div key={item.title} className="news-item">
-                <p className="news-date">{item.date}</p>
-                <h3 className="news-title">{item.title}</h3>
-                <p className="news-desc">{item.desc}</p>
-                <span className="read-more">Read More →</span>
+            {homeNewsPosts.length ? homeNewsPosts.map((item) => (
+              <Link key={item.id} to={`/news/${item.id}`} className="news-item-link">
+                <div className="news-item">
+                  <p className="news-date">{formatNewsDate(item.published_at)}</p>
+                  <h3 className="news-title">{item.title}</h3>
+                  <p className="news-desc">{item.summary || 'Read the full update from St Mary\'s Cathedral.'}</p>
+                  <span className="read-more">Read More →</span>
+                </div>
+              </Link>
+            )) : (
+              <div className="news-item">
+                <p className="news-date">Updates</p>
+                <h3 className="news-title">News posts will appear here</h3>
+                <p className="news-desc">Published news and announcements from the admin dashboard will show here automatically.</p>
               </div>
-            ))}
+            )}
+            <div style={{ marginTop: '18px' }}>
+              <Link to="/news" className="btn-outline">View All News</Link>
+            </div>
           </div>
           <div className="newsletter-box">
-            <div className="newsletter-icon">📰</div>
+            <div className="newsletter-icon">News</div>
             <h3 className="newsletter-title">Weekly Newsletter</h3>
             <p className="newsletter-desc">
               Keep up with weekly Mass updates, parish notices, diocesan news, social events, and seasonal services through the parish newsletter and the Clarion diocesan newsletter.
             </p>
-            <button className="btn-gold" style={{ width: '100%', justifyContent: 'center', marginBottom: '12px' }}>
-              Subscribe
-            </button>
+            <Link className="btn-gold" style={{ width: '100%', justifyContent: 'center', marginBottom: '12px' }} to="/newsletter">
+              View Newsletter
+            </Link>
             <p className="newsletter-note">
               We respect your privacy. You may unsubscribe at any time. View our privacy policy.
             </p>
@@ -353,12 +384,12 @@ export default function HomePage() {
 
       <section className="donate-cta">
         <div className="container" style={{ textAlign: 'center' }}>
-          <div className="donate-heart">♡</div>
+          <div className="donate-heart">Support</div>
           <h2 className="donate-title">Supporting The Cathedral</h2>
           <p className="donate-desc">
             The Cathedral parish depends on parishioners, visitors, and grant funders to support daily ministry, ongoing maintenance, and future development projects. Every contribution helps sustain parish life.
           </p>
-          <Link to="/donate" className="btn-gold">♡ Donate to Support the Cathedral</Link>
+          <Link to="/donate" className="btn-gold">Donate to Support the Cathedral</Link>
         </div>
       </section>
 
@@ -368,17 +399,17 @@ export default function HomePage() {
           <h2 className="section-title">Visit St Mary's Cathedral</h2>
           <div className="visit-cards-row">
             <div className="visit-card">
-              <div className="visit-card-icon">📍</div>
+              <div className="visit-card-icon">WX</div>
               <h4>Address</h4>
               <p>St Mary's Cathedral<br />Regent Street<br />Wrexham, LL11 1RB</p>
             </div>
             <div className="visit-card">
-              <div className="visit-card-icon">🕐</div>
+              <div className="visit-card-icon">Hrs</div>
               <h4>Office Hours</h4>
               <p>Tuesday, Wednesday and Friday<br />9:30 AM - 2:30 PM<br />Please email ahead where possible</p>
             </div>
             <div className="visit-card">
-              <div className="visit-card-icon">📞</div>
+              <div className="visit-card-icon">Tel</div>
               <h4>Contact</h4>
               <p>01978 263943<br />secretarywrexhamcathedral@rcdwxm.org.uk</p>
             </div>

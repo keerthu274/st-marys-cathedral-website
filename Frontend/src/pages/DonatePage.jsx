@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
+import Container from '../components/ui/Container'
+import Section from '../components/ui/Section'
 import './DonatePage.css'
 
 const donationOptions = [
@@ -22,8 +24,8 @@ export default function DonatePage() {
         <div>
             <PageHero icon="SM" title="Support Our Cathedral" subtitle="The Cathedral parish depends on donations from parishioners, visitors, and grant funders to sustain worship, outreach, maintenance, and future development." />
 
-            <section className="section">
-                <div className="container">
+            <Section>
+                <Container>
                     <h2 className="section-title">Ways to Donate</h2>
                     <div className="grid-3" style={{ marginTop: '40px' }}>
                         {donationOptions.map((option) => (
@@ -36,11 +38,11 @@ export default function DonatePage() {
                             </div>
                         ))}
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container">
+            <Section style={{ background: 'var(--off-white)' }}>
+                <Container>
                     <div className="gift-aid-card">
                         <div className="gift-aid-left">
                             <h2 className="gift-aid-title"><span>i</span> Gift Aid</h2>
@@ -58,11 +60,11 @@ export default function DonatePage() {
                             <Link to="/contact?subject=Gift%20Aid" className="btn-gold" style={{ marginTop: '16px' }}>Gift Aid Declaration Help</Link>
                         </div>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section">
-                <div className="container">
+            <Section>
+                <Container>
                     <h2 className="section-title">Other Ways to Give</h2>
                     <div className="grid-3" style={{ marginTop: '40px' }}>
                         {otherWays.map((item) => (
@@ -77,19 +79,19 @@ export default function DonatePage() {
                         <h3>Supporting The Cathedral</h3>
                         <p>The Cathedral parish depends on donations from parishioners, visitors, and grant funders for daily ministry, maintenance, and development projects. Thank you for contributing in any way you can.</p>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
 
-            <section className="section" style={{ background: 'var(--off-white)' }}>
-                <div className="container" style={{ textAlign: 'center' }}>
+            <Section style={{ background: 'var(--off-white)' }}>
+                <Container style={{ textAlign: 'center' }}>
                     <h2 className="section-title">Questions About Donating?</h2>
                     <p className="section-subtitle">If you have questions about supporting the Cathedral, Gift Aid, legacies, or the building project, please get in touch with the parish office.</p>
                     <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                         <Link to="/contact" className="btn-primary">Contact Us</Link>
                         <a href="tel:01978263943" className="btn-outline">01978 263943</a>
                     </div>
-                </div>
-            </section>
+                </Container>
+            </Section>
         </div>
     )
 }
