@@ -41,6 +41,10 @@
     background: var(--off-white);
 }
 
+.about-gallery {
+    margin-top: 18px;
+}
+
 .about-page .section-title {
     margin-bottom: 20px;
 }

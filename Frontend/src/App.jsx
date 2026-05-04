@@ -34,6 +34,7 @@ import SchoolsPage from './pages/SchoolsPage'
 import ParkingPage from './pages/ParkingPage'
 import CathedralHirePage from './pages/CathedralHirePage'
 import DiocesePage from './pages/DiocesePage'
+import GalleryPage from './pages/GalleryPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import AdminLayout from './admin/AdminLayout'
@@ -90,6 +91,7 @@ function App() {
           <Route path="/newsletter" element={<WeeklyNewsletterPage />} />
           <Route path="/newsletter-archive" element={<NewsletterArchivePage />} />
           <Route path="/diocese" element={<DiocesePage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/links" element={<UsefulLinksPage />} />
         </Route>
 

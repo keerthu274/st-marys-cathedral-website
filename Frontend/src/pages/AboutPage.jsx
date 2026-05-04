@@ -1,6 +1,8 @@
 import PageHero from '../components/PageHero'
 import Container from '../components/ui/Container'
 import Section from '../components/ui/Section'
+import PhotoGallery from '../components/PhotoGallery'
+import { galleryImages } from '../lib/galleryImages'
 import './AboutPage.css'
 
 const values = [
@@ -150,6 +152,17 @@ export default function AboutPage() {
             <Section id="artefacts" className="about-band">
                 <Container>
                     <h2 className="section-title">Art And Artefacts</h2>
+                    <div className="about-gallery">
+                        <PhotoGallery images={galleryImages.filter((img) => (
+                            [
+                                'Pieta Statue',
+                                'Stained Glass Panel',
+                                'Saint Richard Gwyn Artwork',
+                                'Our Lady and Child Artwork',
+                                'Santo Nino Display',
+                            ].includes(img.title)
+                        ))} />
+                    </div>
                     <div className="content-grid" style={{ marginTop: '40px' }}>
                         <div className="content-card">
                             <h3>Stained Glass</h3>
@@ -163,6 +176,9 @@ export default function AboutPage() {
                                 Highlights mentioned in the PowerPoint include the tomb of Ellen Thompson, a relic shrine of Saint Richard Gwyn, a memorial to Flight Lieutenant David Lord VC, the Polish icon of Our Lady of Czestochowa, a statue of Santo Nino, and the Baptismal font.
                             </p>
                         </div>
+                    </div>
+                    <div style={{ marginTop: '22px' }}>
+                        <a className="btn-outline" href="/gallery">View Photo Gallery</a>
                     </div>
                 </Container>
             </Section>

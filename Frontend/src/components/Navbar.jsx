@@ -25,6 +25,7 @@ const navItems = [
             { label: 'Our Parish', path: '/parish' },
             { label: 'Parish Council', path: '/parish-council' },
             { label: 'Parish Groups', path: '/parish-groups' },
+            { label: 'Photo Gallery', path: '/gallery' },
             { label: 'Building Project', path: '/building-project' },
             { label: 'Fundraising', path: '/fundraising' },
             { label: 'Policies & Safeguarding', path: '/safeguarding' },

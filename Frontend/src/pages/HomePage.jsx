@@ -6,12 +6,14 @@ import './HomePage.css'
 import churchIcon from '../assets/icons/church_sketch.png'
 import bibleIcon from '../assets/icons/bible_sketch.png'
 import doveIcon from '../assets/icons/dove_sketch.png'
+import PhotoGallery from '../components/PhotoGallery'
+import { galleryImages } from '../lib/galleryImages'
 
-const publicAsset = (path) => `${import.meta.env.BASE_URL}${path}`
+const publicAsset = (path) => encodeURI(`${import.meta.env.BASE_URL}${path}`)
 
 const heroSlides = [
   {
-    image: publicAsset('image 01.jpg'),
+    image: [publicAsset('gallery/IMG_4301.jpeg'), publicAsset('image 01.jpg')],
     label: 'MASS TIMES',
     title: 'Join Us For Worship',
     desc: "Find weekday and weekend Mass times at St Mary's Cathedral and the Church of the Holy Family, Coedpoeth.",
@@ -19,7 +21,7 @@ const heroSlides = [
     link: '/mass-times',
   },
   {
-    image: publicAsset('image 02.jpg'),
+    image: [publicAsset('gallery/thumbnail_IMG_7226.jpg'), publicAsset('image 02.jpg')],
     label: 'UPCOMING EVENTS',
     title: 'See What Is Happening',
     desc: 'Keep up with parish events, special celebrations, and community gatherings across cathedral life.',
@@ -27,7 +29,7 @@ const heroSlides = [
     link: '/news-events',
   },
   {
-    image: publicAsset('image 03.jpg'),
+    image: [publicAsset('gallery/IMG_4020.jpeg'), publicAsset('image 03.jpg')],
     label: 'PARISH REGISTRATION',
     title: 'Become Part Of Our Parish',
     desc: 'Register with the parish so we can welcome you, support your household, and help you stay connected.',
@@ -35,7 +37,7 @@ const heroSlides = [
     link: '/registration',
   },
   {
-    image: publicAsset('image 04.jpg'),
+    image: [publicAsset('gallery/IMG_5236 (1).jpeg'), publicAsset('image 04.jpg')],
     label: 'NEWSLETTER',
     title: 'Stay In Touch Each Week',
     desc: 'Read the weekly newsletter for parish notices, Mass updates, diocesan news, and seasonal services.',
@@ -177,7 +179,9 @@ export default function HomePage() {
               key={index}
               className={`hero-bg-slide ${index === heroIdx ? 'active' : ''}`}
               style={{
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${slide.image}')`,
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), ${slide.image
+                  .map((imgUrl) => `url('${imgUrl}')`)
+                  .join(', ')}`,
               }}
             />
           ))}
@@ -378,6 +382,20 @@ export default function HomePage() {
             <p className="newsletter-note">
               We respect your privacy. You may unsubscribe at any time. View our privacy policy.
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section home-gallery-section">
+        <div className="container">
+          <p className="section-label" style={{ textAlign: 'center' }}>GALLERY</p>
+          <h2 className="section-title">A Glimpse of Cathedral Life</h2>
+          <p className="section-desc" style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 28px' }}>
+            Worship, welcome, and community moments from around St Mary&apos;s Cathedral.
+          </p>
+          <PhotoGallery images={galleryImages} limit={6} />
+          <div style={{ textAlign: 'center', marginTop: '24px' }}>
+            <Link to="/gallery" className="btn-outline">View Full Gallery</Link>
           </div>
         </div>
       </section>
