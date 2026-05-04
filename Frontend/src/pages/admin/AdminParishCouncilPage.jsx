@@ -415,10 +415,10 @@ export default function AdminParishCouncilPage() {
                   }
                 }}
               >
-                {item.photo_url ? (
+                {(item.admin_photo_url || item.photo_url) ? (
                   <img
                     className="admin-event-thumb"
-                    src={getBackendUrl(item.photo_url)}
+                    src={getBackendUrl(item.admin_photo_url || item.photo_url)}
                     alt={item.name}
                   />
                 ) : (
@@ -507,11 +507,11 @@ export default function AdminParishCouncilPage() {
             </div>
           ) : null}
 
-          {selectedMember?.photo_url && !selectedFile ? (
+          {(selectedMember?.admin_photo_url || selectedMember?.photo_url) && !selectedFile ? (
             <div className="admin-panel">
               <strong>Current photo</strong>
               <div className="admin-member-preview">
-                <img src={getBackendUrl(selectedMember.photo_url)} alt={selectedMember.name} />
+                <img src={getBackendUrl(selectedMember.admin_photo_url || selectedMember.photo_url)} alt={selectedMember.name} />
                 <p>{selectedMember.photo_filename || 'Current uploaded image'} • {formatBytes(selectedMember.photo_size)}</p>
               </div>
             </div>

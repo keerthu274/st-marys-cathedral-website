@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Validator;
 
 class ParishCouncilMemberRequest extends FormRequest
 {
@@ -68,17 +69,42 @@ class ParishCouncilMemberRequest extends FormRequest
             'photo' => [
                 $member ? 'nullable' : 'required',
                 'file',
-                'mimes:jpg,jpeg,png,webp',
                 'max:5120',
             ],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            if (! $this->hasFile('photo')) {
+                return;
+            }
+
+            $photo = $this->file('photo');
+
+            if (! $photo || ! $photo->isValid()) {
+                return;
+            }
+
+            $extension = strtolower($photo->getClientOriginalExtension());
+
+            if (! in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+                $validator->errors()->add('photo', 'The member photo must be a JPG, PNG, or WebP image.');
+
+                return;
+            }
+
+            if (@getimagesize($photo->getRealPath()) === false) {
+                $validator->errors()->add('photo', 'The member photo must be a valid image file.');
+            }
+        });
     }
 
     public function messages(): array
     {
         return [
             'photo.required' => 'Please upload a member photo.',
-            'photo.mimes' => 'The member photo must be a JPG, PNG, or WebP image.',
             'photo.max' => 'The member photo must be 5MB or smaller.',
         ];
     }

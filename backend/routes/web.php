@@ -126,6 +126,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::resource('parish-council-members', ParishCouncilMemberController::class)
             ->except(['create', 'show', 'update']);
 
+        Route::get('parish-council-members/{parishCouncilMember}/photo', [ParishCouncilMemberController::class, 'photo'])
+            ->name('parish-council-members.photo');
+
         Route::post('parish-council-members/{parishCouncilMember}', [ParishCouncilMemberController::class, 'update'])
             ->name('parish-council-members.update-post');
 

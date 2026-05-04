@@ -52,6 +52,45 @@ class ParishCouncilMemberManagementTest extends TestCase
         $member = ParishCouncilMember::first();
         $this->assertNotNull($member);
         $this->assertFileExists(storage_path("app/private/{$member->photo_path}"));
+
+        $this->get("/api/v1/parish-council-members/{$member->id}/photo")
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
+    }
+
+    public function test_admin_photo_route_serves_hidden_member_photos(): void
+    {
+        $admin = User::factory()->create([
+            'is_main_admin' => true,
+        ]);
+
+        $directory = storage_path('app/private/parish-council-members');
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        file_put_contents(
+            storage_path('app/private/parish-council-members/hidden.png'),
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9pR4H8sAAAAASUVORK5CYII=')
+        );
+
+        $member = ParishCouncilMember::create([
+            'name' => 'Hidden Member',
+            'role' => 'Advisor',
+            'photo_path' => 'parish-council-members/hidden.png',
+            'photo_filename' => 'hidden.png',
+            'photo_size' => 68,
+            'is_active' => false,
+        ]);
+
+        $this->get("/api/v1/parish-council-members/{$member->id}/photo")
+            ->assertNotFound();
+
+        $this->actingAs($admin)
+            ->get("/admin/parish-council-members/{$member->id}/photo")
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
     }
 
     public function test_main_admin_can_update_and_delete_a_parish_council_member(): void

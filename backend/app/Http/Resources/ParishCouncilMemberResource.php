@@ -21,6 +21,7 @@ class ParishCouncilMemberResource extends JsonResource
             'role' => $this->role,
             'bio' => $this->bio,
             'photo_url' => $hasPhoto ? "/api/v1/parish-council-members/{$this->id}/photo" : null,
+            'admin_photo_url' => $hasPhoto ? "/admin/parish-council-members/{$this->id}/photo" : null,
             'photo_filename' => $this->photo_filename,
             'photo_size' => $hasPhoto ? filesize($photoPath) : null,
             'sort_order' => $this->sort_order,
