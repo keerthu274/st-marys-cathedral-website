@@ -656,6 +656,14 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
+.admin-row-news {
+  grid-template-columns: auto minmax(0, 1.1fr) minmax(0, 1.6fr) auto;
+}
+
+.admin-row-news .admin-row-summary {
+  word-break: break-word;
+}
+
 .admin-row-clickable:focus-visible {
   outline: 3px solid rgba(30, 58, 95, 0.18);
   outline-offset: 2px;
@@ -695,6 +703,13 @@
   color: var(--text-mid);
 }
 
+.admin-row-summary {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
 .admin-event-thumb {
   width: 72px;
   height: 72px;
@@ -725,6 +740,11 @@
   text-transform: capitalize;
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.admin-badge.is-warning {
+  background: rgba(180, 35, 24, 0.1);
+  color: #8e2f23;
 }
 
 .admin-actions,

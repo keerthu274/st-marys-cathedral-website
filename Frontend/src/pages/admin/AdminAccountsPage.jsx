@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createAdminAccount, deleteAdminAccount, listGroups, updateAdminAccount } from '../../lib/admin'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { titleCaseWords } from '../../lib/textFormat'
 import { asError, validateEmail, validateMaxLength, validateNameText } from '../../lib/validation'
 
@@ -54,6 +55,7 @@ function formatDisplayText(value, fallback = 'Not set') {
 
 export default function AdminAccountsPage() {
   const { user } = useOutletContext()
+  const editorRef = useRef(null)
   const [groups, setGroups] = useState([])
   const [availableAdmins, setAvailableAdmins] = useState([])
   const [editingAdminId, setEditingAdminId] = useState(null)
@@ -155,12 +157,14 @@ export default function AdminAccountsPage() {
       group_id: admin.group_id ? String(admin.group_id) : '',
     })
     setAdminErrors({})
+    focusAdminEditor(editorRef)
   }
 
   function resetAdminForm() {
     setEditingAdminId(null)
     setAdminForm(emptyAdminForm)
     setAdminErrors({})
+    focusAdminEditor(editorRef)
   }
 
   function handleAdminChange(event) {
@@ -359,7 +363,7 @@ export default function AdminAccountsPage() {
           </div>
         </article>
 
-        <article className="admin-surface">
+        <article className="admin-surface" ref={editorRef} id="admin-editor">
           <div className="admin-section-head">
             <div>
               <h2>{editingAdminId ? 'Edit Admin' : 'Create Admin'}</h2>

@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createEvent, deleteEvent, getEvent, listEvents, listEventsByDate, updateEvent } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { countWords, hasErrors, requireField, validateDateOrder, validateMaxLength, validateTimeOrder, validateWordLimit } from '../../lib/validation'
@@ -130,6 +131,7 @@ export default function AdminEventsPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const fileInputRef = useRef(null)
+  const editorRef = useRef(null)
   const [events, setEvents] = useState([])
   const [eventPreview, setEventPreview] = useState([])
   const [selectedEventId, setSelectedEventId] = useState(null)
@@ -196,6 +198,7 @@ export default function AdminEventsPage() {
       setRemoveExistingImage(false)
       setEventErrors({})
       setSearchParams({ edit: String(id) })
+      focusAdminEditor(editorRef)
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -366,6 +369,7 @@ export default function AdminEventsPage() {
     setRemoveExistingImage(false)
     setEventErrors({})
     setSearchParams({})
+    focusAdminEditor(editorRef)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -610,7 +614,7 @@ export default function AdminEventsPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
           <div className="admin-section-head">
             <div>
               <h2>{selectedEventId ? 'Edit Event' : 'Create Event'}</h2>

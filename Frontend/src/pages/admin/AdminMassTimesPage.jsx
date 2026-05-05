@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createMassTime, deleteMassTime, getMassTime, listMassTimes, listMassTimesByDay, updateMassTime } from '../../lib/admin'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
@@ -34,6 +35,7 @@ function FieldError({ errors, name }) {
 
 export default function AdminMassTimesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const editorRef = useRef(null)
   const [massTimes, setMassTimes] = useState([])
   const [massTimeMeta, setMassTimeMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [massPreview, setMassPreview] = useState([])
@@ -92,6 +94,7 @@ export default function AdminMassTimesPage() {
       })
       setMassTimeErrors({})
       setSearchParams({ edit: String(id) })
+      focusAdminEditor(editorRef)
     } catch (error) {
       openDialog('error', 'Unable to load Mass time', error.message || 'The selected Mass time could not be opened.')
     } finally {
@@ -188,6 +191,7 @@ export default function AdminMassTimesPage() {
     setMassTimeForm(emptyMassTimeForm)
     setMassTimeErrors({})
     setSearchParams({})
+    focusAdminEditor(editorRef)
   }
 
   async function submitMassTime(event) {
@@ -338,7 +342,7 @@ export default function AdminMassTimesPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>{selectedMassTimeId ? 'Edit Mass Time' : 'Create Mass Time'}</h2>

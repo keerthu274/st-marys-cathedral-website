@@ -13,6 +13,8 @@ class NewsletterController extends Controller
 {
     public function index(Request $request)
     {
+        Newsletter::publishDueDrafts();
+
         $newsletters = Newsletter::orderBy('publication_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(10);

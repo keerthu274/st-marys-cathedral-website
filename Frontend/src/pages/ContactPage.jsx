@@ -159,21 +159,47 @@ export default function ContactPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify(contactForm),
             })
 
-            const data = await response.json()
+            const rawBody = await response.text()
+            let data = null
+
+            try {
+                data = rawBody ? JSON.parse(rawBody) : null
+            } catch {
+                data = null
+            }
 
             if (!response.ok) {
-                throw new Error(data.message || 'Something went wrong')
+                const firstApiError = data?.errors && typeof data.errors === 'object'
+                    ? Object.values(data.errors).flat().filter(Boolean)[0]
+                    : null
+
+                if (data?.errors && typeof data.errors === 'object') {
+                    setContactErrors(current => ({ ...current, ...data.errors }))
+                }
+
+                if (firstApiError) {
+                    setError(firstApiError)
+                } else if (response.status < 500 && data?.message) {
+                    setError(data.message)
+                } else {
+                    console.error('Contact form submission failed:', response.status, rawBody)
+                    setError("We could not send your message right now. Please try again in a moment, or contact the parish office by phone or email.")
+                }
+
+                return
             }
 
             setContactForm(initialContactForm)
             setContactErrors({})
             setSuccessDialogOpen(true)
         } catch (submitError) {
-            setError(submitError.message)
+            console.error('Contact form submission error:', submitError)
+            setError("We could not send your message right now. Please check your connection and try again, or contact the parish office by phone or email.")
         } finally {
             setLoading(false)
         }

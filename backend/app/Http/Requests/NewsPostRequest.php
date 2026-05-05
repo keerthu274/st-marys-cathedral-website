@@ -36,19 +36,38 @@ class NewsPostRequest extends FormRequest
             'status' => ['required', Rule::in(['draft', 'published'])],
             'image' => [
                 $newsPost ? 'nullable' : 'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
+                'file',
+                'extensions:jpg,jpeg,png,webp',
                 'max:2048',
             ],
             'remove_image' => ['nullable', 'boolean'],
         ];
     }
 
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if (! $this->hasFile('image')) {
+                return;
+            }
+
+            $image = $this->file('image');
+
+            if (! $image || ! $image->isValid()) {
+                return;
+            }
+
+            if (@getimagesize($image->getRealPath()) === false) {
+                $validator->errors()->add('image', 'The news image must be a valid JPG, PNG, or WebP image.');
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [
-            'image.image' => 'The news image must be an image file.',
-            'image.mimes' => 'The news image must be a JPG, PNG, or WebP image.',
+            'image.file' => 'The news image must be a valid image file.',
+            'image.extensions' => 'The news image must be a JPG, PNG, or WebP image.',
             'image.max' => 'The news image must be 2MB or smaller.',
             'image.uploaded' => 'The news image must be 2MB or smaller.',
         ];

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -80,6 +81,17 @@ class NewsletterRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            $publicationDate = $this->input('publication_date');
+            $status = $this->input('status');
+
+            if ($publicationDate && $status === 'published') {
+                $date = Carbon::parse($publicationDate)->startOfDay();
+
+                if ($date->greaterThan(now()->startOfDay())) {
+                    $validator->errors()->add('status', 'Future-dated newsletters must be saved as drafts. They will publish automatically on the publication date.');
+                }
+            }
+
             if (! $this->hasFile('pdf')) {
                 return;
             }

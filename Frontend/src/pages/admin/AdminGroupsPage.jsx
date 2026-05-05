@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import {
@@ -10,6 +10,7 @@ import {
   updateGroup,
   updateGroupMember,
 } from '../../lib/admin'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import {
   hasErrors,
@@ -109,6 +110,8 @@ function toPrefilledMemberForm(searchParams) {
 export default function AdminGroupsPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
+  const groupEditorRef = useRef(null)
+  const memberEditorRef = useRef(null)
   const [groups, setGroups] = useState([])
   const [availableAdmins, setAvailableAdmins] = useState([])
   const [selectedGroupId, setSelectedGroupId] = useState(null)
@@ -216,6 +219,22 @@ export default function AdminGroupsPage() {
       ignore = true
     }
   }, [searchParams, user?.is_main_admin])
+
+  useEffect(() => {
+    if (!selectedGroupId) {
+      return
+    }
+
+    focusAdminEditor(user?.is_main_admin ? groupEditorRef : memberEditorRef)
+  }, [selectedGroupId, user?.is_main_admin])
+
+  useEffect(() => {
+    if (!selectedMemberId) {
+      return
+    }
+
+    focusAdminEditor(memberEditorRef)
+  }, [selectedMemberId])
 
   useEffect(() => {
     if (isCreatingGroup) {
@@ -691,7 +710,7 @@ export default function AdminGroupsPage() {
 
       <div className="admin-page-grid">
         {user?.is_main_admin ? (
-          <article className="admin-surface">
+          <article className="admin-surface" ref={groupEditorRef} id="admin-editor">
             <div className="admin-section-head">
               <div>
                 <h2>{selectedGroupId ? 'Edit Group' : 'Create Group'}</h2>
@@ -743,7 +762,7 @@ export default function AdminGroupsPage() {
           </article>
         ) : null}
 
-        <article className="admin-surface">
+        <article className="admin-surface" ref={memberEditorRef} id="admin-member-editor">
           <div className="admin-section-head">
             <div>
               <h2>{selectedMemberId ? 'Edit Member' : 'Register Member'}</h2>

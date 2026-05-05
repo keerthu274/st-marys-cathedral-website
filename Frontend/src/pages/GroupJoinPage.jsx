@@ -138,6 +138,7 @@ export default function GroupJoinPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           ...joinForm,
@@ -146,10 +147,34 @@ export default function GroupJoinPage() {
         }),
       })
 
-      const payload = await response.json()
+      const rawBody = await response.text()
+      let payload = null
+
+      try {
+        payload = rawBody ? JSON.parse(rawBody) : null
+      } catch {
+        payload = null
+      }
 
       if (!response.ok) {
-        throw new Error(payload.message || 'Unable to send your group registration right now.')
+        const firstApiError = payload?.errors && typeof payload.errors === 'object'
+          ? Object.values(payload.errors).flat().filter(Boolean)[0]
+          : null
+
+        if (payload?.errors && typeof payload.errors === 'object') {
+          setJoinErrors(current => ({ ...current, ...payload.errors }))
+        }
+
+        if (firstApiError) {
+          throw new Error(firstApiError)
+        }
+
+        if (response.status < 500 && payload?.message) {
+          throw new Error(payload.message)
+        }
+
+        console.error('Group join submission failed:', response.status, rawBody)
+        throw new Error('Unable to send your group registration right now. Please try again in a moment.')
       }
 
       setJoinForm({
@@ -159,7 +184,8 @@ export default function GroupJoinPage() {
       setJoinErrors({})
       setSuccessDialogOpen(true)
     } catch (submitError) {
-      setError(submitError.message || 'Unable to send your group registration right now.')
+      console.error('Group join submission error:', submitError)
+      setError(submitError?.message || 'Unable to send your group registration right now. Please try again in a moment.')
     } finally {
       setLoading(false)
     }

@@ -84,7 +84,7 @@ class EventRequest extends FormRequest
             'category' => ['nullable', 'string', 'max:255'],
 
             'all_day' => ['nullable', 'boolean'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'image' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:5120'],
             'remove_image' => ['nullable', 'boolean'],
         ];
     }
@@ -106,7 +106,31 @@ class EventRequest extends FormRequest
                     $validator->errors()->add('end_time', 'End time must be after start time.');
                 }
             }
+
+            if (! $this->hasFile('image')) {
+                return;
+            }
+
+            $image = $this->file('image');
+
+            if (! $image || ! $image->isValid()) {
+                return;
+            }
+
+            if (@getimagesize($image->getRealPath()) === false) {
+                $validator->errors()->add('image', 'The event image must be a valid JPG, PNG, or WebP image.');
+            }
         });
+    }
+
+    public function messages(): array
+    {
+        return [
+            'image.file' => 'The event image must be a valid image file.',
+            'image.extensions' => 'The event image must be a JPG, PNG, or WebP image.',
+            'image.max' => 'The event image must be 5MB or smaller.',
+            'image.uploaded' => 'The event image must be 5MB or smaller.',
+        ];
     }
 
     private function wordCount(string $value): int

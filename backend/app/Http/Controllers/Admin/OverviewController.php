@@ -14,6 +14,7 @@ use App\Models\Event;
 use App\Models\GroupMember;
 use App\Models\MassTime;
 use App\Models\NewsPost;
+use App\Models\Newsletter;
 use App\Models\ParishChild;
 use App\Models\ParishRegistration;
 use App\Models\User;
@@ -26,6 +27,8 @@ class OverviewController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
+        Newsletter::publishDueDrafts();
+
         $user = $request->user();
         $overviewPreferences = $this->normalizeOverviewPreferences($user?->hidden_overview_items);
         $baselineAt = $overviewPreferences['baseline_at']
@@ -171,6 +174,21 @@ class OverviewController extends Controller
                     ->count()
                 : 0,
             'draft_news' => $user->is_main_admin ? NewsPost::query()->where('status', 'draft')->count() : 0,
+            'newsletters_due_for_publication' => $user->is_main_admin
+                ? Newsletter::query()
+                    ->where('status', 'draft')
+                    ->whereDate('publication_date', '<=', $today->toDateString())
+                    ->count()
+                : 0,
+            'newsletters_publishing_soon' => $user->is_main_admin
+                ? Newsletter::query()
+                    ->where('status', 'draft')
+                    ->whereBetween('publication_date', [
+                        $today->addDay()->toDateString(),
+                        $today->addWeek()->toDateString(),
+                    ])
+                    ->count()
+                : 0,
             'adult_children' => $user->is_main_admin
                 ? ParishChild::query()
                     ->whereNotNull('date_of_birth')
@@ -223,6 +241,28 @@ class OverviewController extends Controller
                 'count' => $counts['draft_news'],
                 'tone' => 'blue',
                 'link' => '/dashboard/news',
+            ];
+        }
+
+        if ($request->user()->is_main_admin && $counts['newsletters_due_for_publication'] > 0) {
+            $items[] = [
+                'key' => 'newsletters-due-for-publication',
+                'title' => 'Newsletters ready to publish',
+                'message' => "{$counts['newsletters_due_for_publication']} newsletter(s) have reached their publication date and will be published automatically when the newsletter page is refreshed.",
+                'count' => $counts['newsletters_due_for_publication'],
+                'tone' => 'red',
+                'link' => '/dashboard/newsletters',
+            ];
+        }
+
+        if ($request->user()->is_main_admin && $counts['newsletters_publishing_soon'] > 0) {
+            $items[] = [
+                'key' => 'newsletters-publishing-soon',
+                'title' => 'Newsletters publishing soon',
+                'message' => "{$counts['newsletters_publishing_soon']} draft newsletter(s) are scheduled within the next 7 days.",
+                'count' => $counts['newsletters_publishing_soon'],
+                'tone' => 'gold',
+                'link' => '/dashboard/newsletters',
             ];
         }
 

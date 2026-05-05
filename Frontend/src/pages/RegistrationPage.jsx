@@ -294,9 +294,16 @@ export default function RegistrationPage() {
                 body: JSON.stringify(payload),
             })
 
-            const data = await response.json()
+            const rawBody = await response.text()
+            let data = null
 
-            if (response.ok && data.success) {
+            try {
+                data = rawBody ? JSON.parse(rawBody) : null
+            } catch {
+                data = null
+            }
+
+            if (response.ok && data?.success) {
                 resetRegistrationForm()
                 setDialogState({
                     open: true,
@@ -310,11 +317,17 @@ export default function RegistrationPage() {
                     ),
                 })
             } else {
+                const firstApiError = data?.errors && typeof data.errors === 'object'
+                    ? Object.values(data.errors).flat().filter(Boolean)[0]
+                    : null
+
                 setDialogState({
                     open: true,
                     tone: 'error',
                     title: 'We could not submit your registration',
-                    message: data.message || 'Please review the form details and try again.',
+                    message: firstApiError
+                        || data?.message
+                        || (rawBody ? `Request failed (${response.status}). ${response.statusText || 'Please try again.'}` : 'Please review the form details and try again.'),
                 })
             }
         } catch (error) {
@@ -323,7 +336,7 @@ export default function RegistrationPage() {
                 open: true,
                 tone: 'error',
                 title: 'Submission failed',
-                message: 'Something went wrong while sending your registration. Please try again in a moment.',
+                message: error?.message || 'Something went wrong while sending your registration. Please try again in a moment.',
             })
         } finally {
             setIsSubmitting(false)

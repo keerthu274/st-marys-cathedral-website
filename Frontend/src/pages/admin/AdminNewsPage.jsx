@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createNewsPost, deleteNewsPost, getNewsPost, listNewsPosts, updateNewsPost } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
-import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
+import { countWords, hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
 const emptyNewsForm = {
   title: '',
@@ -15,6 +16,12 @@ const emptyNewsForm = {
   published_at: new Date().toISOString().slice(0, 10),
   status: 'published',
 }
+
+const newsWordLimits = {
+  title: 50,
+  summary: 120,
+  content: 800,
+}
 const maxImageSize = 2 * 1024 * 1024
 
 function FieldError({ errors, name }) {
@@ -23,6 +30,10 @@ function FieldError({ errors, name }) {
   }
 
   return <p className="admin-field-error">{errors[name][0]}</p>
+}
+
+function FieldHint({ current, max }) {
+  return <p className="admin-field-hint">{current}/{max} words</p>
 }
 
 function formatDate(value) {
@@ -65,6 +76,7 @@ function normalizeErrors(error) {
 export default function AdminNewsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const fileInputRef = useRef(null)
+  const editorRef = useRef(null)
   const [newsPosts, setNewsPosts] = useState([])
   const [newsMeta, setNewsMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [selectedNewsId, setSelectedNewsId] = useState(null)
@@ -140,6 +152,7 @@ export default function AdminNewsPage() {
       if (searchParams.get('edit') !== String(id)) {
         setSearchParams({ edit: String(id) })
       }
+      focusAdminEditor(editorRef)
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -168,6 +181,7 @@ export default function AdminNewsPage() {
     setRemoveCurrentImage(false)
     setNewsErrors({})
     setSearchParams({})
+    focusAdminEditor(editorRef)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -219,8 +233,19 @@ export default function AdminNewsPage() {
     if (fieldName === 'title') {
       requireField(nextErrors, 'title', form.title, 'Title')
       validateMaxLength(nextErrors, 'title', form.title, 255, 'Title')
+      if (countWords(form.title) > newsWordLimits.title) {
+        nextErrors.title = [`Title must be ${newsWordLimits.title} words or fewer.`]
+      }
     } else if (fieldName === 'summary') {
       validateMaxLength(nextErrors, 'summary', form.summary, 500, 'Summary')
+      if (countWords(form.summary) > newsWordLimits.summary) {
+        nextErrors.summary = [`Summary must be ${newsWordLimits.summary} words or fewer.`]
+      }
+    } else if (fieldName === 'content') {
+      validateMaxLength(nextErrors, 'content', form.content, 10000, 'News details')
+      if (countWords(form.content) > newsWordLimits.content) {
+        nextErrors.content = [`News details must be ${newsWordLimits.content} words or fewer.`]
+      }
     }
 
     return nextErrors
@@ -234,6 +259,19 @@ export default function AdminNewsPage() {
     requireField(nextErrors, 'type', newsForm.type, 'Type')
     requireField(nextErrors, 'status', newsForm.status, 'Status')
     validateMaxLength(nextErrors, 'summary', newsForm.summary, 500, 'Summary')
+    validateMaxLength(nextErrors, 'content', newsForm.content, 10000, 'News details')
+
+    if (countWords(newsForm.title) > newsWordLimits.title) {
+      nextErrors.title = [`Title must be ${newsWordLimits.title} words or fewer.`]
+    }
+
+    if (countWords(newsForm.summary) > newsWordLimits.summary) {
+      nextErrors.summary = [`Summary must be ${newsWordLimits.summary} words or fewer.`]
+    }
+
+    if (countWords(newsForm.content) > newsWordLimits.content) {
+      nextErrors.content = [`News details must be ${newsWordLimits.content} words or fewer.`]
+    }
 
     if (selectedFile && !isImageSizeAllowed(selectedFile)) {
       nextErrors.image = ['Please upload an image that is 2 MB or smaller.']
@@ -362,18 +400,18 @@ export default function AdminNewsPage() {
 
           <div className="admin-data-table">
             {filteredNews.map(item => (
-              <div key={item.id} className="admin-row admin-row-with-thumb">
+              <div key={item.id} className="admin-row admin-row-with-thumb admin-row-news">
                 {item.image_url ? (
                   <img className="admin-event-thumb" src={getBackendUrl(item.image_url)} alt={item.title} />
                 ) : (
                   <span className="admin-event-thumb admin-event-thumb-placeholder" aria-hidden="true" />
                 )}
-                <div>
+                <div className="admin-row-main">
                   <strong>{item.title}</strong>
                   <span>{formatDate(item.published_at)} • {formatTypeLabel(item.type)}</span>
                 </div>
-                <div>
-                  <small>{item.summary || 'No summary added yet.'}</small>
+                <div className="admin-row-meta">
+                  <small className="admin-row-summary">{item.summary || 'No summary added yet.'}</small>
                   <span className="admin-badge">{formatTypeLabel(item.status)}</span>
                 </div>
                 <div className="admin-row-actions">
@@ -397,7 +435,7 @@ export default function AdminNewsPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>{selectedNewsId ? 'Edit News Post' : 'Create News Post'}</h2>
@@ -409,6 +447,7 @@ export default function AdminNewsPage() {
           <label>
             <span>Title</span>
             <input name="title" value={newsForm.title} onChange={handleNewsChange} onBlur={() => formatNewsField('title', titleCaseWords)} aria-invalid={Boolean(newsErrors.title)} />
+            <FieldHint current={countWords(newsForm.title)} max={newsWordLimits.title} />
             <FieldError errors={newsErrors} name="title" />
           </label>
 
@@ -432,12 +471,14 @@ export default function AdminNewsPage() {
           <label>
             <span>Summary</span>
             <textarea name="summary" rows="3" value={newsForm.summary} onChange={handleNewsChange} onBlur={() => formatNewsField('summary', capitalizeFirst)} aria-invalid={Boolean(newsErrors.summary)} />
+            <FieldHint current={countWords(newsForm.summary)} max={newsWordLimits.summary} />
             <FieldError errors={newsErrors} name="summary" />
           </label>
 
           <label>
             <span>News details</span>
             <textarea name="content" rows="7" value={newsForm.content} onChange={handleNewsChange} onBlur={() => formatNewsField('content', capitalizeFirst)} aria-invalid={Boolean(newsErrors.content)} />
+            <FieldHint current={countWords(newsForm.content)} max={newsWordLimits.content} />
             <FieldError errors={newsErrors} name="content" />
           </label>
 

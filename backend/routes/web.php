@@ -156,6 +156,8 @@ Route::prefix('auth-api')->group(function () {
     Route::get('csrf-token', [ApiAuthController::class, 'csrfToken']);
     Route::post('signup', [ApiAuthController::class, 'signup']);
     Route::post('login', [ApiAuthController::class, 'login']);
+    Route::post('forgot-password', [ApiAuthController::class, 'forgotPassword']);
+    Route::post('reset-password', [ApiAuthController::class, 'resetPassword']);
 
     Route::middleware('auth')->group(function () {
         Route::get('me', [ApiAuthController::class, 'me']);

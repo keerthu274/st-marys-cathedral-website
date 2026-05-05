@@ -145,13 +145,13 @@ class DatabaseSeeder extends Seeder
                 ],
                 'events' => [
                     [
-                        'title' => 'Choir Rehearsal',
-                        'description' => 'Weekly rehearsal covering Sunday hymns, psalm settings, and music for upcoming feast days.',
-                        'start_date' => '2026-05-06',
-                        'start_time' => '19:00:00',
-                        'end_date' => '2026-05-06',
-                        'end_time' => '20:30:00',
-                        'location' => 'Choir Loft',
+                        'title' => 'Choir Christmas Carol Service',
+                        'description' => 'A festive evening of carols, scripture readings, and seasonal music led by the cathedral choir.',
+                        'start_date' => '2024-12-15',
+                        'start_time' => '18:30:00',
+                        'end_date' => '2024-12-15',
+                        'end_time' => '19:45:00',
+                        'location' => "St Mary's Cathedral",
                         'status' => 'published',
                         'category' => 'liturgy',
                     ],
@@ -205,12 +205,12 @@ class DatabaseSeeder extends Seeder
                 ],
                 'events' => [
                     [
-                        'title' => 'Youth Night: Faith and Friendship',
-                        'description' => 'An evening of discussion, prayer, and activities focused on building friendships rooted in faith.',
-                        'start_date' => '2026-05-08',
-                        'start_time' => '19:30:00',
-                        'end_date' => '2026-05-08',
-                        'end_time' => '21:00:00',
+                        'title' => 'Youth Group Summer Social',
+                        'description' => 'A relaxed summer gathering for young people with games, food, prayer, and time together in the parish hall.',
+                        'start_date' => '2024-07-20',
+                        'start_time' => '18:00:00',
+                        'end_date' => '2024-07-20',
+                        'end_time' => '20:30:00',
                         'location' => 'Parish Hall',
                         'status' => 'published',
                         'category' => 'youth',
@@ -254,13 +254,13 @@ class DatabaseSeeder extends Seeder
                 ],
                 'events' => [
                     [
-                        'title' => 'Readers Training Session',
-                        'description' => 'Practical session on proclamation, microphone technique, and preparing the readings.',
-                        'start_date' => '2026-05-09',
-                        'start_time' => '10:30:00',
-                        'end_date' => '2026-05-09',
-                        'end_time' => '11:30:00',
-                        'location' => 'Cathedral Nave',
+                        'title' => 'Readers Advent Reflection Morning',
+                        'description' => 'A formation morning for parish readers with prayer, scripture reflection, and practical preparation for Advent readings.',
+                        'start_date' => '2025-11-22',
+                        'start_time' => '10:00:00',
+                        'end_date' => '2025-11-22',
+                        'end_time' => '12:00:00',
+                        'location' => 'Parish Meeting Room',
                         'status' => 'published',
                         'category' => 'formation',
                     ],
@@ -401,11 +401,11 @@ class DatabaseSeeder extends Seeder
                 ],
                 'events' => [
                     [
-                        'title' => 'Food Bank Collection Weekend',
-                        'description' => 'Collection point open after each weekend Mass for non-perishable food donations.',
-                        'start_date' => '2026-05-09',
-                        'start_time' => '17:00:00',
-                        'end_date' => '2026-05-10',
+                        'title' => 'Harvest Food Bank Collection',
+                        'description' => 'A parish collection of food and essential items for local families, coordinated by the St Vincent de Paul Society.',
+                        'start_date' => '2025-09-28',
+                        'start_time' => '09:00:00',
+                        'end_date' => '2025-09-28',
                         'end_time' => '13:00:00',
                         'location' => 'Cathedral Porch',
                         'status' => 'published',
@@ -549,12 +549,12 @@ class DatabaseSeeder extends Seeder
         // 4) Main-admin events and Mass times
         $mainAdminEvents = [
             [
-                'title' => 'Parish Coffee Morning',
-                'description' => 'Join us for tea, coffee, and conversation after the 11:00 Mass. All are welcome.',
-                'start_date' => '2026-05-10',
+                'title' => 'Parish Coffee Morning and Welcome',
+                'description' => 'A community coffee morning after Sunday Mass to welcome new parishioners and visitors.',
+                'start_date' => '2025-03-09',
                 'start_time' => '12:05:00',
-                'end_date' => '2026-05-10',
-                'end_time' => '13:00:00',
+                'end_date' => '2025-03-09',
+                'end_time' => '13:15:00',
                 'location' => 'Parish Hall',
                 'status' => 'published',
                 'category' => 'community',
@@ -1112,15 +1112,17 @@ class DatabaseSeeder extends Seeder
 
         foreach ($newsletters as $n) {
             $filename = Str::slug($n['title']) . '.pdf';
+            $filePath = 'newsletters/' . $filename;
+            $fileSize = $this->createSampleNewsletterPdf($filePath, $n['title'], $n['publication_date']);
 
             Newsletter::create([
                 'title' => $n['title'],
                 'publication_date' => $n['publication_date'],
                 'description' => 'Weekly parish news, Mass intentions, and upcoming events.',
-                'file_path' => 'newsletters/' . $filename,
+                'file_path' => $filePath,
                 'original_filename' => $filename,
-                'file_size' => 250000,
-                'status' => 'published',
+                'file_size' => $fileSize,
+                'status' => $n['publication_date'] > now()->toDateString() ? 'draft' : 'published',
             ]);
         }
 
@@ -1138,5 +1140,33 @@ class DatabaseSeeder extends Seeder
                 'message' => 'This record exists only to ensure a minimum sample dataset size.',
             ]);
         }
+    }
+
+    private function createSampleNewsletterPdf(string $relativePath, string $title, string $publicationDate): int
+    {
+        $fullPath = storage_path("app/private/{$relativePath}");
+        $directory = dirname($fullPath);
+
+        if (! is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $safeTitle = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $title);
+        $safeDate = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $publicationDate);
+        $stream = "BT /F1 18 Tf 72 720 Td ({$safeTitle}) Tj 0 -32 Td /F1 12 Tf (Publication date: {$safeDate}) Tj 0 -28 Td (Sample parish newsletter PDF for local development.) Tj ET";
+        $streamLength = strlen($stream);
+
+        $pdf = "%PDF-1.4\n"
+            . "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+            . "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+            . "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n"
+            . "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"
+            . "5 0 obj << /Length {$streamLength} >> stream\n{$stream}\nendstream endobj\n"
+            . "xref\n0 6\n0000000000 65535 f \n"
+            . "trailer << /Root 1 0 R /Size 6 >>\nstartxref\n0\n%%EOF\n";
+
+        file_put_contents($fullPath, $pdf);
+
+        return filesize($fullPath) ?: strlen($pdf);
     }
 }

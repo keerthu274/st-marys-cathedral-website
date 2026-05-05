@@ -12,6 +12,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\JsonResponse;
+use Throwable;
 
 class ParishRegistrationApiController extends Controller
 {
@@ -85,8 +86,12 @@ class ParishRegistrationApiController extends Controller
 
         $registration->load(['children', 'interest']);
 
-        Mail::to($registration->email)
-            ->send(new ParishRegistrationWelcome($registration));
+        try {
+            Mail::to($registration->email)
+                ->send(new ParishRegistrationWelcome($registration));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         /**
          * ----------------------------------------------------------

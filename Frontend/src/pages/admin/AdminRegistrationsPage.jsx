@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteRegistration, getRegistration, listRegistrations, updateRegistration } from '../../lib/admin'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { titleCaseWords } from '../../lib/textFormat'
 import { asError, hasErrors, validateEmail, validateMaxLength, validateNameText, validatePhone } from '../../lib/validation'
 
@@ -157,6 +158,7 @@ function FieldError({ errors, name }) {
 
 export default function AdminRegistrationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const editorRef = useRef(null)
   const [registrations, setRegistrations] = useState([])
   const [registrationMeta, setRegistrationMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [selectedRegistrationId, setSelectedRegistrationId] = useState(null)
@@ -215,6 +217,14 @@ export default function AdminRegistrationsPage() {
       setSelectedRegistrationId(Number(selected))
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (!selectedRegistrationId) {
+      return
+    }
+
+    focusAdminEditor(editorRef)
+  }, [selectedRegistrationId])
 
   useEffect(() => {
     let ignore = false
@@ -584,7 +594,7 @@ export default function AdminRegistrationsPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>Registration Details</h2>

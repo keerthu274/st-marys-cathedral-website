@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { deleteContactMessage, getContactMessage, listContactMessages, updateContactMessageStatus } from '../../lib/admin'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 
 const statusOptions = [
@@ -101,6 +102,7 @@ function buildAddMemberUrl(message, user) {
 export default function AdminContactMessagesPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
+  const editorRef = useRef(null)
   const [messages, setMessages] = useState([])
   const [messageMeta, setMessageMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [selectedMessageId, setSelectedMessageId] = useState(null)
@@ -166,6 +168,14 @@ export default function AdminContactMessagesPage() {
       setSelectedMessageId(Number(selected))
     }
   }, [searchParams])
+
+  useEffect(() => {
+    if (!selectedMessageId) {
+      return
+    }
+
+    focusAdminEditor(editorRef)
+  }, [selectedMessageId])
 
   useEffect(() => {
     let ignore = false
@@ -395,7 +405,7 @@ export default function AdminContactMessagesPage() {
         </div>
       </article>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>Message Detail</h2>

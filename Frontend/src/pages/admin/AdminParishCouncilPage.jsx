@@ -9,6 +9,7 @@ import {
   updateParishCouncilMember,
 } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { compressImageFile } from '../../lib/imageCompression'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
 import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
@@ -49,13 +50,15 @@ function isImageFile(file) {
 }
 
 function getMemberPhotoUrl(member) {
-  return member?.admin_photo_url || member?.photo_url || null
+  // Prefer the public photo URL to avoid cookie/session issues in <img> tags.
+  return member?.photo_url || member?.admin_photo_url || null
 }
 
 export default function AdminParishCouncilPage() {
   const { user } = useOutletContext()
   const [searchParams, setSearchParams] = useSearchParams()
   const fileInputRef = useRef(null)
+  const editorRef = useRef(null)
   const [members, setMembers] = useState([])
   const [selectedMemberId, setSelectedMemberId] = useState(null)
   const [memberForm, setMemberForm] = useState(emptyMemberForm)
@@ -126,6 +129,7 @@ export default function AdminParishCouncilPage() {
       setSelectedFile(null)
       setMemberErrors({})
       setSearchParams({ edit: String(id) })
+      focusAdminEditor(editorRef)
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -169,6 +173,7 @@ export default function AdminParishCouncilPage() {
     setSelectedFile(null)
     setMemberErrors({})
     setSearchParams({})
+    focusAdminEditor(editorRef)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -453,7 +458,7 @@ export default function AdminParishCouncilPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>{selectedMemberId ? 'Edit Council Member' : 'Create Council Member'}</h2>

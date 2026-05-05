@@ -12,10 +12,14 @@ class NewsletterApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $newsletters = Newsletter::where('status', 'published')
+        Newsletter::publishDueDrafts();
+
+        $newsletters = Newsletter::publiclyPublished()
             ->orderBy('publication_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->filter(fn (Newsletter $newsletter) => $newsletter->pdfExists())
+            ->values();
 
         return response()->json([
             'success' => true,

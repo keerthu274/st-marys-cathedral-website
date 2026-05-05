@@ -8,7 +8,10 @@ class NewsletterFileController extends Controller
 {
     public function view(Newsletter $newsletter)
     {
-        abort_unless($newsletter->status === 'published' || auth()->check(), 404);
+        Newsletter::publishDueDrafts();
+        $newsletter->refresh();
+
+        abort_unless(($newsletter->status === 'published' && ! $newsletter->is_future) || auth()->check(), 404);
         $path = storage_path("app/private/{$newsletter->file_path}");
         abort_unless(is_file($path), 404);
 
@@ -20,7 +23,10 @@ class NewsletterFileController extends Controller
 
     public function download(Newsletter $newsletter)
     {
-        abort_unless($newsletter->status === 'published' || auth()->check(), 404);
+        Newsletter::publishDueDrafts();
+        $newsletter->refresh();
+
+        abort_unless(($newsletter->status === 'published' && ! $newsletter->is_future) || auth()->check(), 404);
         $path = storage_path("app/private/{$newsletter->file_path}");
         abort_unless(is_file($path), 404);
 

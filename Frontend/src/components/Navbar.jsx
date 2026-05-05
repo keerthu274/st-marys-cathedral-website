@@ -2,6 +2,26 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import './Navbar.css'
 
+function isRouteMatch(pathname, path) {
+    if (!path) {
+        return false
+    }
+
+    if (pathname === path) {
+        return true
+    }
+
+    return pathname.startsWith(`${path}/`)
+}
+
+function getActiveChild(item, pathname) {
+    if (!item?.children?.length) {
+        return null
+    }
+
+    return item.children.find(child => isRouteMatch(pathname, child.path)) || null
+}
+
 const navItems = [
     { label: 'Home', path: '/' },
     {
@@ -68,6 +88,7 @@ export default function Navbar() {
     const [mobileOpen, setMobileOpen] = useState(false)
     const [openDropdown, setOpenDropdown] = useState(null)
     const location = useLocation()
+    const pathname = location.pathname
 
     return (
         <nav className="navbar">
@@ -88,10 +109,10 @@ export default function Navbar() {
                                 <>
                                     <Link
                                         to={item.path}
-                                        className={`nav-link ${item.children.some(child => location.pathname === child.path) ? 'active' : ''}`}
+                                        className={`nav-link ${getActiveChild(item, pathname) ? 'active' : ''}`}
                                         onMouseEnter={() => setOpenDropdown(item.label)}
                                     >
-                                        {item.label} <span className="dropdown-arrow">▼</span>
+                                        {getActiveChild(item, pathname)?.label || item.label} <span className="dropdown-arrow">▼</span>
                                     </Link>
                                     {openDropdown === item.label && (
                                         <ul className="dropdown" onMouseLeave={() => setOpenDropdown(null)}>
@@ -112,7 +133,7 @@ export default function Navbar() {
                             ) : (
                                 <Link
                                     to={item.path}
-                                    className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+                                    className={`nav-link ${isRouteMatch(pathname, item.path) ? 'active' : ''}`}
                                 >
                                     {item.label}
                                 </Link>
@@ -139,13 +160,13 @@ export default function Navbar() {
                         <div key={item.label}>
                             {item.children ? (
                                 <>
-                                    <span className="mobile-link">{item.label}</span>
+                                    <span className="mobile-link">{getActiveChild(item, pathname)?.label || item.label}</span>
                                     <div className="mobile-sub">
                                         {item.children.map(child => (
                                             <Link
                                                 key={child.label}
                                                 to={child.path}
-                                                className="mobile-sub-link"
+                                                className={`mobile-sub-link ${isRouteMatch(pathname, child.path) ? 'active' : ''}`}
                                                 onClick={() => setMobileOpen(false)}
                                             >
                                                 {child.label}
@@ -156,7 +177,7 @@ export default function Navbar() {
                             ) : (
                                 <Link
                                     to={item.path}
-                                    className="mobile-link"
+                                    className={`mobile-link ${isRouteMatch(pathname, item.path) ? 'active' : ''}`}
                                     onClick={() => setMobileOpen(false)}
                                 >
                                     {item.label}

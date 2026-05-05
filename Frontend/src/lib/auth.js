@@ -97,6 +97,14 @@ export async function login(formData) {
   return authRequest('/login', formData)
 }
 
+export async function requestPasswordReset(formData) {
+  return authRequest('/forgot-password', formData)
+}
+
+export async function resetPassword(formData) {
+  return authRequest('/reset-password', formData)
+}
+
 export async function logout() {
   return authRequest('/logout', {})
 }

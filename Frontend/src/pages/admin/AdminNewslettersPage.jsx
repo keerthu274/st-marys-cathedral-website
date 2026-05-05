@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom'
 import FeedbackDialog from '../../components/FeedbackDialog'
 import { createNewsletter, deleteNewsletter, getNewsletter, listNewsletters, updateNewsletter } from '../../lib/admin'
 import { getBackendUrl } from '../../lib/auth'
+import { focusAdminEditor } from '../../lib/adminEditorFocus'
 import { capitalizeFirst, titleCaseWords } from '../../lib/textFormat'
-import { hasErrors, requireField, validateDateNotFuture, validateMaxLength } from '../../lib/validation'
+import { hasErrors, requireField, validateMaxLength } from '../../lib/validation'
 
 const emptyNewsletterForm = {
   title: '',
@@ -65,9 +66,30 @@ function isPdfFile(file) {
   return file?.type === 'application/pdf' || file?.name?.toLowerCase().endsWith('.pdf')
 }
 
+function todayString() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function isFutureDate(value) {
+  return Boolean(value && value > todayString())
+}
+
+function statusLabel(item) {
+  if (item.status === 'draft' && item.is_future) {
+    return item.publishes_within_one_week ? 'scheduled soon' : 'scheduled'
+  }
+
+  if (item.status === 'draft' && item.is_due_for_publication) {
+    return 'publishing due'
+  }
+
+  return item.status
+}
+
 export default function AdminNewslettersPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const fileInputRef = useRef(null)
+  const editorRef = useRef(null)
   const [newsletters, setNewsletters] = useState([])
   const [newsletterMeta, setNewsletterMeta] = useState({ current_page: 1, last_page: 1, total: 0 })
   const [selectedNewsletterId, setSelectedNewsletterId] = useState(null)
@@ -179,6 +201,7 @@ export default function AdminNewslettersPage() {
     setSelectedFile(null)
     setNewsletterErrors({})
     setSearchParams({})
+    focusAdminEditor(editorRef)
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -202,6 +225,7 @@ export default function AdminNewslettersPage() {
       setSelectedFile(null)
       setNewsletterErrors({})
       setSearchParams({ edit: String(id) })
+      focusAdminEditor(editorRef)
 
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -218,6 +242,14 @@ export default function AdminNewslettersPage() {
     const nextForm = {
       ...newsletterForm,
       [name]: value,
+    }
+
+    if (name === 'publication_date' && isFutureDate(value)) {
+      nextForm.status = 'draft'
+    }
+
+    if (name === 'status' && value === 'published' && isFutureDate(newsletterForm.publication_date)) {
+      nextForm.status = 'draft'
     }
 
     setNewsletterForm(nextForm)
@@ -271,11 +303,14 @@ export default function AdminNewslettersPage() {
     requireField(nextErrors, 'title', newsletterForm.title, 'Title')
     validateMaxLength(nextErrors, 'title', newsletterForm.title, 255, 'Title')
     requireField(nextErrors, 'publication_date', newsletterForm.publication_date, 'Publication date')
-    validateDateNotFuture(nextErrors, 'publication_date', newsletterForm.publication_date, 'Publication date')
     validateMaxLength(nextErrors, 'description', newsletterForm.description, 2000, 'Description')
 
     if (!['draft', 'published'].includes(newsletterForm.status)) {
       nextErrors.status = ['Select a valid status.']
+    }
+
+    if (isFutureDate(newsletterForm.publication_date) && newsletterForm.status === 'published') {
+      nextErrors.status = ['Future-dated newsletters must be saved as drafts. They will publish automatically on the publication date.']
     }
 
     if (!selectedNewsletterId && !selectedFile) {
@@ -303,7 +338,6 @@ export default function AdminNewslettersPage() {
 
     if (changedName === 'publication_date') {
       requireField(nextErrors, 'publication_date', form.publication_date, 'Publication date')
-      validateDateNotFuture(nextErrors, 'publication_date', form.publication_date, 'Publication date')
     }
 
     if (changedName === 'description') {
@@ -312,6 +346,10 @@ export default function AdminNewslettersPage() {
 
     if (changedName === 'status' && !['draft', 'published'].includes(form.status)) {
       nextErrors.status = ['Select a valid status.']
+    }
+
+    if ((changedName === 'status' || changedName === 'publication_date') && isFutureDate(form.publication_date) && form.status === 'published') {
+      nextErrors.status = ['Future-dated newsletters must be saved as drafts. They will publish automatically on the publication date.']
     }
 
     return {
@@ -431,7 +469,7 @@ export default function AdminNewslettersPage() {
                 </div>
                 <div>
                   <small>{item.original_filename}</small>
-                  <span className="admin-badge">{item.status}</span>
+                  <span className={`admin-badge ${item.publishes_within_one_week ? 'is-warning' : ''}`}>{statusLabel(item)}</span>
                 </div>
                 <div className="admin-row-actions">
                   <a href={fileUrl(item.view_url)} target="_blank" rel="noreferrer">Open</a>
@@ -456,7 +494,7 @@ export default function AdminNewslettersPage() {
         </article>
       </div>
 
-      <article className="admin-surface">
+      <article className="admin-surface" ref={editorRef} id="admin-editor">
         <div className="admin-section-head">
           <div>
             <h2>{selectedNewsletterId ? 'Edit Newsletter' : 'Create Newsletter'}</h2>
@@ -486,9 +524,12 @@ export default function AdminNewslettersPage() {
           <label>
             <span>Status</span>
             <select name="status" value={newsletterForm.status} onChange={handleNewsletterChange} aria-invalid={Boolean(newsletterErrors.status)}>
-              <option value="published">Published</option>
+              <option value="published" disabled={isFutureDate(newsletterForm.publication_date)}>Published</option>
               <option value="draft">Draft</option>
             </select>
+            {isFutureDate(newsletterForm.publication_date) ? (
+              <p className="admin-field-hint">Future newsletters must stay as drafts. They will publish automatically on the publication date, and alerts begin 7 days before publication.</p>
+            ) : null}
             <FieldError errors={newsletterErrors} name="status" />
           </label>
 

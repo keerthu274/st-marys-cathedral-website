@@ -37,6 +37,8 @@ import DiocesePage from './pages/DiocesePage'
 import GalleryPage from './pages/GalleryPage'
 import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import AdminLayout from './admin/AdminLayout'
 import AdminOverviewPage from './pages/admin/AdminOverviewPage'
 import AdminEventsPage from './pages/admin/AdminEventsPage'
@@ -71,6 +73,8 @@ function App() {
           <Route path="/registration" element={<RegistrationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/donate" element={<DonatePage />} />
           <Route path="/parish" element={<OurParishPage />} />
           <Route path="/parish-council" element={<ParishCouncilPage />} />

@@ -13,6 +13,10 @@
   align-items: stretch;
 }
 
+.auth-layout-centered {
+  max-width: 1120px;
+}
+
 .auth-panel,
 .auth-card {
   border-radius: 24px;
@@ -178,6 +182,26 @@
   color: var(--navy);
 }
 
+.auth-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-forgot-link {
+  color: var(--gold-dark);
+  font-size: 0.86rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.auth-forgot-link:hover {
+  color: var(--navy);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .auth-field input {
   width: 100%;
   padding: 14px 16px;
@@ -246,12 +270,25 @@
   color: #8a5a17;
 }
 
+.auth-password-meter {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(30, 58, 95, 0.045);
+  border: 1px solid rgba(30, 58, 95, 0.08);
+}
+
 .auth-actions {
   display: flex;
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
   margin-top: 6px;
+}
+
+.auth-actions-stack {
+  align-items: flex-start;
 }
 
 .auth-submit {
@@ -316,6 +353,12 @@
   .auth-actions,
   .auth-after {
     align-items: stretch;
+  }
+
+  .auth-label-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .auth-submit,
