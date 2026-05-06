@@ -1,3 +1,5 @@
+import { getBackendUrl } from './auth'
+
 const publicAsset = (path) => encodeURI(`${import.meta.env.BASE_URL}${path}`)
 
 // These images live in `Frontend/public/gallery/`.
@@ -79,3 +81,34 @@ export const galleryImages = [
     caption: 'A devotional display in the cathedral.',
   },
 ]
+
+function normalizeBackendGalleryImage(item) {
+  return {
+    src: getBackendUrl(item.image_url),
+    title: item.title,
+    caption: item.caption || '',
+  }
+}
+
+export async function fetchGalleryImages() {
+  try {
+    const response = await fetch(getBackendUrl('/api/v1/gallery-images'), {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    const payload = await response.json()
+
+    if (!response.ok || !Array.isArray(payload.data) || payload.data.length === 0) {
+      return galleryImages
+    }
+
+    const backendImages = payload.data
+      .filter(item => item.image_url && item.title)
+      .map(normalizeBackendGalleryImage)
+
+    return backendImages.length ? backendImages : galleryImages
+  } catch {
+    return galleryImages
+  }
+}

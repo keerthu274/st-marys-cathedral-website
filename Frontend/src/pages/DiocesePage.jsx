@@ -67,7 +67,11 @@ export default function DiocesePage() {
             <section className="bishop-section">
                 <div className="container bishop-container">
                     <div className="bishop-card">
-                        <div className="bishop-image-placeholder">BP</div>
+                        <img
+                            className="bishop-image"
+                            src="/leadership/bishop-peter.jfif"
+                            alt="Bishop Peter Brignall"
+                        />
                         <h3 className="bishop-name">Bishop Peter Brignall</h3>
                         <div className="bishop-title">Bishop of Wrexham</div>
                     </div>

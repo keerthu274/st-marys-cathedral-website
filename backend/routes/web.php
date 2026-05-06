@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\OverviewController;
 use App\Http\Controllers\Admin\ParishRegistrationController;
 use App\Http\Controllers\Admin\ContactMessageController;
 use App\Http\Controllers\Admin\ParishCouncilMemberController;
+use App\Http\Controllers\Admin\GalleryImageController;
 use App\Http\Controllers\Admin\AdminAccountController;
 use App\Http\Controllers\Admin\GroupController;
 use App\Http\Controllers\Admin\GroupMemberController;
@@ -134,6 +135,15 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::post('parish-council-members/{parishCouncilMember}', [ParishCouncilMemberController::class, 'update'])
             ->name('parish-council-members.update-post');
+
+        Route::get('gallery-images/{galleryImage}/image', [GalleryImageController::class, 'image'])
+            ->name('gallery-images.image');
+
+        Route::resource('gallery-images', GalleryImageController::class)
+            ->except(['create', 'show', 'update']);
+
+        Route::post('gallery-images/{galleryImage}', [GalleryImageController::class, 'update'])
+            ->name('gallery-images.update-post');
 
         Route::post('admin-accounts', [AdminAccountController::class, 'store'])
             ->name('admin-accounts.store');

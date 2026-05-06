@@ -7,13 +7,13 @@ import churchIcon from '../assets/icons/church_sketch.png'
 import bibleIcon from '../assets/icons/bible_sketch.png'
 import doveIcon from '../assets/icons/dove_sketch.png'
 import PhotoGallery from '../components/PhotoGallery'
-import { galleryImages } from '../lib/galleryImages'
+import { fetchGalleryImages, galleryImages } from '../lib/galleryImages'
 
 const publicAsset = (path) => encodeURI(`${import.meta.env.BASE_URL}${path}`)
 
 const heroSlides = [
   {
-    image: [publicAsset('gallery/IMG_4301.jpeg'), publicAsset('image 01.jpg')],
+    image: [publicAsset('gallery/hero-interior.jpg'), publicAsset('image 01.jpg')],
     label: 'MASS TIMES',
     title: 'Join Us For Worship',
     desc: "Find weekday and weekend Mass times at St Mary's Cathedral and the Church of the Holy Family, Coedpoeth.",
@@ -95,11 +95,29 @@ export default function HomePage() {
   const [heroIdx, setHeroIdx] = useState(0)
   const [homeMassTimes, setHomeMassTimes] = useState([])
   const [homeNewsPosts, setHomeNewsPosts] = useState([])
-  const activeHeroSlide = heroSlides[heroIdx]
+  const [homeGalleryImages, setHomeGalleryImages] = useState(galleryImages)
 
   useEffect(() => {
     const timer = setInterval(() => setHeroIdx((i) => (i + 1) % heroSlides.length), 5000)
     return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadGalleryImages() {
+      const images = await fetchGalleryImages()
+
+      if (!ignore) {
+        setHomeGalleryImages(images)
+      }
+    }
+
+    loadGalleryImages()
+
+    return () => {
+      ignore = true
+    }
   }, [])
 
   useEffect(() => {
@@ -179,7 +197,7 @@ export default function HomePage() {
               key={index}
               className={`hero-bg-slide ${index === heroIdx ? 'active' : ''}`}
               style={{
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), ${slide.image
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.62)), ${slide.image
                   .map((imgUrl) => `url('${imgUrl}')`)
                   .join(', ')}`,
               }}
@@ -188,15 +206,20 @@ export default function HomePage() {
         </div>
 
         <div className="container hero-content-centered">
-          <div key={heroIdx} className="hero-text-layer active">
-            <p className="hero-label-stately">{activeHeroSlide.label} • EST. 1857</p>
-            <h1 className="hero-title-grand">{activeHeroSlide.title}</h1>
-            <p className="hero-desc">{activeHeroSlide.desc}</p>
-            <div className="hero-btns">
-              <Link to={activeHeroSlide.link} className="btn-primary-grand">{activeHeroSlide.btnText}</Link>
-              <Link to="/contact" className="btn-outline-white hero-secondary-btn">Contact Us</Link>
+          {heroSlides.map((slide, index) => (
+            <div
+              key={index}
+              className={`hero-text-layer ${index === heroIdx ? 'active' : ''}`}
+            >
+              <p className="hero-label-stately">{slide.label} • EST. 1857</p>
+              <h1 className="hero-title-grand">{slide.title}</h1>
+              <p className="hero-desc">{slide.desc}</p>
+              <div className="hero-btns">
+                <Link to={slide.link} className="btn-primary-grand">{slide.btnText}</Link>
+                <Link to="/contact" className="btn-outline-white hero-secondary-btn">Contact Us</Link>
+              </div>
             </div>
-          </div>
+          ))}
 
           <div className="hero-dots">
             {heroSlides.map((_, index) => (
@@ -393,7 +416,7 @@ export default function HomePage() {
           <p className="section-desc" style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 28px' }}>
             Worship, welcome, and community moments from around St Mary&apos;s Cathedral.
           </p>
-          <PhotoGallery images={galleryImages} limit={6} />
+          <PhotoGallery images={homeGalleryImages} limit={6} />
           <div style={{ textAlign: 'center', marginTop: '24px' }}>
             <Link to="/gallery" className="btn-outline">View Full Gallery</Link>
           </div>

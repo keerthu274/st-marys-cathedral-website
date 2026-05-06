@@ -21,16 +21,12 @@
     text-align: center;
 }
 
-.bishop-image-placeholder {
+.bishop-image {
     width: 100%;
     aspect-ratio: 3/4;
-    background-color: var(--light-gray);
     border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 5rem;
-    color: var(--text-light);
+    object-fit: cover;
+    object-position: center top;
     margin-bottom: 20px;
 }
 

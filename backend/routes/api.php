@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\NewsletterApiController;
 use App\Http\Controllers\Api\V1\NewsPostApiController;
 use App\Http\Controllers\Api\V1\ParishCouncilMemberApiController;
 use App\Http\Controllers\Api\V1\GroupApiController;
+use App\Http\Controllers\Api\V1\GalleryImageApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,5 +83,14 @@ Route::prefix('v1')->group(function () {
     Route::get('parish-council-members', [ParishCouncilMemberApiController::class, 'index']);
     Route::get('parish-council-members/{parishCouncilMember}/photo', [ParishCouncilMemberApiController::class, 'photo']);
     Route::get('groups', [GroupApiController::class, 'index']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Photo Gallery API
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('gallery-images', [GalleryImageApiController::class, 'index']);
+    Route::get('gallery-images/{galleryImage}/image', [GalleryImageApiController::class, 'image']);
     
 });

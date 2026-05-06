@@ -52,6 +52,7 @@ import AdminParishCouncilPage from './pages/admin/AdminParishCouncilPage'
 import AdminGroupsPage from './pages/admin/AdminGroupsPage'
 import AdminAccountsPage from './pages/admin/AdminAccountsPage'
 import AdminMyGroupPage from './pages/admin/AdminMyGroupPage'
+import AdminGalleryPage from './pages/admin/AdminGalleryPage'
 
 function App() {
   return (
@@ -109,6 +110,7 @@ function App() {
           <Route path="contact-messages" element={<AdminContactMessagesPage />} />
           <Route path="parish-council" element={<AdminParishCouncilPage />} />
           <Route path="groups" element={<AdminGroupsPage />} />
+          <Route path="gallery" element={<AdminGalleryPage />} />
           <Route path="accounts" element={<AdminAccountsPage />} />
           <Route path="my-group" element={<AdminMyGroupPage />} />
           <Route path="profile" element={<AdminProfilePage />} />

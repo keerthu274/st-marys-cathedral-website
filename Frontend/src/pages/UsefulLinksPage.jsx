@@ -51,7 +51,11 @@ export default function UsefulLinksPage() {
                 <div className="container">
                     <div className="links-summary-grid">
                         <div className="links-feature-card">
-                            <div className="links-feature-icon">DW</div>
+                            <img
+                                className="links-feature-image"
+                                src="/leadership/bishop-peter.jfif"
+                                alt="Bishop Peter Brignall"
+                            />
                             <h2 className="links-feature-title">Diocese of Wrexham</h2>
                             <p className="links-feature-desc">Access diocesan news, pastoral letters, pilgrimages, and official information from the Diocese of Wrexham.</p>
                             <a href="https://www.wrexhamdiocese.org.uk/" target="_blank" rel="noopener noreferrer" className="links-feature-btn">View Links →</a>

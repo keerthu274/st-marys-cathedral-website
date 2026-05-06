@@ -1,12 +1,33 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHero from '../components/PageHero'
 import Container from '../components/ui/Container'
 import Section from '../components/ui/Section'
 import PhotoGallery from '../components/PhotoGallery'
-import { galleryImages } from '../lib/galleryImages'
+import { fetchGalleryImages, galleryImages } from '../lib/galleryImages'
 import './GalleryPage.css'
 
 export default function GalleryPage() {
+  const [publicGalleryImages, setPublicGalleryImages] = useState(galleryImages)
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadGalleryImages() {
+      const images = await fetchGalleryImages()
+
+      if (!ignore) {
+        setPublicGalleryImages(images)
+      }
+    }
+
+    loadGalleryImages()
+
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   return (
     <div className="gallery-page">
       <PageHero
@@ -24,7 +45,7 @@ export default function GalleryPage() {
             </div>
           </div>
 
-          <PhotoGallery images={galleryImages} />
+          <PhotoGallery images={publicGalleryImages} />
         </Container>
       </Section>
     </div>

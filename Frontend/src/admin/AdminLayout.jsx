@@ -13,6 +13,7 @@ const navItems = [
   { to: '/dashboard/mass-times', label: 'Mass Times', meta: 'Manage weekly worship times', mainAdminOnly: true },
   { to: '/dashboard/news', label: 'News', meta: 'Publish news and announcements', mainAdminOnly: true },
   { to: '/dashboard/newsletters', label: 'Newsletters', meta: 'Upload weekly PDFs', mainAdminOnly: true },
+  { to: '/dashboard/gallery', label: 'Photo Gallery', meta: 'Manage public gallery photos', mainAdminOnly: true },
   { to: '/dashboard/registrations', label: 'Registrations', meta: 'Review parish records', mainAdminOnly: true },
   { to: '/dashboard/contact-messages', label: 'Contact', meta: 'Read website enquiries' },
   { to: '/dashboard/groups', label: 'Groups', meta: 'Manage groups and admins', mainAdminOnly: true },

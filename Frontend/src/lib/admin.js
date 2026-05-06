@@ -289,6 +289,26 @@ export function deleteParishCouncilMember(id) {
   return adminRequest(`/admin/parish-council-members/${id}`, { method: 'DELETE' })
 }
 
+export function listGalleryImages() {
+  return adminRequest('/admin/gallery-images')
+}
+
+export function getGalleryImage(id) {
+  return adminRequest(`/admin/gallery-images/${id}/edit`)
+}
+
+export function createGalleryImage(data) {
+  return adminRequest('/admin/gallery-images', { method: 'POST', body: data })
+}
+
+export function updateGalleryImage(id, data) {
+  return adminRequest(`/admin/gallery-images/${id}`, { method: 'POST', body: data })
+}
+
+export function deleteGalleryImage(id) {
+  return adminRequest(`/admin/gallery-images/${id}`, { method: 'DELETE' })
+}
+
 export function listGroups() {
   return adminRequest('/admin/groups')
 }
